@@ -7,7 +7,7 @@
 # `install` command), it is necessary to pass the `FIRST_TARGET` option to
 # `install_basic_package_files` in the main CMakeLists.txt file.
 # In this case the project name is used for both, therefore it is not necessary.
-set(LIBRARY_TARGET_NAME ${PROJECT_NAME})
+set(LIBRARY_TARGET_NAME SuperquadricGraspLib)
 
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC

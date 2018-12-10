@@ -7,16 +7,20 @@
 # `install` command), it is necessary to pass the `FIRST_TARGET` option to
 # `install_basic_package_files` in the main CMakeLists.txt file.
 # In this case the project name is used for both, therefore it is not necessary.
-set(LIBRARY_TARGET_NAME ${PROJECT_NAME})
+set(LIBRARY_TARGET_NAME SuperquadricModelLib)
 
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC
-        src/LibTemplateCMake.cpp
+        src/pointCloud.cpp
+		src/superquadric.cpp
+		src/superquadricEstimator.cpp
 )
 
 # List of HPP (header) library files.
 set(${LIBRARY_TARGET_NAME}_HDR
-        include/LibTemplateCMake/LibTemplateCMake.h
+        include/pointCloud.h
+		include/superquadricEstimator.h
+		include/superquadric.h
 )
 
 # You can add an external dependency using the find_package() function call
