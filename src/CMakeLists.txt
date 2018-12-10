@@ -1,2 +1,2 @@
-add_subdirectory(LibTemplateCMake)
-add_subdirectory(ExeExample)
+add_subdirectory(SuperquadricLib)
+add_subdirectory(SuperquadricPipeline)

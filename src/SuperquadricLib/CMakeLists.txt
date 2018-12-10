@@ -1,0 +1,3 @@
+add_subdirectory(SuperquadricGrasp)
+add_subdirectory(SuperquadricModel)
+add_subdirectory(SuperquadricVis)
