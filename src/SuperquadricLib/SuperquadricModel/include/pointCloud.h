@@ -1,28 +1,28 @@
 #ifndef POINTCLOUD_H
 #define POINTCLOUD_H
 
-namespace PointCloud {
+namespace SuperqModel {
 
 /**
-* \class PointCloud::3Dpoints
+* \class SuperqModel::3Dpoints
 * \headerfile pointcloud.h <SuperquadricModel/include/pointcloud.h>
 *
-* \brief A class from PointCloud namespace.
+* \brief A class from SuperqModel namespace.
 *
 * This class contains a 3D point cloud used for estimating the superquadric.
 */
-class 3Dpoints
+class PointCloud
 {
 public:
     /**
     * Constructor
     */
-    3Dpoints();
+    PointCloud();
 
     /**
     * Destructory
     */
-    virtual ~3Dpoints();
+    virtual ~PointCloud();
 
 
 };

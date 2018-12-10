@@ -1,28 +1,28 @@
 #ifndef SUPERQESTIMATOR_H
 #define SUPERQESTIMATOR_H
 
-namespace SuperqEstimator {
+namespace SuperqModel {
 
 /**
-* \class SuperqEstimator::Superq_NLP
+* \class SuperqModel::Superq_NLP
 * \headerfile superqEstimator.h <SuperquadricModel/include/superqEstimator.h>
 *
-* \brief A class from SuperqEstimator namespace.
+* \brief A class from SuperqModel namespace.
 *
 * This class implements an IpOpt optimizer for reconstructing a superquadric from point clouds.
 */
-class Superq_NLP
+class SuperqEstimator
 {
 public:
     /**
     * Constructor
     */
-    Superq_NLP();
+    SuperqEstimator();
 
     /**
     * Destructory
     */
-    virtual ~Superq_NLP();
+    virtual ~SuperqEstimator();
 
 
 };
