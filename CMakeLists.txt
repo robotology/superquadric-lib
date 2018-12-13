@@ -24,7 +24,7 @@ cmake_minimum_required(VERSION 3.5)
 # be enabled and thus using only CXX may cause issues. Note that by default when 
 # LANGUAGES is not specified CMake enables both CXX and C.
 
-project(SuperquadricLibModel
+project(SuperquadricLib
     	LANGUAGES CXX 
     	VERSION 0.0.1.0)
 
@@ -90,15 +90,6 @@ option(SUPERQ_MODEL "Create SuperquadricLibModel" ON)
 option(SUPERQ_GRASP "Create SuperquadricLibGrasp" OFF)
 option(SUPERQ_VIS "Create SuperquadricLibVis" OFF)
 
-if (SUPERQ_MODEL)
-	#set(PROJECT_NAME SuperquadricLibModel)
-endif()
-if (SUPERQ_GRASP)
-	set(${PROJECT_NAME_EXT} Grasp)
-endif()
-if (SUPERQ_VIS)
-	set(${PROJECT_NAME_EXT} Vis)
-endif()
 
 # We use
 # - InstallBasicPackageFiles (http://robotology.github.io/ycm/gh-pages/v0.8/module/InstallBasicPackageFiles.html)
@@ -156,12 +147,12 @@ add_subdirectory(src)
 #
 # Note that if your library depends from other libraries, you are probably
 # required to used the install_basic_package_files() DEPENDENCIES option.
+
 include(InstallBasicPackageFiles)
 install_basic_package_files(${PROJECT_NAME}
                             VERSION ${${PROJECT_NAME}_VERSION}
                             COMPATIBILITY AnyNewerVersion
-							TARGETS_PROPERTY ${PROJECT_NAME}_TARGETS
-                            EXPORT ${PROJECT_NAME}
+							TARGETS ${${PROJECT_NAME}_TARGETS}
                             VARS_PREFIX ${PROJECT_NAME}
                             NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 # Add the uninstall target
