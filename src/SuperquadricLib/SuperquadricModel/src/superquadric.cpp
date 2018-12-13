@@ -6,6 +6,7 @@ using namespace std;
 using namespace Eigen;
 using namespace SuperqModel;
 
+/*********************************************/
 Superquadric::Superquadric(int num_params=11)
 {
     params.resize(num_params);
@@ -13,6 +14,7 @@ Superquadric::Superquadric(int num_params=11)
     n_params=num_params;
 }
 
+/*********************************************/
 bool Superquadric::setSuperqParams(VectorXd &p)
 {
     bool params_ok=true;
@@ -25,15 +27,21 @@ bool Superquadric::setSuperqParams(VectorXd &p)
     if (params_ok)
         params=p;
 
+    dim=params.head(3);
+    exp=params.segment(3,2);
+    center=params.segment(5,3);
+
     return params_ok;
 
 }
 
+/*********************************************/
 VectorXd Superquadric::getSuperqParams()
 {
     return params;
 }
 
+/*********************************************/
 bool Superquadric::setSuperqDims(Vector3d &d)
 {
     bool params_ok=true;
@@ -44,15 +52,19 @@ bool Superquadric::setSuperqDims(Vector3d &d)
     if (params_ok)
         params.head(3)=d;
 
+    dim=params.head(3);
+
     return params_ok;
 
 }
 
+/*********************************************/
 Vector3d Superquadric::getSuperqDims()
 {
     return params.head(3);
 }
 
+/*********************************************/
 bool Superquadric::setSuperqExps(Vector2d &e)
 {
     bool params_ok=true;
@@ -63,30 +75,34 @@ bool Superquadric::setSuperqExps(Vector2d &e)
     if (params_ok)
         params.segment(3,2)=e;
 
+    exp=params.segment(3,2);
     return params_ok;
 
 }
 
+/*********************************************/
 Vector2d Superquadric::getSuperqExps()
 {
     return params.segment(3,2);
 }
 
-
+/*********************************************/
 bool Superquadric::setSuperqCenter(Vector3d &c)
 {
     params.segment(5,3)=c;
+    center=params.segment(5,3);
 
     return true;
 
 }
 
+/*********************************************/
 Vector3d Superquadric::getSuperqCenter()
 {
     return params.segment(5,3);
 }
 
-
+/*********************************************/
 bool Superquadric::setSuperqOrientation(Vector3d &o)
 {
     params.segment(8,3)=o;
@@ -95,15 +111,19 @@ bool Superquadric::setSuperqOrientation(Vector3d &o)
            AngleAxisd(o(1), Vector3d::UnitY())*
            AngleAxisd(o(2), Vector3d::UnitZ());
 
+    // To be transposed?
+
     return true;
 
 }
 
+/*********************************************/
 Vector3d Superquadric::getSuperqEulerZYZ()
 {
     return params.segment(8,3);
 }
 
+/*********************************************/
 bool Superquadric::setSuperqOrientation(Vector4d &o)
 {
     bool params_ok=true;
@@ -112,6 +132,8 @@ bool Superquadric::setSuperqOrientation(Vector4d &o)
     if (params_ok)
     {
        axes = AngleAxisd(o(3), o.head(3));
+
+       // To be transposed?
 
        Vector3d ea = axes.eulerAngles(2,1,2);
 
@@ -123,6 +145,7 @@ bool Superquadric::setSuperqOrientation(Vector4d &o)
 
 }
 
+/*********************************************/
 Vector4d Superquadric::getSuperqAxisAngle()
 {
     AngleAxisd aa_superq(axes);
@@ -133,6 +156,23 @@ Vector4d Superquadric::getSuperqAxisAngle()
     aa(3)=aa_superq.angle();
 
     return aa;
+}
+
+/*********************************************/
+double Superquadric::insideOutsideF(VectorXd &pose, Vector3d &point)
+{
+    Vector3d c=pose.head(3);
+    Vector3d ea=pose.tail(3);
+    setSuperqCenter(c);
+    setSuperqOrientation(ea);
+
+    double num1=axes.row(0)*(point - center);
+    double num2=axes.row(1)*(point - center);
+    double num3=axes.row(2)*(point - center);
+
+    double inner=pow(abs(num1/dim[0]), 2.0/exp[0]) + pow(abs(num2/dim[1]), 2.0/exp[1]);
+
+    return pow(abs(inner), exp[1]/exp[0]) + pow(abs(num3/dim[2]), (2.0/exp[0]));
 }
 
 

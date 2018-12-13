@@ -1,8 +1,10 @@
 #include "superquadric.h"
+#include "pointCloud.h"
 
 #include <cstdlib>
 #include <cmath>
 #include <iostream>
+#include <deque>
 
 using namespace std;
 using namespace Eigen;
@@ -37,7 +39,7 @@ int main()
     }
 
     Vector3d dimensions;
-    dimensions<<10, 20, 30;
+    dimensions<<0.1, 0.1, 0.1;
 
     superq.setSuperqDims(dimensions);
 
@@ -49,7 +51,7 @@ int main()
 
 
     Vector2d exp;
-    exp<< 1.5, 1.5;
+    exp<< 1.0, 1.0;
 
     superq.setSuperqExps(exp);
 
@@ -81,6 +83,69 @@ int main()
         cerr << "[ERROR] superquadric axis angles not set correctly"<<endl;
         return EXIT_FAILURE;
     }
+
+
+    deque<VectorXd> test_points;
+    VectorXd point(3);
+    point<< 1, 0, 0;
+    test_points.push_back(point);
+    point<< 2, 0, 0;
+    test_points.push_back(point);
+    point<< 3, 0, 0;
+    test_points.push_back(point);
+    point<< 1, 0, 0;
+    test_points.push_back(point);
+    point<< 2, 0, 0;
+    test_points.push_back(point);
+    point<< 3, 0, 0;
+    test_points.push_back(point);
+
+    PointCloud pc;
+    pc.setPoints(test_points);
+
+    if (fabs(pc.getNumberPoints() - test_points.size())>0)
+    {
+        cerr << "[ERROR] point clout not set correctly"<<endl;
+        return EXIT_FAILURE;
+    }
+
+    pc.subSample(3);
+
+    if (fabs(pc.getNumberPoints() - 3)>0)
+    {
+        cerr << "[ERROR] not subsampled correctly"<<endl;
+        return EXIT_FAILURE;
+    }
+
+    Vector3d point_test;
+    point_test<< 0.0, 0.05, 0.0;
+
+    VectorXd pose(6);
+    pose<<0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+
+    if (superq.insideOutsideF(pose, point_test)>=1)
+    {
+        cerr << "[ERROR] not inside-outside function correct 1 "<<endl;
+        return EXIT_FAILURE;
+    }
+
+    point_test<< 0.0, 1.05, 0.0;
+
+    if (superq.insideOutsideF(pose, point_test)<1)
+    {
+        cerr << "[ERROR] not inside-outside function correct2 "<<endl;
+        return EXIT_FAILURE;
+    }
+
+    point_test<< 0.0, 0.1, 0.0;
+
+    if (superq.insideOutsideF(pose, point_test)!=1)
+    {
+        cerr << "[ERROR] not inside-outside function correct 3"<<endl;
+        return EXIT_FAILURE;
+    }
+
+    // Find a way to test barycenter and orientation of matrix
 
     return EXIT_SUCCESS;
 }
