@@ -7,21 +7,27 @@
 # `install` command), it is necessary to pass the `FIRST_TARGET` option to
 # `install_basic_package_files` in the main CMakeLists.txt file.
 # In this case the project name is used for both, therefore it is not necessary.
-set(LIBRARY_TARGET_NAME SuperquadricModelLib)
-
-# List of CPP (source) library files.
-set(${LIBRARY_TARGET_NAME}_SRC
-        src/pointCloud.cpp
-		src/superquadric.cpp
-		src/superquadricEstimator.cpp
-)
+set(LIBRARY_TARGET_NAME SuperquadricLibModel)
 
 # List of HPP (header) library files.
 set(${LIBRARY_TARGET_NAME}_HDR
-        include/pointCloud.h
-		include/superquadricEstimator.h
+        #include/pointCloud.h
+		#include/superquadricEstimator.h
 		include/superquadric.h
 )
+# List of CPP (source) library files.
+set(${LIBRARY_TARGET_NAME}_SRC
+       #src/pointCloud.cpp
+		src/superquadric.cpp
+		#src/superquadricEstimator.cpp
+)
+
+
+
+find_package(Eigen3 QUIET CONFIG)
+if(NOT EIGEN3_FOUND)
+    find_package(Eigen3 REQUIRED)
+endif()
 
 # You can add an external dependency using the find_package() function call
 # See: https://cmake.org/cmake/help/latest/command/find_package.html
@@ -57,6 +63,15 @@ set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES VERSION       ${${PROJEC
 target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                                                          "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
 
+
+if(NOT TARGET Eigen3)
+    target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
+
+	target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+else()
+    target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC Eigen3::Eigen)
+endif()
+
 # If you used find_package() you need to use target_include_directories() and/or
 # target_link_libraries(). As explained previously, depending on the imported
 # objects, you may need to call either or both:
@@ -73,3 +88,6 @@ install(TARGETS ${LIBRARY_TARGET_NAME}
         ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"                            COMPONENT lib
         RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}"                            COMPONENT bin
         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${LIBRARY_TARGET_NAME}" COMPONENT dev)
+
+set_property(GLOBAL APPEND PROPERTY ${PROJECT_NAME}_TARGETS ${LIBRARY_TARGET_NAME})
+

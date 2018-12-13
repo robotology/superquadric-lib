@@ -1,4 +1,4 @@
-#include "include/superquadricEstimator.h"
+#include "superquadricEstimator.h"
 
 
 SuperqModel::SuperqEstimator::SuperqEstimator();

@@ -23,9 +23,11 @@ cmake_minimum_required(VERSION 3.5)
 # Infact, some legacy Find<package>.cmake files that require the C language to 
 # be enabled and thus using only CXX may cause issues. Note that by default when 
 # LANGUAGES is not specified CMake enables both CXX and C.
-project(LibTemplateCMake
-        LANGUAGES CXX C
-        VERSION 0.0.0.0)
+
+project(SuperquadricLibModel
+    	LANGUAGES CXX 
+    	VERSION 0.0.1.0)
+
 
 # Defines the CMAKE_INSTALL_LIBDIR, CMAKE_INSTALL_BINDIR and many other useful macros.
 # See https://cmake.org/cmake/help/latest/module/GNUInstallDirs.html
@@ -80,6 +82,21 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # extensions off.
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+option(EXECUTABLE "Build also the executable" OFF)
+option(SUPERQ_MODEL "Create SuperquadricLibModel" ON)
+option(SUPERQ_GRASP "Create SuperquadricLibGrasp" OFF)
+option(SUPERQ_VIS "Create SuperquadricLibVis" OFF)
+
+if (SUPERQ_MODEL)
+	#set(PROJECT_NAME SuperquadricLibModel)
+endif()
+if (SUPERQ_GRASP)
+	set(${PROJECT_NAME_EXT} Grasp)
+endif()
+if (SUPERQ_VIS)
+	set(${PROJECT_NAME_EXT} Vis)
+endif()
 
 # We use
 # - InstallBasicPackageFiles (http://robotology.github.io/ycm/gh-pages/v0.8/module/InstallBasicPackageFiles.html)
@@ -141,6 +158,7 @@ include(InstallBasicPackageFiles)
 install_basic_package_files(${PROJECT_NAME}
                             VERSION ${${PROJECT_NAME}_VERSION}
                             COMPATIBILITY AnyNewerVersion
+							TARGETS_PROPERTY ${PROJECT_NAME}_TARGETS
                             EXPORT ${PROJECT_NAME}
                             VARS_PREFIX ${PROJECT_NAME}
                             NO_CHECK_REQUIRED_COMPONENTS_MACRO)

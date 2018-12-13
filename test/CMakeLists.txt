@@ -1,4 +1,4 @@
-set(TEST_TARGET_NAME test)
+set(TEST_TARGET_NAME test-superqlib)
 
 set(${TEST_TARGET_NAME}_SRC
         test.cpp
@@ -6,7 +6,7 @@ set(${TEST_TARGET_NAME}_SRC
 
 add_executable(${TEST_TARGET_NAME} ${${TEST_TARGET_NAME}_SRC})
 
-target_link_libraries(${TEST_TARGET_NAME} LibTemplateCMake)
+target_link_libraries(${TEST_TARGET_NAME} SuperquadricLibModel)
 
 # Add a test to the project to be run by ctest.
 # See https://cmake.org/cmake/help/latest/command/add_test.html

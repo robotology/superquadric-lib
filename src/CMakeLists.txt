@@ -1,2 +1,4 @@
 add_subdirectory(SuperquadricLib)
-add_subdirectory(SuperquadricPipeline)
+if(EXECUTABLE)
+	add_subdirectory(SuperquadricPipeline)
+endif()

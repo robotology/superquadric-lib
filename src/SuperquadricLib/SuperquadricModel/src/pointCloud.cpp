@@ -1,4 +1,4 @@
-#include "include/pointCloud.h"
+#include "pointCloud.h"
 
 
 SuperqModel::PointCloud::PointCloud();

@@ -1,34 +1,55 @@
-#include "LibTemplateCMake/LibTemplateCMake.h"
+#include "superquadric.h"
 
 #include <cstdlib>
 #include <cmath>
 #include <iostream>
 
+using namespace std;
+using namespace Eigen;
+using namespace SuperqModel;
+
 int main()
 {
-    std::cout << "Example executable" << std::endl;
-    LibTemplateCMake::summationClass sumClass;
-    LibTemplateCMake::differenceClass diffClass;
+    int num_params=11;
+    VectorXd params(num_params);
+    params(0)=1.0;
+    params(1)=2.0;
+    params(2)=3.0;
 
-    double tol = 1e-10;
-    double op1 = 15.0;
-    double op2 = 10.0;
+    VectorXd s_params(num_params);
 
-    if( fabs(sumClass.doSomething(op1,op2)-(op1+op2)) > tol )
-    {
-        std::cerr << "[ERR] sumClass.doSomething(" << op1 << "," << op2
-                  << ") is equal to " << sumClass.doSomething(op1,op2)
-                  << " instead of the expected " << op1+op2 << std::endl;
-        return EXIT_FAILURE;
-    }
+    Superquadric superq(num_params);
 
-    if( fabs(diffClass.doSomething(op1,op2)-(op1-op2)) > tol )
-    {
-        std::cerr << "[ERR] sumClass.doSomething(" << op1 << "," << op2
-                  << ") is equal to " << diffClass.doSomething(op1,op2)
-                  << " instead of the expected " << op1-op2 << std::endl;
-        return EXIT_FAILURE;
-    }
+    s_params=superq.getSuperqParams();
 
-    return EXIT_SUCCESS;
+    cout<< "old params "<<endl;
+    cout<<s_params;
+
+    superq.setSuperqParams(params);
+
+    s_params=superq.getSuperqParams();
+
+    cout<< "new params "<<endl;
+    cout<<s_params;
+
+    Vector3d center;
+    center<<0.1, 0.2, 0.3;
+
+    superq.setSuperqCenter(center);
+
+    cout<< "center "<<endl;
+    cout<<superq.getSuperqCenter;
+
+    Vector3d dimensions;
+    dimensions<<10, 20, 30;
+
+
+    Vector2d exp;
+    exp<< 1.5, 1.5;
+
+    Vector3d ea;
+    ea<<0.7, 0.7, 0.7;
+
+    superq.setSuperqCenter(center);
+
 }
