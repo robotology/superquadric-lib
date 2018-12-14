@@ -1,5 +1,10 @@
-#ifndef PLANEVIS_H
-#define PLANEVIS_H
+#ifndef PLANEVTK_H
+#define PLANEVTK_H
+
+#include "vtk.h"
+
+#include <vtkPlaneSource.h>
+
 
 namespace SuperqVis {
 
@@ -11,18 +16,22 @@ namespace SuperqVis {
 *
 * This class implements a VTK visualizer for a plane.
 */
-class Plane
+class Plane : public Object
 {
+protected:
+    vtkSmartPointer<vtkPlaneSource> plane_source;
+    vtkSmartPointer<vtkPolyDataMapper> vtk_mapper;
+
 public:
     /**
     * Constructor
     */
-    Plane();
+    Plane(double z_height);
 
     /**
     * Destructory
     */
-    virtual ~Plane();
+    ~Plane();
 
 
 };

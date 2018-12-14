@@ -88,7 +88,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(EXECUTABLE "Build also the executable" OFF)
 option(SUPERQ_MODEL "Create SuperquadricLibModel" ON)
 option(SUPERQ_GRASP "Create SuperquadricLibGrasp" OFF)
-option(SUPERQ_VIS "Create SuperquadricLibVis" OFF)
+option(SUPERQ_VIS "Create SuperquadricLibVis" ON)
 
 
 # We use

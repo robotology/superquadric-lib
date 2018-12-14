@@ -11,19 +11,29 @@ set(LIBRARY_TARGET_NAME SuperquadricVisLib)
 
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC
-        src/graspingPose.cpp
-		src/plane.cpp
-		src/pointCloud.cpp
-		src/superquadric.cpp
+		src/vtk.cpp
+        src/vtkPose.cpp
+		#src/vtkPlane.cpp
+		src/vtkPoints.cpp
+		#src/vtkSuperq.cpp
 )
 
 # List of HPP (header) library files.
 set(${LIBRARY_TARGET_NAME}_HDR
-        include/graspingPose.h
-		include/plane.h
-		include/pointCloud.h
-		include/superquadric.h
+		include/vtk.h
+        include/vtkPose.h
+		#include/vtkPlane.h
+		include/vtkPoints.h
+		#include/vtkSuperq.h
 )
+
+find_package(VTK REQUIRED)
+include(${VTK_USE_FILE})
+
+find_package(Eigen3 QUIET CONFIG)
+if(NOT EIGEN3_FOUND)
+    find_package(Eigen3 REQUIRED)
+endif()
 
 # You can add an external dependency using the find_package() function call
 # See: https://cmake.org/cmake/help/latest/command/find_package.html
@@ -59,6 +69,15 @@ set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES VERSION       ${${PROJEC
 target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                                                          "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
 
+target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC  ${VTK_LIBRARIES})
+if(NOT TARGET Eigen3)
+    target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
+
+	target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+else()
+    target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC Eigen3::Eigen)
+endif()
+
 # If you used find_package() you need to use target_include_directories() and/or
 # target_link_libraries(). As explained previously, depending on the imported
 # objects, you may need to call either or both:
@@ -67,6 +86,8 @@ target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC "$<BUILD_INTERFACE:${CM
 #   target_link_libraries(${LIBRARY_TARGET_NAME} ${FooPackage_LIBRARIES})
 # - with imported target:
 #   target_link_libraries(${LIBRARY_TARGET_NAME} FooPackage_LIBRARIES::FooPackage_LIBRARIES)
+
+set(${PROJECT_NAME}_TARGETS ${${PROJECT_NAME}_TARGETS} ${LIBRARY_TARGET_NAME} PARENT_SCOPE)
 
 # Specify installation targets, typology and destination folders.
 install(TARGETS ${LIBRARY_TARGET_NAME}
