@@ -1,13 +1,14 @@
 #ifndef POINTSVTK_H
 #define POINTSVTK_H
 
-#include "vtk.h"
+#include "vis.h"
 
 #include <vector>
 #include <Eigen/Dense>
 #include <vtkPointData.h>
 #include <vtkUnsignedCharArray.h>
 #include <vtkVertexGlyphFilter.h>
+#include <vtkProperty.h>
 
 
 namespace SuperqVis {
@@ -31,7 +32,7 @@ public:
     /**
     * Constructor
     */
-    Points(const std::vector<VectorXd> &points, const int point_size);
+    Points(const std::vector<Eigen::VectorXd> &points, const int point_size);
 
     /**
     * Destructory
@@ -42,7 +43,7 @@ public:
      * Set the points to visualize
      * @param points is a vector of 3d or 6d Eigen vectors of points
      */
-    void set_points(const std::vector<VectorXd> &points);
+    void set_points(const std::vector<Eigen::VectorXd> &points);
 
     /**
      * Set the color of the points for visualization
@@ -56,4 +57,4 @@ public:
 
 }
 
-//#endif
+#endif

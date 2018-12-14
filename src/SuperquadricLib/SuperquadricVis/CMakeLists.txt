@@ -11,20 +11,20 @@ set(LIBRARY_TARGET_NAME SuperquadricVisLib)
 
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC
-		src/vtk.cpp
-        src/vtkPose.cpp
-		#src/vtkPlane.cpp
-		src/vtkPoints.cpp
-		#src/vtkSuperq.cpp
+		src/vis.cpp
+        src/poseVis.cpp
+		src/planeVis.cpp
+		src/pointsVis.cpp
+		src/superqVis.cpp
 )
 
 # List of HPP (header) library files.
 set(${LIBRARY_TARGET_NAME}_HDR
-		include/vtk.h
-        include/vtkPose.h
-		#include/vtkPlane.h
-		include/vtkPoints.h
-		#include/vtkSuperq.h
+		include/vis.h
+        include/poseVis.h
+		include/planeVis.h
+		include/pointsVis.h
+		include/superqVis.h
 )
 
 find_package(VTK REQUIRED)

@@ -1,4 +1,4 @@
-#include "vtk.h"
+#include "vis.h"
 
 using namespace std;
 using namespace SuperqVis;

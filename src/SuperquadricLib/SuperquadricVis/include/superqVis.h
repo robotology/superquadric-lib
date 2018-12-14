@@ -1,13 +1,15 @@
 #ifndef SUPERQVTK_H
 #define SUPERQVTK_H
 
-#include "vtk.h"
+#include "vis.h"
 
 #include <vtkSuperquadric.h>
 #include <vtkSampleFunction.h>
 #include <vtkContourFilter.h>
 #include <vtkTransform.h>
+#include <vtkProperty.h>
 
+#include <Eigen/Dense>
 
 namespace SuperqVis {
 

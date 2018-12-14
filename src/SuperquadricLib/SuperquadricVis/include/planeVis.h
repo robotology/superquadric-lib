@@ -1,7 +1,7 @@
 #ifndef PLANEVTK_H
 #define PLANEVTK_H
 
-#include "vtk.h"
+#include "vis.h"
 
 #include <vtkPlaneSource.h>
 

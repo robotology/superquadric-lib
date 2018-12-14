@@ -1,4 +1,4 @@
-#include "vtkPose.h"
+#include "poseVis.h"
 
 #include <boost/range/irange.hpp>
 

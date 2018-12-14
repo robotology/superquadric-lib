@@ -1,4 +1,4 @@
-#include "vtkPoints.h"
+#include "pointsVis.h"
 
 using namespace std;
 using namespace Eigen;
