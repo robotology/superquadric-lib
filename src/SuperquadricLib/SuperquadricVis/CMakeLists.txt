@@ -12,6 +12,7 @@ set(LIBRARY_TARGET_NAME SuperquadricVisLib)
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC
 		src/vis.cpp
+		src/visRenderer.cpp
         src/poseVis.cpp
 		src/planeVis.cpp
 		src/pointsVis.cpp
@@ -21,6 +22,7 @@ set(${LIBRARY_TARGET_NAME}_SRC
 # List of HPP (header) library files.
 set(${LIBRARY_TARGET_NAME}_HDR
 		include/vis.h
+		include/visRenderer.h
         include/poseVis.h
 		include/planeVis.h
 		include/pointsVis.h

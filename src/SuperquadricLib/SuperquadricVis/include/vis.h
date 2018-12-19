@@ -11,14 +11,6 @@
 
 namespace SuperqVis {
 
-/**
-* \class SuperqModel::Superquadric
-* \headerfile superquadric.h <SuperquadricModel/include/superquadric.h>
-*
-* \brief A class from SuperqModel namespace.
-*
-* This class implements a generic Superquadric with 11 parameters.
-*/
 class UpdateCommand : public vtkCommand
 {
     const bool *closing;
