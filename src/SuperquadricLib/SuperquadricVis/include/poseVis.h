@@ -36,7 +36,7 @@ public:
     /**
     * Destructory
     */
-    ~Pose();
+    ~Pose() { }
 
     /**
      * Set the desired pose of the reference frame

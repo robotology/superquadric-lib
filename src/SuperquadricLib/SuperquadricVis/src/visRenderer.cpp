@@ -46,16 +46,28 @@ Visualizer::~Visualizer()
 }
 
 /**********************************************/
-/*void Visualizer::addPoints(vector<VectorXd> &all_points, vector<vector<unsigned char>> all_colors)
+void Visualizer::addPoints(vector<VectorXd> &all_points, vector<vector<unsigned char>> all_colors)
 {
     vtk_all_points=unique_ptr<Points>(new Points(all_points,size_points));
     vtk_all_points->set_colors(all_colors);
 
     vtk_renderer->AddActor(vtk_all_points->get_actor());
-}*/
+
+    vector<double> bounds(6),centroid(3);
+    vtk_all_points->get_polydata()->GetBounds(bounds.data());
+
+    for (size_t i=0; i<centroid.size(); i++)
+        centroid[i]=0.5*(bounds[i<<1]+bounds[(i<<1)+1]);
+
+    vtk_camera=vtkSmartPointer<vtkCamera>::New();
+    vtk_camera->SetPosition(centroid[0]+0.5,centroid[1],centroid[2]+0.4);
+    vtk_camera->SetFocalPoint(centroid.data());
+    vtk_camera->SetViewUp(0.0,0.0,1.0);
+    vtk_renderer->SetActiveCamera(vtk_camera);
+}
 
 /**********************************************/
-/*void Visualizer::addPoints(vector<VectorXd> &all_points, vector<VectorXd> &dwn_points, vector<vector<unsigned char>> all_colors)
+void Visualizer::addPoints(vector<VectorXd> &all_points, vector<VectorXd> &dwn_points, vector<vector<unsigned char>> all_colors)
 {
     size_points=4;
     vtk_all_points=unique_ptr<Points>(new Points(all_points,size_points));
@@ -68,14 +80,26 @@ Visualizer::~Visualizer()
 
     vtk_renderer->AddActor(vtk_all_points->get_actor());
     vtk_renderer->AddActor(vtk_dwn_points->get_actor());
-}*/
+
+    vector<double> bounds(6),centroid(3);
+    vtk_all_points->get_polydata()->GetBounds(bounds.data());
+
+    for (size_t i=0; i<centroid.size(); i++)
+        centroid[i]=0.5*(bounds[i<<1]+bounds[(i<<1)+1]);
+
+    vtk_camera=vtkSmartPointer<vtkCamera>::New();
+    vtk_camera->SetPosition(centroid[0]+0.5,centroid[1],centroid[2]+0.4);
+    vtk_camera->SetFocalPoint(centroid.data());
+    vtk_camera->SetViewUp(0.0,0.0,1.0);
+    vtk_renderer->SetActiveCamera(vtk_camera);
+}
 
 /**********************************************/
-/*void Visualizer::addPlane(double &z)
+void Visualizer::addPlane(double &z)
 {
     vtk_plane=unique_ptr<Plane>(new Plane(z));
     vtk_renderer->AddActor(vtk_plane->get_actor());
-}*/
+}
 
 /**********************************************/
 void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
@@ -84,7 +108,6 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
 
     for (auto sup:s)
     {
-        cout<<sup.getSuperqParams()<<endl;
         r.resize(12);
         r.segment(0,3)=sup.getSuperqCenter();
         r.segment(3,4)=sup.getSuperqAxisAngle();
@@ -94,18 +117,6 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
         vtk_superquadric=unique_ptr<SuperquadricVis>(new SuperquadricVis(r));
 
         vtk_renderer->AddActor(vtk_superquadric->get_actor());
-
-        //vector<double> bounds(6),centroid(3);
-        //vtk_all_points->get_polydata()->GetBounds(bounds.data());
-
-        //for (size_t i=0; i<centroid.size(); i++)
-        //    centroid[i]=0.5*(bounds[i<<1]+bounds[(i<<1)+1]);
-
-        //vtk_camera=vtkSmartPointer<vtkCamera>::New();
-        //vtk_camera->SetPosition(centroid[0]+0.5,centroid[1],centroid[2]+0.4);
-        //vtk_camera->SetFocalPoint(centroid.data());
-        //vtk_camera->SetViewUp(0.0,0.0,1.0);
-        //vtk_renderer->SetActiveCamera(vtk_camera);
     }
 }
 

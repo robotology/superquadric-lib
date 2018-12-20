@@ -37,7 +37,7 @@ public:
     /**
     * Destructory
     */
-    ~Points();
+    ~Points() { }
 
     /**
      * Set the points to visualize

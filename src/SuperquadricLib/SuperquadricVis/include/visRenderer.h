@@ -33,10 +33,10 @@ protected:
     bool closing;
     std::vector<double> backgroundColor;
 
-    //std::unique_ptr<SuperqVis::Points> vtk_all_points;
-    //std::unique_ptr<SuperqVis::Points> vtk_dwn_points;
+    std::unique_ptr<SuperqVis::Points> vtk_all_points;
+    std::unique_ptr<SuperqVis::Points> vtk_dwn_points;
     std::unique_ptr<SuperqVis::SuperquadricVis> vtk_superquadric;
-    //std::unique_ptr<SuperqVis::Plane> vtk_plane;
+    std::unique_ptr<SuperqVis::Plane> vtk_plane;
     std::vector<std::vector<unsigned char>> all_colors;
 
     vtkSmartPointer<vtkRenderer> vtk_renderer;
@@ -82,25 +82,25 @@ public:
     * @param p is a plane visualizer
     * @return true/false on success/failuer
     */
-    //void addPlane(double &z);
+    void addPlane(double &z);
 
     /** Start visualizer
     * @param p is a points visualizer
     * @return true/false on success/failuer
     */
-    //void addPoints(std::vector<Eigen::VectorXd> &all_points, std::vector<std::vector<unsigned char>> all_colors);
+    void addPoints(std::vector<Eigen::VectorXd> &all_points, std::vector<std::vector<unsigned char>> all_colors);
 
     /** Start visualizer
     * @param p is a points visualizer
     * @return true/false on success/failuer
     */
-    //void addPoints(std::vector<Eigen::VectorXd> &all_points, std::vector<Eigen::VectorXd> &dwn_points, std::vector<std::vector<unsigned char>> all_colors);
+    void addPoints(std::vector<Eigen::VectorXd> &all_points, std::vector<Eigen::VectorXd> &dwn_points, std::vector<std::vector<unsigned char>> all_colors);
 
     /** Start visualizer
     * @param p is a pose visualizer
     * @return true/false on success/failuer
     */
-    //void addPoses(std::vector<Eigen::VectorXd> &poses);
+    void addPoses(std::vector<Eigen::VectorXd> &poses);
 };
 }
 #endif

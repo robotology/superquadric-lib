@@ -7,7 +7,7 @@ using namespace Eigen;
 using namespace SuperqVis;
 using namespace boost;
 
-
+/**********************************************/
 Pose::Pose()
 {
     pose.setIdentity();

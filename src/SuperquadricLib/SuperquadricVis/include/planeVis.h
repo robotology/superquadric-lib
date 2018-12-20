@@ -19,19 +19,27 @@ namespace SuperqVis {
 class Plane : public Object
 {
 protected:
+
     vtkSmartPointer<vtkPlaneSource> plane_source;
     vtkSmartPointer<vtkPolyDataMapper> vtk_mapper;
 
 public:
+    double z_height;
     /**
     * Constructor
     */
-    Plane(double z_height);
+    Plane(double &z_height);
 
     /**
     * Destructory
     */
-    ~Plane();
+    ~Plane() { }
+
+    /**
+     * Set the heigh of the plane
+     * @param z_height is the height of the plane
+     */
+    void setHeight(double &z_height);
 
 
 };

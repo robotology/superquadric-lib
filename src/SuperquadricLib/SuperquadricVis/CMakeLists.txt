@@ -13,9 +13,9 @@ set(LIBRARY_TARGET_NAME SuperquadricLibVis)
 set(${LIBRARY_TARGET_NAME}_SRC
 		src/vis.cpp
 		src/visRenderer.cpp
-        #src/poseVis.cpp
-		#src/planeVis.cpp
-		#src/pointsVis.cpp
+        src/poseVis.cpp
+		src/planeVis.cpp
+		src/pointsVis.cpp
 		src/superqVis.cpp
 )
 
@@ -23,9 +23,9 @@ set(${LIBRARY_TARGET_NAME}_SRC
 set(${LIBRARY_TARGET_NAME}_HDR
 		include/vis.h
 		include/visRenderer.h
-        #include/poseVis.h
-		#include/planeVis.h
-		#include/pointsVis.h
+        include/poseVis.h
+		include/planeVis.h
+		include/pointsVis.h
 		include/superqVis.h
 )
 
