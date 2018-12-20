@@ -7,15 +7,15 @@
 # `install` command), it is necessary to pass the `FIRST_TARGET` option to
 # `install_basic_package_files` in the main CMakeLists.txt file.
 # In this case the project name is used for both, therefore it is not necessary.
-set(LIBRARY_TARGET_NAME SuperquadricVisLib)
+set(LIBRARY_TARGET_NAME SuperquadricLibVis)
 
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC
 		src/vis.cpp
 		src/visRenderer.cpp
-        src/poseVis.cpp
-		src/planeVis.cpp
-		src/pointsVis.cpp
+        #src/poseVis.cpp
+		#src/planeVis.cpp
+		#src/pointsVis.cpp
 		src/superqVis.cpp
 )
 
@@ -23,13 +23,14 @@ set(${LIBRARY_TARGET_NAME}_SRC
 set(${LIBRARY_TARGET_NAME}_HDR
 		include/vis.h
 		include/visRenderer.h
-        include/poseVis.h
-		include/planeVis.h
-		include/pointsVis.h
+        #include/poseVis.h
+		#include/planeVis.h
+		#include/pointsVis.h
 		include/superqVis.h
 )
 
 find_package(VTK REQUIRED)
+message(STATUS "vtk use file ${VTK_USE_FILE}")
 include(${VTK_USE_FILE})
 
 find_package(Eigen3 QUIET CONFIG)
@@ -71,7 +72,7 @@ set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES VERSION       ${${PROJEC
 target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                                                          "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
 
-target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC  ${VTK_LIBRARIES})
+target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC ${VTK_LIBRARIES} SuperquadricLibModel)
 if(NOT TARGET Eigen3)
     target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
 

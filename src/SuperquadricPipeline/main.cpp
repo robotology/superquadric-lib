@@ -1,4 +1,5 @@
 #include "superquadric.h"
+#include "visRenderer.h"
 
 #include <cstdlib>
 #include <cmath>
@@ -7,49 +8,38 @@
 using namespace std;
 using namespace Eigen;
 using namespace SuperqModel;
+using namespace SuperqVis;
 
 int main()
 {
+    // Create params of superquadric
     int num_params=11;
     VectorXd params(num_params);
-    params(0)=1.0;
-    params(1)=2.0;
-    params(2)=3.0;
+    params(0)=0.1;
+    params(1)=0.2;
+    params(2)=0.3;
+    params(3)=0.1;
+    params(4)=1.0;
 
     VectorXd s_params(num_params);
 
+    // Create Superquadric instance
     Superquadric superq(num_params);
 
-    s_params=superq.getSuperqParams();
-
-    cout<< "old params "<<endl;
-    cout<<s_params;
-
+    // VTK need to receive a vector of Superquadrics
+    vector<Superquadric> superqs;
     superq.setSuperqParams(params);
+    superqs.push_back(superq);
 
-    s_params=superq.getSuperqParams();
+    //VTK visualizer
+    Visualizer vis;
 
-    cout<< "new params "<<endl;
-    cout<<s_params;
+    // Add superquadric to visualizer
+    vis.addSuperq(superqs);
 
-    Vector3d center;
-    center<<0.1, 0.2, 0.3;
-
-    superq.setSuperqCenter(center);
-
-    cout<< "center "<<endl;
-    cout<<superq.getSuperqCenter;
-
-    Vector3d dimensions;
-    dimensions<<10, 20, 30;
+    // Visualize
+    vis.visualize();
 
 
-    Vector2d exp;
-    exp<< 1.5, 1.5;
-
-    Vector3d ea;
-    ea<<0.7, 0.7, 0.7;
-
-    superq.setSuperqCenter(center);
-
+    return 0;
 }

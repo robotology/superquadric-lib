@@ -21,7 +21,7 @@ namespace SuperqVis {
 *
 * This class implements a VTK visualizer for a Superquadric with 11 parameters.
 */
-class Superquadric : public Object
+class SuperquadricVis : public Object
 {
 protected:
     vtkSmartPointer<vtkSuperquadric> vtk_superquadric;
@@ -32,12 +32,12 @@ public:
     /**
     * Constructor
     */
-    Superquadric(const Eigen::VectorXd &s);
+    SuperquadricVis(const Eigen::VectorXd &s);
 
     /**
     * Destructory
     */
-    ~Superquadric();
+    ~SuperquadricVis() { }
 
     /**
      * Set superquadric parameters
