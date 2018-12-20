@@ -11,13 +11,13 @@ set(LIBRARY_TARGET_NAME SuperquadricLibModel)
 
 # List of HPP (header) library files.
 set(${LIBRARY_TARGET_NAME}_HDR
-        include/pointCloud.h
+        #include/pointCloud.h
 		#include/superquadricEstimator.h
 		include/superquadric.h
 )
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC
-        src/pointCloud.cpp
+        #src/pointCloud.cpp
 		src/superquadric.cpp
 		#src/superquadricEstimator.cpp
 )
@@ -81,7 +81,7 @@ endif()
 # - with imported target:
 #   target_link_libraries(${LIBRARY_TARGET_NAME} FooPackage_LIBRARIES::FooPackage_LIBRARIES)
 
-set(${PROJECT_NAME}_TARGETS ${${PROJECT_NAME}_TARGETS} ${LIBRARY_TARGET_NAME} PARENT_SCOPE)
+#et(${PROJECT_NAME}_TARGETS ${${PROJECT_NAME}_TARGETS} ${LIBRARY_TARGET_NAME} PARENT_SCOPE)
 
 
 # Specify installation targets, typology and destination folders.

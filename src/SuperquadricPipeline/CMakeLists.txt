@@ -1,8 +1,5 @@
 set(EXE_TARGET_NAME Superquadric-Pipeline)
 
-find_package(VTK REQUIRED)
-include(${VTK_USE_FILE})
-
 set(${EXE_TARGET_NAME}_SRC
         main.cpp
 )

@@ -73,6 +73,8 @@ target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC "$<BUILD_INTERFACE:${CM
                                                          "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
 
 target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC ${VTK_LIBRARIES} SuperquadricLibModel)
+target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC ${VTK_INCLUDE_DIRS})
+
 if(NOT TARGET Eigen3)
     target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
 
@@ -90,7 +92,7 @@ endif()
 # - with imported target:
 #   target_link_libraries(${LIBRARY_TARGET_NAME} FooPackage_LIBRARIES::FooPackage_LIBRARIES)
 
-set(${PROJECT_NAME}_TARGETS ${${PROJECT_NAME}_TARGETS} ${LIBRARY_TARGET_NAME} PARENT_SCOPE)
+#set(${PROJECT_NAME}_TARGETS ${${PROJECT_NAME}_TARGETS} ${LIBRARY_TARGET_NAME} PARENT_SCOPE)
 
 # Specify installation targets, typology and destination folders.
 install(TARGETS ${LIBRARY_TARGET_NAME}

@@ -86,7 +86,6 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(EXECUTABLE "Build also the executable" OFF)
-option(SUPERQ_MODEL "Create SuperquadricLibModel" ON)
 option(SUPERQ_GRASP "Create SuperquadricLibGrasp" OFF)
 option(SUPERQ_VIS "Create SuperquadricLibVis" ON)
 
@@ -152,10 +151,12 @@ include(InstallBasicPackageFiles)
 install_basic_package_files(${PROJECT_NAME}
                             VERSION ${${PROJECT_NAME}_VERSION}
                             COMPATIBILITY AnyNewerVersion
-							TARGETS ${${PROJECT_NAME}_TARGETS}
+							FIRST_TARGET SuperquadricLibModel
 							DEPENDENCIES VTK Eigen3
                             VARS_PREFIX ${PROJECT_NAME}
-                            NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+                            NO_CHECK_REQUIRED_COMPONENTS_MACRO
+                            INCLUDE_CONTENT "include(\${VTK_USE_FILE})"
+                            NO_COMPATIBILITY_VARS)
 # Add the uninstall target
 include(AddUninstallTarget)
 
