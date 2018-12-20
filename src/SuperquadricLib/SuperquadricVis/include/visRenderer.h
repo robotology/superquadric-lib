@@ -33,10 +33,10 @@ protected:
     bool closing;
     std::vector<double> backgroundColor;
 
-    std::unique_ptr<SuperqVis::Points> vtk_all_points;
-    std::unique_ptr<SuperqVis::Points> vtk_dwn_points;
+    std::unique_ptr<SuperqVis::PointsVis> vtk_all_points;
+    std::unique_ptr<SuperqVis::PointsVis> vtk_dwn_points;
     std::unique_ptr<SuperqVis::SuperquadricVis> vtk_superquadric;
-    std::unique_ptr<SuperqVis::Plane> vtk_plane;
+    std::unique_ptr<SuperqVis::PlaneVis> vtk_plane;
     std::vector<std::vector<unsigned char>> all_colors;
 
     vtkSmartPointer<vtkRenderer> vtk_renderer;

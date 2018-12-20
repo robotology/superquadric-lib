@@ -20,7 +20,7 @@ namespace SuperqVis {
 *
 * This class implements a VTK class for visualizing a grasping pose.
 */
-class Pose : public Object
+class PoseVis : public Object
 {
 protected:
     vtkSmartPointer<vtkAxesActor> pose_vtk_actor;
@@ -31,12 +31,12 @@ public:
     /**
     * Constructor
     */
-    Pose();
+    PoseVis();
 
     /**
     * Destructory
     */
-    ~Pose() { }
+    ~PoseVis() { }
 
     /**
      * Set the desired pose of the reference frame

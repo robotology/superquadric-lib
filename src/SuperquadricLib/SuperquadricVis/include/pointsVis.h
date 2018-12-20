@@ -21,7 +21,7 @@ namespace SuperqVis {
 *
 * This class implements a VTK visualization of 3D points.
 */
-class Points : public Object
+class PointsVis : public Object
 {
 protected:
     vtkSmartPointer<vtkPoints> vtk_points;
@@ -32,12 +32,12 @@ public:
     /**
     * Constructor
     */
-    Points(const std::vector<Eigen::VectorXd> &points, const int point_size);
+    PointsVis(const std::vector<Eigen::VectorXd> &points, const int point_size);
 
     /**
     * Destructory
     */
-    ~Points() { }
+    ~PointsVis() { }
 
     /**
      * Set the points to visualize

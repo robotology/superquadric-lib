@@ -8,7 +8,7 @@ using namespace SuperqVis;
 using namespace boost;
 
 /**********************************************/
-Pose::Pose()
+PoseVis::PoseVis()
 {
     pose.setIdentity();
     pose_vtk_actor = vtkSmartPointer<vtkAxesActor>::New();
@@ -17,7 +17,7 @@ Pose::Pose()
 }
 
 /**********************************************/
-void Pose::setvtkTransform(const VectorXd &pose_vect)
+void PoseVis::setvtkTransform(const VectorXd &pose_vect)
 {
     if (pose_vect.size()==6)
     {
@@ -42,7 +42,7 @@ void Pose::setvtkTransform(const VectorXd &pose_vect)
 }
 
 /**********************************************/
-void Pose::setvtkActorCaption(const string &caption, double &offset)
+void PoseVis::setvtkActorCaption(const string &caption, double &offset)
 {
     pose_vtk_caption_actor->GetTextActor()->SetTextScaleModeToNone();
     pose_vtk_caption_actor->SetCaption(caption.c_str());

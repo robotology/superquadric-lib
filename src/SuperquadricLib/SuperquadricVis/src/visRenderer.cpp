@@ -48,7 +48,7 @@ Visualizer::~Visualizer()
 /**********************************************/
 void Visualizer::addPoints(vector<VectorXd> &all_points, vector<vector<unsigned char>> all_colors)
 {
-    vtk_all_points=unique_ptr<Points>(new Points(all_points,size_points));
+    vtk_all_points=unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
     vtk_all_points->set_colors(all_colors);
 
     vtk_renderer->AddActor(vtk_all_points->get_actor());
@@ -70,8 +70,8 @@ void Visualizer::addPoints(vector<VectorXd> &all_points, vector<vector<unsigned 
 void Visualizer::addPoints(vector<VectorXd> &all_points, vector<VectorXd> &dwn_points, vector<vector<unsigned char>> all_colors)
 {
     size_points=4;
-    vtk_all_points=unique_ptr<Points>(new Points(all_points,size_points));
-    vtk_dwn_points=unique_ptr<Points>(new Points(dwn_points,size_points));
+    vtk_all_points=unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
+    vtk_dwn_points=unique_ptr<PointsVis>(new PointsVis(dwn_points,size_points));
 
     vtk_all_points->set_colors(all_colors);
     vtk_dwn_points->get_actor()->GetProperty()->SetColor(1.0,1.0,0.0);
@@ -97,7 +97,7 @@ void Visualizer::addPoints(vector<VectorXd> &all_points, vector<VectorXd> &dwn_p
 /**********************************************/
 void Visualizer::addPlane(double &z)
 {
-    vtk_plane=unique_ptr<Plane>(new Plane(z));
+    vtk_plane=unique_ptr<PlaneVis>(new PlaneVis(z));
     vtk_renderer->AddActor(vtk_plane->get_actor());
 }
 

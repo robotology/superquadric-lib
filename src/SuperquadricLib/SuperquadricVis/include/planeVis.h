@@ -16,7 +16,7 @@ namespace SuperqVis {
 *
 * This class implements a VTK visualizer for a plane.
 */
-class Plane : public Object
+class PlaneVis : public Object
 {
 protected:
 
@@ -28,12 +28,12 @@ public:
     /**
     * Constructor
     */
-    Plane(double &z_height);
+    PlaneVis(double &z_height);
 
     /**
     * Destructory
     */
-    ~Plane() { }
+    ~PlaneVis() { }
 
     /**
      * Set the heigh of the plane

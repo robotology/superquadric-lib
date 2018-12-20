@@ -5,7 +5,7 @@ using namespace Eigen;
 using namespace SuperqVis;
 
 /**********************************************/
-Points::Points(const vector<VectorXd> &points, const int point_size)
+PointsVis::PointsVis(const vector<VectorXd> &points, const int point_size)
 {
     if (points[0].size() == 3 || points.size() == 6)
     {
@@ -30,7 +30,7 @@ Points::Points(const vector<VectorXd> &points, const int point_size)
 }
 
 /**********************************************/
-void Points::set_points(const vector<VectorXd> &points)
+void PointsVis::set_points(const vector<VectorXd> &points)
 {
     vtk_points=vtkSmartPointer<vtkPoints>::New();
     for (auto point:points)
@@ -40,7 +40,7 @@ void Points::set_points(const vector<VectorXd> &points)
 }
 
 /**********************************************/
-bool Points::set_colors(const vector<vector<unsigned char>> &colors)
+bool PointsVis::set_colors(const vector<vector<unsigned char>> &colors)
 {
     if (colors.size()==vtk_points->GetNumberOfPoints())
     {
@@ -57,7 +57,7 @@ bool Points::set_colors(const vector<vector<unsigned char>> &colors)
 }
 
 /**********************************************/
-vtkSmartPointer<vtkPolyData> &Points::get_polydata()
+vtkSmartPointer<vtkPolyData> &PointsVis::get_polydata()
 {
     return vtk_polydata;
 }
