@@ -71,7 +71,7 @@ public:
      * Remove outliers using dbscan algorithm
      * @param radius and minpts are two parameters of dbscan for tuning the outlier removal
      */
-    void removeOutliers(double &radius=0.1, int &minpts=10);
+    //void removeOutliers(double &radius=0.1, int &minpts=10);
 
 };
 

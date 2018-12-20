@@ -143,7 +143,7 @@ void PointCloud::subSample(int desired_points)
 }
 
 /*********************************************/
-void PointCloud::removeOutliers(double &radius=0.1, int &minpts=10)
+/*void PointCloud::removeOutliers(double &radius=0.1, int &minpts=10)
 {
     DBSCAN dbscan;
     map<size_t,set<size_t>> clusters=dbscan.cluster(all_points,options);
@@ -168,4 +168,4 @@ void PointCloud::removeOutliers(double &radius=0.1, int &minpts=10)
     }
 
     cout<<out_points.size()<<"Outliers removed of "<<all_points.size()<<" points";
-}
+}*/

@@ -11,13 +11,13 @@ set(LIBRARY_TARGET_NAME SuperquadricLibModel)
 
 # List of HPP (header) library files.
 set(${LIBRARY_TARGET_NAME}_HDR
-        #include/pointCloud.h
+        include/pointCloud.h
 		#include/superquadricEstimator.h
 		include/superquadric.h
 )
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC
-        #src/pointCloud.cpp
+        src/pointCloud.cpp
 		src/superquadric.cpp
 		#src/superquadricEstimator.cpp
 )
