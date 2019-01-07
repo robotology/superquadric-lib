@@ -21,6 +21,7 @@
 #include "poseVis.h"
 #include "superqVis.h"
 #include "superquadric.h"
+#include "pointCloud.h"
 
 namespace SuperqVis {
 
@@ -88,7 +89,7 @@ public:
     * @param p is a points visualizer
     * @return true/false on success/failuer
     */
-    void addPoints(std::vector<Eigen::VectorXd> &all_points, std::vector<std::vector<unsigned char>> all_colors);
+    void addPoints(SuperqModel::PointCloud &point_cloud);
 
     /** Start visualizer
     * @param p is a points visualizer

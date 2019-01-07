@@ -20,7 +20,8 @@ class PointCloud
 public:
 
     int n_points;
-    std::deque<Eigen::VectorXd> points;
+    std::vector<Eigen::VectorXd> points;
+    std::vector<std::vector<unsigned char>> colors;
     Eigen::Vector3d barycenter;
     Eigen::Matrix3d orientation;
     Eigen::MatrixXd bounding_box;
@@ -41,6 +42,14 @@ public:
      * @return true is number of points > 0 and if they are 3d or 6d
      */
     bool setPoints(std::deque<Eigen::VectorXd> &p);
+
+    /**
+     * set colors of the point cloud
+     * @param c is a vector of vector of char
+     * @return true the number of colors is equal to the number of points
+     */
+    /*********************************************/
+    bool setColors(std::vector<std::vector<unsigned char>> &c);
 
     /**
      * get the number of points of the point cloud

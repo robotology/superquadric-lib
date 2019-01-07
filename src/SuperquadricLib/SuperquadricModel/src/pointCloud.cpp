@@ -24,7 +24,7 @@ PointCloud::~PointCloud()
 /*********************************************/
 bool PointCloud::setPoints(deque<VectorXd> &p)
 {
-    if (p[0].size()==3 || p[0].size()==6)
+    if (p[0].size()==3)
     {
         for (auto& point:p)
         {
@@ -34,6 +34,26 @@ bool PointCloud::setPoints(deque<VectorXd> &p)
         n_points=points.size();
 
         return true;
+    }
+    else
+        return false;
+}
+
+/*********************************************/
+bool PointCloud::setColors(vector<vector<unsigned char>> &c)
+{
+    if (c[0].size()==3)
+    {
+        for (auto& color:c)
+        {
+            colors.push_back(color);
+        }
+
+        if (colors.size()==n_points)
+          return true;
+        else
+          return false;
+
     }
     else
         return false;

@@ -46,8 +46,11 @@ Visualizer::~Visualizer()
 }
 
 /**********************************************/
-void Visualizer::addPoints(vector<VectorXd> &all_points, vector<vector<unsigned char>> all_colors)
+void Visualizer::addPoints(PointCloud &point_cloud)
 {
+    vector<VectorXd> &all_points=point_cloud.points;
+    vector<vector<unsigned char>> all_colors=point_cloud.colors;
+
     vtk_all_points=unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
     vtk_all_points->set_colors(all_colors);
 

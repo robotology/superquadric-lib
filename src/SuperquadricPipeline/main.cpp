@@ -80,6 +80,7 @@ int main(int argc, char* argv[])
     }
 
     point_cloud.setPoints(all_points);
+    point_cloud.setColors(all_colors);
 
     /*******************************************/
     // Compute superq
@@ -97,7 +98,7 @@ int main(int argc, char* argv[])
     vis.addSuperq(superqs);
 
     // Add points to visualizer // Fix this
-    //vis.addPoints(point_cloud);
+    vis.addPoints(point_cloud);
 
     // Visualize
     vis.visualize();
