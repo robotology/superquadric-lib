@@ -19,27 +19,22 @@ using namespace SuperqVis;
 
 int main(int argc, char* argv[])
 {
-    // Create params of superquadric
-    // int num_params=11;
-    // VectorXd params(num_params);
-    // params(0)=0.1;
-    // params(1)=0.2;
-    // params(2)=0.3;
-    // params(3)=0.1;
-    // params(4)=1.0;
+    /*******************************************/
+    //Instance everything
 
-    //PointCloud class
+    // PointCloud class
     PointCloud point_cloud;
 
     // Create Superquadric
     Superquadric superq;
 
-    //VTK visualizer
+    // VTK visualizer
     Visualizer vis;
 
-    // Superq SuperqEstimator
+    // Superq Estimator
     EstimatorApp estim;
 
+    // Params for solver in estimator
     IpoptParam params;
     params.tol=1e-5;
     params.acceptable_iter=0;
@@ -52,6 +47,7 @@ int main(int argc, char* argv[])
     params.object_class="default";
     params.optimizer_points=50;
 
+    /*******************************************/
     // Read point cloud
     deque<VectorXd> all_points;
     vector<vector<unsigned char>> all_colors;
@@ -85,7 +81,12 @@ int main(int argc, char* argv[])
 
     point_cloud.setPoints(all_points);
 
+    /*******************************************/
+    // Compute superq
     superq=estim.computeSuperq(params, point_cloud);
+
+    /*******************************************/
+    // Outcome visualization
 
     // VTK need to receive a vector of Superquadrics
     vector<Superquadric> superqs;
@@ -100,7 +101,6 @@ int main(int argc, char* argv[])
 
     // Visualize
     vis.visualize();
-
 
     return 0;
 }

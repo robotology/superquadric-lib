@@ -118,6 +118,27 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
 
         vtk_renderer->AddActor(vtk_superquadric->get_actor());
     }
+
+    vtk_camera=vtkSmartPointer<vtkCamera>::New();
+
+    Vector3d center(3);
+    if (s.size()==1)
+      center=s[0].getSuperqCenter();
+    else
+    {
+        center.setZero();
+        for (auto sup:s)
+        {
+          center+=sup.getSuperqCenter();
+        }
+
+        center/=s.size();
+    }
+
+    vtk_camera->SetPosition(center(0)+0.5,center(1),center(2)+0.4);
+    vtk_camera->SetFocalPoint(center.data());
+    vtk_camera->SetViewUp(0.0,0.0,1.0);
+    vtk_renderer->SetActiveCamera(vtk_camera);
 }
 
 /**********************************************/
