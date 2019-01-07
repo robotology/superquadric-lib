@@ -9,17 +9,21 @@
 # In this case the project name is used for both, therefore it is not necessary.
 set(LIBRARY_TARGET_NAME SuperquadricLibModel)
 
+# To include FindIpopt.cmake for /cmake
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(IPOPT REQUIRED)
+
 # List of HPP (header) library files.
 set(${LIBRARY_TARGET_NAME}_HDR
         include/pointCloud.h
-		#include/superquadricEstimator.h
+		include/superquadricEstimator.h
 		include/superquadric.h
 )
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC
         src/pointCloud.cpp
 		src/superquadric.cpp
-		#src/superquadricEstimator.cpp
+		src/superquadricEstimator.cpp
 )
 
 
@@ -28,6 +32,8 @@ find_package(Eigen3 QUIET CONFIG)
 if(NOT EIGEN3_FOUND)
     find_package(Eigen3 REQUIRED)
 endif()
+
+#find_package(IPOPT REQUIRED)
 
 # You can add an external dependency using the find_package() function call
 # See: https://cmake.org/cmake/help/latest/command/find_package.html
@@ -58,10 +64,11 @@ set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES VERSION       ${${PROJEC
                                                         PUBLIC_HEADER "${${LIBRARY_TARGET_NAME}_HDR}")
 
 # Specify include directories for both compilation and installation process.
-# The $<INSTALL_PREFIX> generator expression is useful to ensure to create 
+# The $<INSTALL_PREFIX> generator expression is useful to ensure to create
 # relocatable configuration files, see https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html#creating-relocatable-packages
 target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-                                                         "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
+                                                         "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>"
+                                                         ${IPOPT_INCLUDE_DIRS})
 
 
 if(NOT TARGET Eigen3)
@@ -72,6 +79,8 @@ else()
     target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC Eigen3::Eigen)
 endif()
 
+target_link_libraries(${LIBRARY_TARGET_NAME} ${IPOPT_LIBRARIES})
+
 # If you used find_package() you need to use target_include_directories() and/or
 # target_link_libraries(). As explained previously, depending on the imported
 # objects, you may need to call either or both:
@@ -81,8 +90,8 @@ endif()
 # - with imported target:
 #   target_link_libraries(${LIBRARY_TARGET_NAME} FooPackage_LIBRARIES::FooPackage_LIBRARIES)
 
-#et(${PROJECT_NAME}_TARGETS ${${PROJECT_NAME}_TARGETS} ${LIBRARY_TARGET_NAME} PARENT_SCOPE)
 
+add_definitions(${IPOPT_DEFINITIONS} -D_USE_MATH_DEFINES)
 
 # Specify installation targets, typology and destination folders.
 install(TARGETS ${LIBRARY_TARGET_NAME}
@@ -91,6 +100,3 @@ install(TARGETS ${LIBRARY_TARGET_NAME}
         ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"                            COMPONENT lib
         RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}"                            COMPONENT bin
         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${LIBRARY_TARGET_NAME}" COMPONENT dev)
-
-
-
