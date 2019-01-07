@@ -49,6 +49,18 @@ public:
     int getNumberPoints();
 
     /**
+     * delete the points of the point cloud
+     */
+    void deletePoints();
+
+    /**
+     * get the bounding box of the point cloud
+     * @return a 3d matrix containing the bounding box of the point cloud
+     */
+    /*********************************************/
+    Eigen::Matrix3d getBoundingBox();
+
+    /**
      * get the barycenter of the point cloud
      * @return a 3d vector containing the barycenter of the point cloud
      */

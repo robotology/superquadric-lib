@@ -44,34 +44,48 @@ int PointCloud::getNumberPoints()
 }
 
 /*********************************************/
+void PointCloud::deletePoints()
+{
+    points.clear();
+}
+
+
+/*********************************************/
+Matrix3d PointCloud::getBoundingBox()
+{
+  bounding_box(3,2);
+  bounding_box(0,0)=numeric_limits<double>::infinity();
+  bounding_box(1,0)=numeric_limits<double>::infinity();
+  bounding_box(2,0)=numeric_limits<double>::infinity();
+  bounding_box(0,1)=-numeric_limits<double>::infinity();
+  bounding_box(1,1)=-numeric_limits<double>::infinity();
+  bounding_box(2,1)=-numeric_limits<double>::infinity();
+
+  for (auto& point: points)
+  {
+      if (bounding_box(0,0)>point(0))
+          bounding_box(0,0)=point(0);
+      if (bounding_box(0,1)<point(0))
+          bounding_box(0,1)=point(0);
+
+      if (bounding_box(1,0)>point(1))
+          bounding_box(1,0)=point(1);
+      if (bounding_box(1,1)<point(1))
+          bounding_box(1,1)=point(1);
+
+      if (bounding_box(2,0)>point(2))
+          bounding_box(2,0)=point(2);
+      if (bounding_box(2,1)<point(2))
+          bounding_box(2,1)=point(2);
+  }
+
+  return bounding_box;
+}
+
+/*********************************************/
 Vector3d PointCloud::getBarycenter()
 {
-    // They are in the point cloud reference frame, remember
-    bounding_box(3,2);
-    bounding_box(0,0)=numeric_limits<double>::infinity();
-    bounding_box(1,0)=numeric_limits<double>::infinity();
-    bounding_box(2,0)=numeric_limits<double>::infinity();
-    bounding_box(0,1)=-numeric_limits<double>::infinity();
-    bounding_box(1,1)=-numeric_limits<double>::infinity();
-    bounding_box(2,1)=-numeric_limits<double>::infinity();
-
-    for (auto& point: points)
-    {
-        if (bounding_box(0,0)>point(0))
-            bounding_box(0,0)=point(0);
-        if (bounding_box(0,1)<point(0))
-            bounding_box(0,1)=point(0);
-
-        if (bounding_box(1,0)>point(1))
-            bounding_box(1,0)=point(1);
-        if (bounding_box(1,1)<point(1))
-            bounding_box(1,1)=point(1);
-
-        if (bounding_box(2,0)>point(2))
-            bounding_box(2,0)=point(2);
-        if (bounding_box(2,1)<point(2))
-            bounding_box(2,1)=point(2);
-    }
+    getBoundingBox();
 
     barycenter.resize(3);
     barycenter(0)=(-bounding_box(0,0)+bounding_box(0,1))/2;
