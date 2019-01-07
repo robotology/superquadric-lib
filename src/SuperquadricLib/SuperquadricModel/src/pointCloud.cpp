@@ -1,6 +1,8 @@
 #include "pointCloud.h"
 #include <boost/range/irange.hpp>
 
+#include <iostream>
+
 using namespace std;
 using namespace boost;
 using namespace Eigen;
@@ -51,9 +53,9 @@ void PointCloud::deletePoints()
 
 
 /*********************************************/
-Matrix3d PointCloud::getBoundingBox()
+MatrixXd PointCloud::getBoundingBox()
 {
-  bounding_box(3,2);
+  bounding_box.resize(3,2);
   bounding_box(0,0)=numeric_limits<double>::infinity();
   bounding_box(1,0)=numeric_limits<double>::infinity();
   bounding_box(2,0)=numeric_limits<double>::infinity();

@@ -7,11 +7,11 @@ using namespace Eigen;
 using namespace SuperqModel;
 
 /*********************************************/
-Superquadric::Superquadric(int num_params=11)
+Superquadric::Superquadric()
 {
-    params.resize(num_params);
+    params.resize(11);
     params.setZero();
-    n_params=num_params;
+    n_params=11;
 }
 
 /*********************************************/
@@ -174,10 +174,3 @@ double Superquadric::insideOutsideF(VectorXd &pose, Vector3d &point)
 
     return pow(abs(inner), exp[1]/exp[0]) + pow(abs(num3/dim[2]), (2.0/exp[0]));
 }
-
-
-
-
-
-
-

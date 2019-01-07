@@ -58,7 +58,7 @@ public:
      * @return a 3d matrix containing the bounding box of the point cloud
      */
     /*********************************************/
-    Eigen::Matrix3d getBoundingBox();
+    Eigen::MatrixXd getBoundingBox();
 
     /**
      * get the barycenter of the point cloud

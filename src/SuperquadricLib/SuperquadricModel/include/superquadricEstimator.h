@@ -201,7 +201,7 @@ public:
   * @param object_class is the object class according to its shape
   */
   /****************************************************************/
-  void configure(Eigen::MatrixXd &b,const std::string &object_class);
+  void configure(std::string object_class);
 
   /** Extract the solution
   * @return the superquadric as a Vector
@@ -209,6 +209,34 @@ public:
   /****************************************************************/
   SuperqModel::Superquadric get_result() const;
 
+  /** Compute superquadric solution
+  /* @param Pointcloud
+  * @return the superquadric solution
+  */
+  /****************************************************************/
+  SuperqModel::Superquadric computeSuperq(PointCloud &pc);
+
+};
+
+struct IpoptParam
+{
+    double tol;
+    int acceptable_iter;
+    std::string mu_strategy;
+    int max_iter;
+    double max_cpu_time;
+    std::string nlp_scaling_method;
+    std::string hessian_approximation;
+    int print_level;
+    std::string object_class;
+    int optimizer_points;
+};
+
+
+class EstimatorApp
+{
+public:
+    SuperqModel::Superquadric computeSuperq(SuperqModel::IpoptParam &pars, PointCloud &point_cloud);
 };
 
 

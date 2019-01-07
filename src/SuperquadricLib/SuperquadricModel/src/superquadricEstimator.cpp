@@ -1,10 +1,7 @@
-#include <csignal>
-#include <cmath>
-#include <limits>
-#include <algorithm>
-#include <sstream>
 #include <fstream>
+#include <iostream>
 #include <iomanip>
+#include <ctime>
 
 #include "superquadricEstimator.h"
 
@@ -22,15 +19,10 @@ void SuperqEstimator::init()
 /****************************************************************/
 void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_points)
 {
-    if (point_cloud.getNumberPoints()<optimizer_points)
-    {
-        points_downsampled=point_cloud;
-    }
-    else
-    {
+    if (point_cloud.getNumberPoints()>optimizer_points)
         point_cloud.subSample(optimizer_points);
-        points_downsampled=point_cloud;
-    }
+
+    points_downsampled=point_cloud;
 
     cout<<"[SuperquadricEstimator]: points actually used for modeling: %lu "<<points_downsampled.getNumberPoints()<<endl;
 
@@ -46,12 +38,10 @@ void SuperqEstimator::computeX0(VectorXd &x0)
     x0(5)=x0(6)=x0(7)=0.0;
 
     Matrix3d orientation=points_downsampled.getAxes();
-
     x0.segment(8,3)=orientation.eulerAngles(2,1,2);
 
     MatrixXd bounding_box(3,2);
     bounding_box=points_downsampled.getBoundingBox();
-
     x0(0)=(-bounding_box(0,0)+bounding_box(0,1))/2;
     x0(1)=(-bounding_box(1,0)+bounding_box(1,1))/2;
     x0(2)=(-bounding_box(2,0)+bounding_box(2,1))/2;
@@ -59,8 +49,8 @@ void SuperqEstimator::computeX0(VectorXd &x0)
     // Let-s try to compute centroid from bounding box
     Matrix3d R;
     R =  AngleAxisd(x0(8), Vector3d::UnitZ())*
-        AngleAxisd(x0(9), Vector3d::UnitY())*
-        AngleAxisd(x0(10), Vector3d::UnitZ());
+         AngleAxisd(x0(9), Vector3d::UnitY())*
+         AngleAxisd(x0(10), Vector3d::UnitZ());
 
     bounding_box = R * bounding_box;
     x0(5) = (bounding_box(0,0)+bounding_box(0,1))/2;
@@ -170,8 +160,8 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
      euler(2)=x[10];
      Matrix3d R;
      R = AngleAxisd(euler(0), Vector3d::UnitZ())*
-                 AngleAxisd(euler(1), Vector3d::UnitY())*
-                 AngleAxisd(euler(2), Vector3d::UnitZ());;
+         AngleAxisd(euler(1), Vector3d::UnitY())*
+         AngleAxisd(euler(2), Vector3d::UnitZ());;
 
      // Required for VTK visualization
      R=R.transpose();
@@ -208,8 +198,8 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
     euler(2)=x[10];
     Matrix3d R;
     R = AngleAxisd(euler(0), Vector3d::UnitZ())*
-                AngleAxisd(euler(1), Vector3d::UnitY())*
-                AngleAxisd(euler(2), Vector3d::UnitZ());;
+        AngleAxisd(euler(1), Vector3d::UnitY())*
+        AngleAxisd(euler(2), Vector3d::UnitZ());
 
     // Required for VTK visualization
     R=R.transpose();
@@ -265,12 +255,41 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
  }
 
  /****************************************************************/
-void SuperqEstimator::configure(MatrixXd &b, const string &object_class)
+void SuperqEstimator::configure(string object_class)
 {
-    bounds.resize(b.rows(),b.cols());
-    bounds=b;
+    bounds.resize(11,2);
 
     obj_class=object_class;
+
+    if (obj_class=="default")
+    {
+      bounds(3,0)=0.1;
+      bounds(3,1)=1.9;
+      bounds(4,0)=0.1;
+      bounds(4,1)=1.9;
+    }
+    else if (obj_class=="box")
+    {
+      bounds(3,0)=0.1;
+      bounds(3,1)=0.3;
+      bounds(4,0)=0.1;
+      bounds(4,1)=0.3;
+    }
+    else if (obj_class=="cylinder")
+    {
+      bounds(3,0)=0.3;
+      bounds(3,1)=0.2;
+      bounds(4,0)=0.01;
+      bounds(4,1)=0.8;
+    }
+    else if (obj_class=="sphere")
+    {
+      bounds(3,0)=1.;
+      bounds(3,1)=1.;
+      bounds(4,0)=1.;
+      bounds(4,1)=1.;
+    }
+
 }
 
 /****************************************************************/
@@ -292,4 +311,61 @@ void SuperqEstimator::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index
 Superquadric SuperqEstimator::get_result() const
 {
     return solution;
+}
+
+/****************************************************************/
+Superquadric EstimatorApp::computeSuperq(IpoptParam &pars, PointCloud &point_cloud)
+{
+    Ipopt::SmartPtr<Ipopt::IpoptApplication> app=new Ipopt::IpoptApplication;
+    app->Options()->SetNumericValue("tol",pars.tol);
+    app->Options()->SetIntegerValue("acceptable_iter",pars.acceptable_iter);
+    app->Options()->SetStringValue("mu_strategy",pars.mu_strategy);
+    app->Options()->SetIntegerValue("max_iter",pars.max_iter);
+    app->Options()->SetNumericValue("max_cpu_time",pars.max_cpu_time);
+    app->Options()->SetStringValue("nlp_scaling_method",pars.nlp_scaling_method);
+    app->Options()->SetStringValue("hessian_approximation",pars.hessian_approximation);
+    app->Options()->SetIntegerValue("print_level",pars.print_level);
+    app->Initialize();
+
+    Ipopt::SmartPtr<SuperqEstimator> estim = new SuperqEstimator;
+    estim->init();
+    estim->configure(pars.object_class);
+    estim->setPoints(point_cloud, pars.optimizer_points);
+
+    clock_t tStart = clock();
+
+    Ipopt::ApplicationReturnStatus status=app->OptimizeTNLP(GetRawPtr(estim));
+
+    double computation_time=(double)(clock() - tStart)/CLOCKS_PER_SEC;
+
+    Superquadric superq;
+
+    IOFormat CommaInitFmt(StreamPrecision, DontAlignCols,", ", ", ", "", "", " [ ", "]");
+
+    if (status==Ipopt::Solve_Succeeded)
+    {
+        superq=estim->get_result();
+        cout<<"|| Solution found            : ";
+        cout<<superq.getSuperqParams().format(CommaInitFmt)<<endl<<endl;
+        cout<<"|| Computed in               :  ";
+        cout<<   computation_time<<" [s]"<<endl;
+        return superq;
+    }
+    else if(status==Ipopt::Maximum_CpuTime_Exceeded)
+    {
+        superq=estim->get_result();
+        cout<<"|| Time expired              :"<<superq.getSuperqParams().format(CommaInitFmt)<<endl<<endl;
+        cout<<"|| Computed in               :  "<<   computation_time<<" [s]"<<endl;
+        return superq;
+    }
+    else
+    {
+        cerr<<"|| Not solution found"<<endl;
+        VectorXd x(11);
+        x.setZero();
+
+        superq.setSuperqParams(x);
+        return superq;
+    }
+
 }

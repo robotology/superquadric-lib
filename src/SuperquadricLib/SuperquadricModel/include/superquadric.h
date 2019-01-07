@@ -29,7 +29,7 @@ public:
     /**
     * Constructor
     */
-    Superquadric(int num_params);
+    Superquadric();
 
     /**
     * Destructory
