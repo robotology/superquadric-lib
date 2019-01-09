@@ -95,7 +95,7 @@ public:
     * @param p is a points visualizer
     * @return true/false on success/failuer
     */
-    void addPoints(std::vector<Eigen::VectorXd> &all_points, std::vector<Eigen::VectorXd> &dwn_points, std::vector<std::vector<unsigned char>> all_colors);
+    void addPoints(std::vector<Eigen::VectorXd> &all_points, std::vector<Eigen::VectorXd> &dwn_points, std::vector<std::vector<unsigned char>> &all_colors);
 
     /** Start visualizer
     * @param p is a pose visualizer

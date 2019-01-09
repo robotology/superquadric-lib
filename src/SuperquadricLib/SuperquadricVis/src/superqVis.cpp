@@ -44,8 +44,8 @@ SuperquadricVis::SuperquadricVis(const VectorXd &r)
     vtk_actor->GetProperty()->SetOpacity(0.25);
 
     vtk_transform=vtkSmartPointer<vtkTransform>::New();
-    vtk_transform->Translate(r.segment(0,2).data());
-    vtk_transform->RotateWXYZ((180.0/M_PI)*r(6),r.segment(3,5).data());
+    vtk_transform->Translate(r.segment(0,3).data());
+    vtk_transform->RotateWXYZ((180.0/M_PI)*r(6),r.segment(3,3).data());
     vtk_actor->SetUserTransform(vtk_transform);
 }
 

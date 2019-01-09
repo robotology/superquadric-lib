@@ -21,6 +21,7 @@ public:
 
     int n_points;
     std::vector<Eigen::VectorXd> points;
+    std::vector<Eigen::VectorXd> points_for_vis;
     std::vector<std::vector<unsigned char>> colors;
     Eigen::Vector3d barycenter;
     Eigen::Matrix3d orientation;

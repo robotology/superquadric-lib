@@ -29,6 +29,7 @@ bool PointCloud::setPoints(deque<VectorXd> &p)
         for (auto& point:p)
         {
             points.push_back(point);
+            points_for_vis.push_back(point);
         }
 
         n_points=points.size();
@@ -85,20 +86,21 @@ MatrixXd PointCloud::getBoundingBox()
 
   for (auto& point: points)
   {
-      if (bounding_box(0,0)>point(0))
-          bounding_box(0,0)=point(0);
-      if (bounding_box(0,1)<point(0))
-          bounding_box(0,1)=point(0);
+      Vector3d point_tmp = orientation.transpose() * point;
+      if (bounding_box(0,0)>point_tmp(0))
+          bounding_box(0,0)=point_tmp(0);
+      if (bounding_box(0,1)<point_tmp(0))
+          bounding_box(0,1)=point_tmp(0);
 
-      if (bounding_box(1,0)>point(1))
-          bounding_box(1,0)=point(1);
-      if (bounding_box(1,1)<point(1))
-          bounding_box(1,1)=point(1);
+      if (bounding_box(1,0)>point_tmp(1))
+          bounding_box(1,0)=point_tmp(1);
+      if (bounding_box(1,1)<point_tmp(1))
+          bounding_box(1,1)=point_tmp(1);
 
-      if (bounding_box(2,0)>point(2))
-          bounding_box(2,0)=point(2);
-      if (bounding_box(2,1)<point(2))
-          bounding_box(2,1)=point(2);
+      if (bounding_box(2,0)>point_tmp(2))
+          bounding_box(2,0)=point_tmp(2);
+      if (bounding_box(2,1)<point_tmp(2))
+          bounding_box(2,1)=point_tmp(2);
   }
 
   return bounding_box;
@@ -123,7 +125,6 @@ Matrix3d PointCloud::getAxes()
     Matrix3d M;
     M.setZero();
 
-
     for (auto& point: points)
     {
         M(0,0)= M(0,0) + (point(1)-barycenter(1))*(point(1)-barycenter(1)) + (point(2)-barycenter(2))*(point(2)-barycenter(2));
@@ -145,12 +146,11 @@ Matrix3d PointCloud::getAxes()
     M(2,0)= M(0,2);
     M(2,1)= M(1,2);
 
-    JacobiSVD<MatrixXd> svd( M, ComputeThinU | ComputeThinV);
+    JacobiSVD<MatrixXd> svd(M, ComputeFullU | ComputeFullU);
     orientation=svd.matrixU();
 
     return orientation;
 }
-
 
 /*********************************************/
 void PointCloud::subSample(int desired_points)

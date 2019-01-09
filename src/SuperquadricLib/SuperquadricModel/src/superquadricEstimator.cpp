@@ -24,7 +24,7 @@ void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_po
 
     points_downsampled=point_cloud;
 
-    cout<<"[SuperquadricEstimator]: points actually used for modeling: %lu "<<points_downsampled.getNumberPoints()<<endl;
+    cout<<"[SuperquadricEstimator]: points actually used for modeling: "<<points_downsampled.getNumberPoints()<<endl;
 
     x0.resize(11);
     x0.setZero();
@@ -34,28 +34,26 @@ void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_po
 /****************************************************************/
 void SuperqEstimator::computeX0(VectorXd &x0)
 {
-    x0(3)=x0(4)=1.0;
+    x0(3)=(bounds(3,0)+bounds(3,1))/2;
+    x0(4)=(bounds(4,0)+bounds(4,1))/2;
     x0(5)=x0(6)=x0(7)=0.0;
 
     Matrix3d orientation=points_downsampled.getAxes();
-    x0.segment(8,3)=orientation.eulerAngles(2,1,2);
+    x0.segment(8,3)=orientation.eulerAngles(2,1,2);  // TEST
 
     MatrixXd bounding_box(3,2);
     bounding_box=points_downsampled.getBoundingBox();
+
     x0(0)=(-bounding_box(0,0)+bounding_box(0,1))/2;
     x0(1)=(-bounding_box(1,0)+bounding_box(1,1))/2;
     x0(2)=(-bounding_box(2,0)+bounding_box(2,1))/2;
 
-    // Let-s try to compute centroid from bounding box
-    Matrix3d R;
-    R =  AngleAxisd(x0(8), Vector3d::UnitZ())*
-         AngleAxisd(x0(9), Vector3d::UnitY())*
-         AngleAxisd(x0(10), Vector3d::UnitZ());
-
-    bounding_box = R * bounding_box;
+    bounding_box = orientation * bounding_box;
     x0(5) = (bounding_box(0,0)+bounding_box(0,1))/2;
     x0(6) = (bounding_box(1,0)+bounding_box(1,1))/2;
     x0(7) = (bounding_box(2,0)+bounding_box(2,1))/2;
+
+    cout<<"X0 "<<x0<<endl;
 }
 
 /****************************************************************/
@@ -96,12 +94,15 @@ void SuperqEstimator::computeBounds()
     bounds(8,1)=2*M_PI;
     bounds(9,1)=M_PI;
     bounds(10,1)=2*M_PI;
+
+    cout<<"bounds "<<bounds<<endl;
 }
 
 /****************************************************************/
 bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt::Number *x_u,
                      Ipopt::Index m, Ipopt::Number *g_l, Ipopt::Number *g_u)
 {
+  cout<<"Bounds info "<<endl;
     computeBounds();
 
     for (Ipopt::Index i=0; i<n; i++)
@@ -118,10 +119,13 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
                             bool init_z, Ipopt::Number *z_L, Ipopt::Number *z_U,
                             Ipopt::Index m, bool init_lambda, Ipopt::Number *lambda)
  {
+   cout<<"Starting point "<<endl;
      for (Ipopt::Index i=0;i<n;i++)
      {
          x[i]=x0[i];
      }
+
+     cout<<"x init"<<x[0]<<x[1]<<x[2]<<x[3]<<x[4]<<x[5]<<x[6]<<x[7]<<x[8]<<x[9]<<x[10]<<endl;
      return true;
  }
 
@@ -129,8 +133,14 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
   bool SuperqEstimator::eval_f(Ipopt::Index n, const Ipopt::Number *x, bool new_x,
                  Ipopt::Number &obj_value)
   {
+      cout<<"x "<<x[0]<<x[1]<<x[2]<<x[3]<<x[4]<<x[5]<<x[6]<<x[7]<<x[8]<<x[9]<<x[10]<<endl;
       F(x, new_x);
       obj_value=aux_objvalue;
+
+      cout<<"_obj_value"<<obj_value<<endl;
+
+      cout<<"new_x"<<new_x<<endl;
+
 
       return true;
   }
@@ -199,7 +209,7 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
     Matrix3d R;
     R = AngleAxisd(euler(0), Vector3d::UnitZ())*
         AngleAxisd(euler(1), Vector3d::UnitY())*
-        AngleAxisd(euler(2), Vector3d::UnitZ());
+        AngleAxisd(euler(2), Vector3d::UnitZ());;
 
     // Required for VTK visualization
     R=R.transpose();
@@ -325,6 +335,7 @@ Superquadric EstimatorApp::computeSuperq(IpoptParam &pars, PointCloud &point_clo
     app->Options()->SetStringValue("nlp_scaling_method",pars.nlp_scaling_method);
     app->Options()->SetStringValue("hessian_approximation",pars.hessian_approximation);
     app->Options()->SetIntegerValue("print_level",pars.print_level);
+    app->Options()->SetStringValue("derivative_test","first-order");
     app->Initialize();
 
     Ipopt::SmartPtr<SuperqEstimator> estim = new SuperqEstimator;

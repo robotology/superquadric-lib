@@ -31,6 +31,10 @@ bool Superquadric::setSuperqParams(VectorXd &p)
     exp=params.segment(3,2);
     center=params.segment(5,3);
 
+    axes = AngleAxisd(p(8), Vector3d::UnitZ())*
+           AngleAxisd(p(9), Vector3d::UnitY())*
+           AngleAxisd(p(10), Vector3d::UnitZ());
+
     return params_ok;
 
 }
@@ -138,7 +142,6 @@ bool Superquadric::setSuperqOrientation(Vector4d &o)
        Vector3d ea = axes.eulerAngles(2,1,2);
 
        params.segment(8,3)=ea;
-
     }
 
     return params_ok;
