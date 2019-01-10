@@ -30,10 +30,16 @@ bool Superquadric::setSuperqParams(VectorXd &p)
     dim=params.head(3);
     exp=params.segment(3,2);
     center=params.segment(5,3);
+    ea=params.segment(8,3);
 
     axes = AngleAxisd(p(8), Vector3d::UnitZ())*
            AngleAxisd(p(9), Vector3d::UnitY())*
            AngleAxisd(p(10), Vector3d::UnitZ());
+
+     AngleAxisd aa_pose(axes);
+
+     axisangle.head(3)=aa_pose.axis();
+     axisangle(3)=aa_pose.angle();
 
     return params_ok;
 }
@@ -63,7 +69,7 @@ bool Superquadric::setSuperqDims(Vector3d &d)
 /*********************************************/
 Vector3d Superquadric::getSuperqDims()
 {
-    return params.head(3);
+    return dim;
 }
 
 /*********************************************/
@@ -85,7 +91,7 @@ bool Superquadric::setSuperqExps(Vector2d &e)
 /*********************************************/
 Vector2d Superquadric::getSuperqExps()
 {
-    return params.segment(3,2);
+    return exp;
 }
 
 /*********************************************/
@@ -101,13 +107,15 @@ bool Superquadric::setSuperqCenter(Vector3d &c)
 /*********************************************/
 Vector3d Superquadric::getSuperqCenter()
 {
-    return params.segment(5,3);
+    return center;
 }
 
 /*********************************************/
 bool Superquadric::setSuperqOrientation(Vector3d &o)
 {
     params.segment(8,3)=o;
+
+    ea = params.segment(8,3);
 
     axes = AngleAxisd(o(0), Vector3d::UnitZ())*
            AngleAxisd(o(1), Vector3d::UnitY())*
@@ -120,7 +128,7 @@ bool Superquadric::setSuperqOrientation(Vector3d &o)
 /*********************************************/
 Vector3d Superquadric::getSuperqEulerZYZ()
 {
-    return params.segment(8,3);
+    return ea;
 }
 
 /*********************************************/
@@ -133,7 +141,9 @@ bool Superquadric::setSuperqOrientation(Vector4d &o)
     {
        axes = AngleAxisd(o(3), o.head(3));
 
-       Vector3d ea = axes.eulerAngles(2,1,2);
+       axisangle=o;
+
+       ea = axes.eulerAngles(2,1,2);
 
        params.segment(8,3)=ea;
     }
@@ -144,14 +154,7 @@ bool Superquadric::setSuperqOrientation(Vector4d &o)
 /*********************************************/
 Vector4d Superquadric::getSuperqAxisAngle()
 {
-    AngleAxisd aa_superq(axes);
-
-    Vector4d aa;
-
-    aa.head(3)=aa_superq.axis();
-    aa(3)=aa_superq.angle();
-
-    return aa;
+    return axisangle;
 }
 
 /*********************************************/

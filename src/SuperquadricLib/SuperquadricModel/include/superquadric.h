@@ -22,7 +22,7 @@ public:
     Eigen::Vector3d dim;
     Eigen::Vector2d exp;
     Eigen::Vector4d axisangle;
-    Eigen::Vector3d eulerZYZ;
+    Eigen::Vector3d ea;
     Eigen::Vector3d center;
     Eigen::Matrix3d axes;
 

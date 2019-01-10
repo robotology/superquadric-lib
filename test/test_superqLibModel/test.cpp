@@ -1,5 +1,6 @@
 #include "superquadric.h"
 #include "pointCloud.h"
+#include "graspPoses.h"
 
 #include <cstdlib>
 #include <cmath>
@@ -9,6 +10,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace SuperqModel;
+using namespace SuperqGrasp;
 
 int main()
 {
@@ -17,7 +19,7 @@ int main()
     params(0)=0.1;
     params(1)=0.2;
     params(2)=0.3;
-    Superquadric superq(num_params);
+    Superquadric superq;
 
     superq.setSuperqParams(params);
 
@@ -109,7 +111,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    pc.subSample(3);
+    pc.subSample(3, false);
 
     if (fabs(pc.getNumberPoints() - 3)>0)
     {
@@ -144,6 +146,74 @@ int main()
         cerr << "[ERROR] not inside-outside function correct 3"<<endl;
         return EXIT_FAILURE;
     }
+
+
+    pose(0)=0.1;
+    pose(1)=0.2;
+    pose(2)=0.3;
+    pose(3)=0.4;
+    pose(4)=0.5;
+    pose(5)=0.6;
+
+    Vector3d p,o;
+
+    GraspPoses grasp;
+
+    grasp.setGraspParams(pose);
+
+    if( (grasp.getGraspParams() - pose).norm() > 0.0)
+    {
+        cerr << "[ERROR] grasp parameters not set correctly"<<endl;
+        return EXIT_FAILURE;
+    }
+
+    p(0)=0.15;
+    p(1)=0.25;
+    p(2)=0.35;
+
+    grasp.setGraspPosition(p);
+
+    if( (grasp.getGraspPosition() - p).norm() > 0.0)
+    {
+        cerr << "[ERROR] grasp position not set correctly"<<endl;
+        return EXIT_FAILURE;
+    }
+
+    o(0)=0.45;
+    o(1)=0.55;
+    o(2)=0.65;
+
+    grasp.setGraspOrientation(o);
+
+    if( (grasp.getGraspEulerZYZ() - o).norm() > 0.0)
+    {
+        cerr << "[ERROR] grasp euler angles not set correctly"<<endl;
+        return EXIT_FAILURE;
+    }
+
+    aa(0)=aa(1)=aa(3)=0;
+    aa(2)=1.0;
+
+    grasp.setGraspOrientation(aa);
+
+    if( (grasp.getGraspAxisAngle() - aa).norm() > 0.0)
+    {
+        cout<<"aa "<<grasp.getGraspAxisAngle()<<endl;
+        cerr << "[ERROR] grasp axisangle not set correctly"<<endl;
+        return EXIT_FAILURE;
+    }
+
+    Matrix3d R;
+    R = AngleAxisd(aa(3), aa.head(3));
+
+    if( (grasp.getGraspAxes() - R).norm() > 0.0)
+    {
+        cerr << "[ERROR] grasp matrix not set correctly"<<endl;
+        return EXIT_FAILURE;
+    }
+
+    if (!EXIT_SUCCESS)
+        cout<<" == All tests passed! =="<<endl;
 
     // Find a way to test barycenter and orientation of matrix
 

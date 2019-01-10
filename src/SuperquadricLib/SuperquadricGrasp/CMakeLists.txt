@@ -7,16 +7,18 @@
 # `install` command), it is necessary to pass the `FIRST_TARGET` option to
 # `install_basic_package_files` in the main CMakeLists.txt file.
 # In this case the project name is used for both, therefore it is not necessary.
-set(LIBRARY_TARGET_NAME SuperquadricGraspLib)
+set(LIBRARY_TARGET_NAME SuperquadricLibGrasp)
 
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC
-        src/LibTemplateCMake.cpp
+        src/graspComputation.cpp
+		src/graspPoses.cpp
 )
 
 # List of HPP (header) library files.
 set(${LIBRARY_TARGET_NAME}_HDR
-        include/LibTemplateCMake/LibTemplateCMake.h
+        include/graspComputation.h
+		include/graspPoses.h
 )
 
 # You can add an external dependency using the find_package() function call
@@ -52,6 +54,8 @@ set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES VERSION       ${${PROJEC
 # relocatable configuration files, see https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html#creating-relocatable-packages
 target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                                                          "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
+
+target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC SuperquadricLibModel)
 
 # If you used find_package() you need to use target_include_directories() and/or
 # target_link_libraries(). As explained previously, depending on the imported
