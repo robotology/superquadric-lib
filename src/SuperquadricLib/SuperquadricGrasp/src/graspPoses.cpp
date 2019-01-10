@@ -11,6 +11,7 @@ GraspPoses::GraspPoses()
     params.resize(6);
 }
 
+/*********************************************/
 bool GraspPoses::setGraspParams(Eigen::VectorXd &p)
 {
   bool params_ok=true;
@@ -66,7 +67,7 @@ bool GraspPoses::setGraspPosition(Vector3d &d)
 /*********************************************/
 Vector3d GraspPoses::getGraspPosition()
 {
-    return params.head(3);
+    return position;
 }
 
 /*********************************************/
@@ -78,6 +79,8 @@ bool GraspPoses::setGraspOrientation(Vector3d &o)
            AngleAxisd(o(1), Vector3d::UnitY())*
            AngleAxisd(o(2), Vector3d::UnitZ());
 
+    ea=o;
+
     return true;
 
 }
@@ -85,7 +88,7 @@ bool GraspPoses::setGraspOrientation(Vector3d &o)
 /*********************************************/
 Vector3d GraspPoses::getGraspEulerZYZ()
 {
-    return params.segment(3,3);
+    return ea;
 }
 
 /*********************************************/
