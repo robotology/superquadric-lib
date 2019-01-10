@@ -24,7 +24,9 @@ void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_po
 
     points_downsampled=point_cloud;
 
-    cout<<"[SuperquadricEstimator]: points actually used for modeling: "<<points_downsampled.getNumberPoints()<<endl;
+    used_points=points_downsampled.getNumberPoints();
+
+    cout<<"[SuperquadricEstimator]: points actually used for modeling: "<<used_points<<endl;
 
     x0.resize(11);
     x0.setZero();
@@ -39,7 +41,7 @@ void SuperqEstimator::computeX0(VectorXd &x0)
     x0(5)=x0(6)=x0(7)=0.0;
 
     Matrix3d orientation=points_downsampled.getAxes();
-    x0.segment(8,3)=orientation.eulerAngles(2,1,2);  // TEST
+    x0.segment(8,3)=orientation.eulerAngles(2,1,2);
 
     MatrixXd bounding_box(3,2);
     bounding_box=points_downsampled.getBoundingBox();
@@ -68,23 +70,20 @@ bool SuperqEstimator::get_nlp_info(Ipopt::Index &n, Ipopt::Index &m,Ipopt::Index
 /****************************************************************/
 void SuperqEstimator::computeBounds()
 {
-    //if (bounds_automatic==true)
-    //{
-        bounds(0,1)=x0(0)*1.3;
-        bounds(1,1)=x0(1)*1.3;
-        bounds(2,1)=x0(2)*1.3;
+    bounds(0,1)=x0(0)*1.3;
+    bounds(1,1)=x0(1)*1.3;
+    bounds(2,1)=x0(2)*1.3;
 
-        bounds(0,0)=x0(0)*0.7;
-        bounds(1,0)=x0(1)*0.7;
-        bounds(2,0)=x0(2)*0.7;
+    bounds(0,0)=x0(0)*0.7;
+    bounds(1,0)=x0(1)*0.7;
+    bounds(2,0)=x0(2)*0.7;
 
-        bounds(5,0)=x0(5)-bounds(0,1);
-        bounds(6,0)=x0(6)-bounds(1,1);
-        bounds(7,0)=x0(7)-bounds(2,1);
-        bounds(5,1)=x0(5)+bounds(0,1);
-        bounds(6,1)=x0(6)+bounds(1,1);
-        bounds(7,1)=x0(7)+bounds(2,1);
-    //}
+    bounds(5,0)=x0(5)-bounds(0,1);
+    bounds(6,0)=x0(6)-bounds(1,1);
+    bounds(7,0)=x0(7)-bounds(2,1);
+    bounds(5,1)=x0(5)+bounds(0,1);
+    bounds(6,1)=x0(6)+bounds(1,1);
+    bounds(7,1)=x0(7)+bounds(2,1);
 
     bounds(8,0)=0;
     bounds(9,0)=0;
@@ -143,7 +142,7 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
              double tmp=pow(f(x,point),x[3])-1;
              value+=tmp*tmp;
          }
-         value*=x[0]*x[1]*x[2]/points_downsampled.getNumberPoints();
+         value*=x[0]*x[1]*x[2]/used_points;
          aux_objvalue=value;
      }
  }
@@ -156,7 +155,7 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
      euler(1)=x[9];
      euler(2)=x[10];
      Matrix3d R;
-     R = AngleAxisd(euler(0), Vector3d::UnitZ())*
+     R = AngleAxisd(euler(0), Vector3d::UnitZ())*         // To make it more efficient
          AngleAxisd(euler(1), Vector3d::UnitY())*
          AngleAxisd(euler(2), Vector3d::UnitZ());
 
@@ -179,7 +178,7 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
           value+=tmp*tmp;
      }
 
-     value*=x(0)*x(1)*x(2)/points_downsampled.getNumberPoints();
+     value*=x(0)*x(1)*x(2)/used_points;
 
      return value;
  }
@@ -193,7 +192,7 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
     euler(2)=x(10);
 
     Matrix3d R;
-    R = AngleAxisd(euler(0), Vector3d::UnitZ())*
+    R = AngleAxisd(euler(0), Vector3d::UnitZ())*              // To make it more efficient
         AngleAxisd(euler(1), Vector3d::UnitY())*
         AngleAxisd(euler(2), Vector3d::UnitZ());
 
@@ -263,17 +262,17 @@ void SuperqEstimator::configure(string object_class)
     }
     else if (obj_class=="box")
     {
-      bounds(3,0)=0.1;
+      bounds(3,0)=0.01;
       bounds(3,1)=0.3;
-      bounds(4,0)=0.1;
+      bounds(4,0)=0.01;
       bounds(4,1)=0.3;
     }
     else if (obj_class=="cylinder")
     {
-      bounds(3,0)=0.3;
-      bounds(3,1)=0.2;
-      bounds(4,0)=0.01;
-      bounds(4,1)=0.8;
+      bounds(3,0)=0.01;
+      bounds(3,1)=0.3;
+      bounds(4,0)=0.8;
+      bounds(4,1)=1.2;
     }
     else if (obj_class=="sphere")
     {

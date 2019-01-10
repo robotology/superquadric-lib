@@ -36,7 +36,6 @@ bool Superquadric::setSuperqParams(VectorXd &p)
            AngleAxisd(p(10), Vector3d::UnitZ());
 
     return params_ok;
-
 }
 
 /*********************************************/
@@ -59,7 +58,6 @@ bool Superquadric::setSuperqDims(Vector3d &d)
     dim=params.head(3);
 
     return params_ok;
-
 }
 
 /*********************************************/
@@ -115,8 +113,6 @@ bool Superquadric::setSuperqOrientation(Vector3d &o)
            AngleAxisd(o(1), Vector3d::UnitY())*
            AngleAxisd(o(2), Vector3d::UnitZ());
 
-    // To be transposed?
-
     return true;
 
 }
@@ -137,15 +133,12 @@ bool Superquadric::setSuperqOrientation(Vector4d &o)
     {
        axes = AngleAxisd(o(3), o.head(3));
 
-       // To be transposed?
-
        Vector3d ea = axes.eulerAngles(2,1,2);
 
        params.segment(8,3)=ea;
     }
 
     return params_ok;
-
 }
 
 /*********************************************/
@@ -169,11 +162,11 @@ double Superquadric::insideOutsideF(VectorXd &pose, Vector3d &point)
     setSuperqCenter(c);
     setSuperqOrientation(ea);
 
-    double num1=axes.row(0)*(point - center);
-    double num2=axes.row(1)*(point - center);
-    double num3=axes.row(2)*(point - center);
+    double num1=axes.col(0).dot(point - center);
+    double num2=axes.col(1).dot(point - center);
+    double num3=axes.col(2).dot(point - center);
 
-    double inner=pow(abs(num1/dim[0]), 2.0/exp[0]) + pow(abs(num2/dim[1]), 2.0/exp[1]);
+    double inner=pow(abs(num1/dim(0)), 2.0/exp(1)) + pow(abs(num2/dim(1)), 2.0/exp(1));
 
-    return pow(abs(inner), exp[1]/exp[0]) + pow(abs(num3/dim[2]), (2.0/exp[0]));
+    return pow(abs(inner), exp(1)/exp(0)) + pow(abs(num3/dim(2)), (2.0/exp(0)));
 }

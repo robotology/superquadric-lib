@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
         c[0]=(unsigned char)c_[0];
         c[1]=(unsigned char)c_[1];
         c[2]=(unsigned char)c_[2];
-        
+
         if (c[0]==c[1] && c[1]==c[2])
          {
              c[0]=50;
@@ -105,8 +105,9 @@ int main(int argc, char* argv[])
     // Add superquadric to visualizer
     vis.addSuperq(superqs);
 
-    // Add points to visualizer // Fix this
-    vis.addPoints(point_cloud);
+    // Add points to visualizer
+    // (true/false to show downsample points used for superq estimation)
+    vis.addPoints(point_cloud, false);
 
     // Visualize
     vis.visualize();

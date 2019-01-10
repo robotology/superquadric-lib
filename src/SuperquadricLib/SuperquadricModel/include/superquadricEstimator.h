@@ -25,6 +25,7 @@ protected:
   Eigen::MatrixXd bounds;
   std::string obj_class;
   double aux_objvalue;
+  int used_points;
 
   /** Get info for the nonlinear problem to be solved with ipopt
   * @param n is the dimension of the variable
