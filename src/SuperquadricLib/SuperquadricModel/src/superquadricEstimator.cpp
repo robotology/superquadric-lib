@@ -20,7 +20,7 @@ void SuperqEstimator::init()
 void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_points)
 {
     if (point_cloud.getNumberPoints()>optimizer_points)
-        point_cloud.subSample(optimizer_points, true);
+        point_cloud.subSample(optimizer_points, false);
 
     points_downsampled=point_cloud;
 
@@ -186,22 +186,17 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
    /****************************************************************/
   double SuperqEstimator::f_v(const VectorXd &x, const Vector3d &point_cloud)
   {
-    Vector3d euler;
-    euler(0)=x(8);
-    euler(1)=x(9);
-    euler(2)=x(10);
+      Matrix3d R;
+      R = AngleAxisd(x(8), Vector3d::UnitZ())*              // To make it more efficient
+          AngleAxisd(x(9), Vector3d::UnitY())*
+          AngleAxisd(x(10), Vector3d::UnitZ());
 
-    Matrix3d R;
-    R = AngleAxisd(euler(0), Vector3d::UnitZ())*              // To make it more efficient
-        AngleAxisd(euler(1), Vector3d::UnitY())*
-        AngleAxisd(euler(2), Vector3d::UnitZ());
+      double num1=R(0,0)*point_cloud(0)+R(1,0)*point_cloud(1)+R(2,0)*point_cloud(2)-x(5)*R(0,0)-x(6)*R(1,0)-x(7)*R(2,0);
+      double num2=R(0,1)*point_cloud(0)+R(1,1)*point_cloud(1)+R(2,1)*point_cloud(2)-x(5)*R(0,1)-x(6)*R(1,1)-x(7)*R(2,1);
+      double num3=R(0,2)*point_cloud(0)+R(1,2)*point_cloud(1)+R(2,2)*point_cloud(2)-x(5)*R(0,2)-x(6)*R(1,2)-x(7)*R(2,2);
+      double tmp=pow(abs(num1/x(0)),2.0/x(4)) + pow(abs(num2/x(1)),2.0/x(4));
 
-    double num1=R(0,0)*point_cloud(0)+R(1,0)*point_cloud(1)+R(2,0)*point_cloud(2)-x(5)*R(0,0)-x(6)*R(1,0)-x(7)*R(2,0);
-    double num2=R(0,1)*point_cloud(0)+R(1,1)*point_cloud(1)+R(2,1)*point_cloud(2)-x(5)*R(0,1)-x(6)*R(1,1)-x(7)*R(2,1);
-    double num3=R(0,2)*point_cloud(0)+R(1,2)*point_cloud(1)+R(2,2)*point_cloud(2)-x(5)*R(0,2)-x(6)*R(1,2)-x(7)*R(2,2);
-    double tmp=pow(abs(num1/x(0)),2.0/x(4)) + pow(abs(num2/x(1)),2.0/x(4));
-
-    return pow( abs(tmp),x(4)/x(3)) + pow( abs(num3/x(2)),(2.0/x(3)));
+      return pow( abs(tmp),x(4)/x(3)) + pow( abs(num3/x(2)),(2.0/x(3)));
   }
 
   /****************************************************************/
