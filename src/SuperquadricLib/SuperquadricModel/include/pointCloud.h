@@ -87,7 +87,7 @@ public:
      * Subsample the point cloud
      * @param desired_points_num is the desired number of points after the downsampling
      */
-    void subSample(int desired_points_num);
+    void subSample(int desired_points_num, bool random);
 
     /**
      * Remove outliers using dbscan algorithm

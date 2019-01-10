@@ -20,7 +20,7 @@ void SuperqEstimator::init()
 void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_points)
 {
     if (point_cloud.getNumberPoints()>optimizer_points)
-        point_cloud.subSample(optimizer_points);
+        point_cloud.subSample(optimizer_points, true);
 
     points_downsampled=point_cloud;
 

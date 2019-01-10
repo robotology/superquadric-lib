@@ -2,6 +2,8 @@
 #include <boost/range/irange.hpp>
 
 #include <iostream>
+#include <set>
+#include <cstdlib>
 
 using namespace std;
 using namespace boost;
@@ -153,18 +155,35 @@ Matrix3d PointCloud::getAxes()
 }
 
 /*********************************************/
-void PointCloud::subSample(int desired_points)
+void PointCloud::subSample(int desired_points, bool random)
 {
     deque<VectorXd> p_aux;
 
     if (n_points > desired_points)
     {
-        int count=n_points/desired_points;
-
-
-        for (auto i: irange(0,n_points, count))
+        if (!random)
         {
-            p_aux.push_back(points[i]);
+            int count=n_points/desired_points;
+
+
+            for (auto i: irange(0,n_points, count))
+            {
+                p_aux.push_back(points[i]);
+            }
+        }
+        else
+        {
+            set<unsigned int> idx;
+            while (idx.size()<desired_points)
+            {
+                unsigned int i=(unsigned int)(rand()%n_points);
+                if (idx.find(i)==idx.end())
+                {
+                    p_aux.push_back(points[i]);
+                    idx.insert(i);
+                }
+             }
+
         }
     }
 

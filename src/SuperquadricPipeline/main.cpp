@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
 
     // Add points to visualizer
     // (true/false to show downsample points used for superq estimation)
-    vis.addPoints(point_cloud, false);
+    vis.addPoints(point_cloud, true);
 
     // Visualize
     vis.visualize();
