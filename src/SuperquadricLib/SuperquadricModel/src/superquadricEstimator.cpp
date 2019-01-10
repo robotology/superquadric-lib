@@ -52,8 +52,6 @@ void SuperqEstimator::computeX0(VectorXd &x0)
     x0(5) = (bounding_box(0,0)+bounding_box(0,1))/2;
     x0(6) = (bounding_box(1,0)+bounding_box(1,1))/2;
     x0(7) = (bounding_box(2,0)+bounding_box(2,1))/2;
-
-    cout<<"X0 "<<x0<<endl;
 }
 
 /****************************************************************/
@@ -94,15 +92,12 @@ void SuperqEstimator::computeBounds()
     bounds(8,1)=2*M_PI;
     bounds(9,1)=M_PI;
     bounds(10,1)=2*M_PI;
-
-    cout<<"bounds "<<bounds<<endl;
 }
 
 /****************************************************************/
 bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt::Number *x_u,
                      Ipopt::Index m, Ipopt::Number *g_l, Ipopt::Number *g_u)
 {
-  cout<<"Bounds info "<<endl;
     computeBounds();
 
     for (Ipopt::Index i=0; i<n; i++)
@@ -119,13 +114,11 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
                             bool init_z, Ipopt::Number *z_L, Ipopt::Number *z_U,
                             Ipopt::Index m, bool init_lambda, Ipopt::Number *lambda)
  {
-   cout<<"Starting point "<<endl;
      for (Ipopt::Index i=0;i<n;i++)
      {
          x[i]=x0[i];
      }
 
-     cout<<"x init"<<x[0]<<x[1]<<x[2]<<x[3]<<x[4]<<x[5]<<x[6]<<x[7]<<x[8]<<x[9]<<x[10]<<endl;
      return true;
  }
 
@@ -133,14 +126,8 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
   bool SuperqEstimator::eval_f(Ipopt::Index n, const Ipopt::Number *x, bool new_x,
                  Ipopt::Number &obj_value)
   {
-      cout<<"x "<<x[0]<<x[1]<<x[2]<<x[3]<<x[4]<<x[5]<<x[6]<<x[7]<<x[8]<<x[9]<<x[10]<<endl;
       F(x, new_x);
       obj_value=aux_objvalue;
-
-      cout<<"_obj_value"<<obj_value<<endl;
-
-      cout<<"new_x"<<new_x<<endl;
-
 
       return true;
   }
@@ -171,14 +158,11 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
      Matrix3d R;
      R = AngleAxisd(euler(0), Vector3d::UnitZ())*
          AngleAxisd(euler(1), Vector3d::UnitY())*
-         AngleAxisd(euler(2), Vector3d::UnitZ());;
+         AngleAxisd(euler(2), Vector3d::UnitZ());
 
-     // Required for VTK visualization
-     R=R.transpose();
-
-     double num1=R(0,0)*point_cloud(0)+R(0,1)*point_cloud(1)+R(0,2)*point_cloud(2)-x[5]*R(0,0)-x[6]*R(0,1)-x[7]*R(0,2);
-     double num2=R(1,0)*point_cloud(0)+R(1,1)*point_cloud(1)+R(1,2)*point_cloud(2)-x[5]*R(1,0)-x[6]*R(1,1)-x[7]*R(1,2);
-     double num3=R(2,0)*point_cloud(0)+R(2,1)*point_cloud(1)+R(2,2)*point_cloud(2)-x[5]*R(2,0)-x[6]*R(2,1)-x[7]*R(2,2);
+     double num1=R(0,0)*point_cloud(0)+R(1,0)*point_cloud(1)+R(2,0)*point_cloud(2)-x[5]*R(0,0)-x[6]*R(1,0)-x[7]*R(2,0);
+     double num2=R(0,1)*point_cloud(0)+R(1,1)*point_cloud(1)+R(2,1)*point_cloud(2)-x[5]*R(0,1)-x[6]*R(1,1)-x[7]*R(2,1);
+     double num3=R(0,2)*point_cloud(0)+R(1,2)*point_cloud(1)+R(2,2)*point_cloud(2)-x[5]*R(0,2)-x[6]*R(1,2)-x[7]*R(2,2);
      double tmp=pow(abs(num1/x[0]),2.0/x[4]) + pow(abs(num2/x[1]),2.0/x[4]);
 
      return pow( abs(tmp),x[4]/x[3]) + pow( abs(num3/x[2]),(2.0/x[3]));
@@ -191,11 +175,12 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
 
      for(auto point : points_downsampled.points)
      {
-          double tmp=pow(f_v(x,point),x[3])-1;
+          double tmp=pow(f_v(x,point),x(3))-1;
           value+=tmp*tmp;
      }
 
-     value*=x[0]*x[1]*x[2]/points_downsampled.getNumberPoints();
+     value*=x(0)*x(1)*x(2)/points_downsampled.getNumberPoints();
+
      return value;
  }
 
@@ -203,23 +188,21 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
   double SuperqEstimator::f_v(const VectorXd &x, const Vector3d &point_cloud)
   {
     Vector3d euler;
-    euler(0)=x[8];
-    euler(1)=x[9];
-    euler(2)=x[10];
+    euler(0)=x(8);
+    euler(1)=x(9);
+    euler(2)=x(10);
+
     Matrix3d R;
     R = AngleAxisd(euler(0), Vector3d::UnitZ())*
         AngleAxisd(euler(1), Vector3d::UnitY())*
-        AngleAxisd(euler(2), Vector3d::UnitZ());;
+        AngleAxisd(euler(2), Vector3d::UnitZ());
 
-    // Required for VTK visualization
-    R=R.transpose();
+    double num1=R(0,0)*point_cloud(0)+R(1,0)*point_cloud(1)+R(2,0)*point_cloud(2)-x(5)*R(0,0)-x(6)*R(1,0)-x(7)*R(2,0);
+    double num2=R(0,1)*point_cloud(0)+R(1,1)*point_cloud(1)+R(2,1)*point_cloud(2)-x(5)*R(0,1)-x(6)*R(1,1)-x(7)*R(2,1);
+    double num3=R(0,2)*point_cloud(0)+R(1,2)*point_cloud(1)+R(2,2)*point_cloud(2)-x(5)*R(0,2)-x(6)*R(1,2)-x(7)*R(2,2);
+    double tmp=pow(abs(num1/x(0)),2.0/x(4)) + pow(abs(num2/x(1)),2.0/x(4));
 
-    double num1=R(0,0)*point_cloud(0)+R(0,1)*point_cloud(1)+R(0,2)*point_cloud(2)-x[5]*R(0,0)-x[6]*R(0,1)-x[7]*R(0,2);
-    double num2=R(1,0)*point_cloud(0)+R(1,1)*point_cloud(1)+R(1,2)*point_cloud(2)-x[5]*R(1,0)-x[6]*R(1,1)-x[7]*R(1,2);
-    double num3=R(2,0)*point_cloud(0)+R(2,1)*point_cloud(1)+R(2,2)*point_cloud(2)-x[5]*R(2,0)-x[6]*R(2,1)-x[7]*R(2,2);
-    double tmp=pow(abs(num1/x[0]),2.0/x[4]) + pow(abs(num2/x[1]),2.0/x[4]);
-
-    return pow( abs(tmp),x[4]/x[3]) + pow( abs(num3/x[2]),(2.0/x[3]));
+    return pow( abs(tmp),x(4)/x(3)) + pow( abs(num3/x(2)),(2.0/x(3)));
   }
 
   /****************************************************************/
@@ -335,7 +318,7 @@ Superquadric EstimatorApp::computeSuperq(IpoptParam &pars, PointCloud &point_clo
     app->Options()->SetStringValue("nlp_scaling_method",pars.nlp_scaling_method);
     app->Options()->SetStringValue("hessian_approximation",pars.hessian_approximation);
     app->Options()->SetIntegerValue("print_level",pars.print_level);
-    app->Options()->SetStringValue("derivative_test","first-order");
+    //app->Options()->SetStringValue("derivative_test","first-order");
     app->Initialize();
 
     Ipopt::SmartPtr<SuperqEstimator> estim = new SuperqEstimator;

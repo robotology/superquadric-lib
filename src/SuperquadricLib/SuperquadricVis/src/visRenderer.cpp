@@ -48,12 +48,12 @@ Visualizer::~Visualizer()
 /**********************************************/
 void Visualizer::addPoints(PointCloud &point_cloud)
 {
-    vector<VectorXd> &all_points=point_cloud.points;
-    //vector<vector<unsigned char>> all_colors=point_cloud.colors;
+    vector<VectorXd> &all_points=point_cloud.points_for_vis;
+    vector<vector<unsigned char>> all_colors=point_cloud.colors;
 
     vtk_all_points=unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
-    //vtk_all_points->set_colors(all_colors);
-    vtk_all_points->get_actor()->GetProperty()->SetColor(1.0,0.0,0.0);
+    vtk_all_points->set_colors(all_colors);
+    //vtk_all_points->get_actor()->GetProperty()->SetColor(1.0,0.0,0.0);
 
     vtk_renderer->AddActor(vtk_all_points->get_actor());
 
@@ -111,12 +111,7 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
     VectorXd r;
 
     for (auto sup:s)
-    {
-        cout<<"sup center "<<sup.getSuperqCenter();
-        cout<<"sup aa "<<sup.getSuperqAxisAngle();
-        cout<<"sup dim"<<sup.getSuperqDims();
-        cout<<"sup exp"<<sup.getSuperqExps();
-        r.resize(12);
+    {   r.resize(12);
         r.segment(0,3)=sup.getSuperqCenter();
         r.segment(3,4)=sup.getSuperqAxisAngle();
         r.segment(7,3)=sup.getSuperqDims();

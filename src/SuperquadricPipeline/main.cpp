@@ -39,11 +39,11 @@ int main(int argc, char* argv[])
     params.tol=1e-5;
     params.acceptable_iter=0;
     params.mu_strategy="adaptive";
-    params.max_iter=1;
+    params.max_iter=1000000;
     params.max_cpu_time=5.0;
     params.nlp_scaling_method="gradient-based";
     params.hessian_approximation="limited-memory";
-    params.print_level=5;
+    params.print_level=0;
     params.object_class="default";
     params.optimizer_points=50;
 
@@ -76,6 +76,14 @@ int main(int argc, char* argv[])
         c[0]=(unsigned char)c_[0];
         c[1]=(unsigned char)c_[1];
         c[2]=(unsigned char)c_[2];
+        
+        if (c[0]==c[1] && c[1]==c[2])
+         {
+             c[0]=50;
+             c[1]=100;
+             c[2]=0;
+         }
+
         all_colors.push_back(c);
     }
 
