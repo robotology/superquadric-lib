@@ -55,6 +55,7 @@ endif()
 
 # Adds a library target called ${LIBRARY_TARGET_NAME} to be built from the
 # source and header files listed in the command invocation.
+
 add_library(${LIBRARY_TARGET_NAME} ${${LIBRARY_TARGET_NAME}_SRC} ${${LIBRARY_TARGET_NAME}_HDR})
 
 # Set two minimum target properties for the library.
@@ -90,8 +91,7 @@ target_link_libraries(${LIBRARY_TARGET_NAME} ${IPOPT_LIBRARIES})
 # - with imported target:
 #   target_link_libraries(${LIBRARY_TARGET_NAME} FooPackage_LIBRARIES::FooPackage_LIBRARIES)
 
-
-add_definitions(${IPOPT_DEFINITIONS} -D_USE_MATH_DEFINES)
+target_compile_definitions(${LIBRARY_TARGET_NAME} PUBLIC ${IPOPT_DEFINITIONS})
 
 # Specify installation targets, typology and destination folders.
 install(TARGETS ${LIBRARY_TARGET_NAME}

@@ -1,7 +1,3 @@
-#define HAVE_CSTDDEF
-#include <IpTNLP.hpp>
-#undef HAVE_CSTDDEF
-
 #include "superquadricEstimator.h"
 #include "visRenderer.h"
 
