@@ -17,10 +17,10 @@ void SuperqEstimator::init()
 }
 
 /****************************************************************/
-void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_points)
+void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_points, bool &random)
 {
     if (point_cloud.getNumberPoints()>optimizer_points)
-        point_cloud.subSample(optimizer_points, false);
+        point_cloud.subSample(optimizer_points, random);
 
     points_downsampled=point_cloud;
 
@@ -319,7 +319,7 @@ Superquadric EstimatorApp::computeSuperq(IpoptParam &pars, PointCloud &point_clo
     Ipopt::SmartPtr<SuperqEstimator> estim = new SuperqEstimator;
     estim->init();
     estim->configure(pars.object_class);
-    estim->setPoints(point_cloud, pars.optimizer_points);
+    estim->setPoints(point_cloud, pars.optimizer_points, pars.random_sampling);
 
     clock_t tStart = clock();
 

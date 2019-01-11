@@ -197,7 +197,7 @@ public:
   * @param optimizer_points is the maximum number of points to be used for the optimization problem
   */
   /****************************************************************/
-  void setPoints(SuperqModel::PointCloud &point_cloud, const int &optimizer_points);
+  void setPoints(SuperqModel::PointCloud &point_cloud, const int &optimizer_points, bool &random);
 
   /** Configure function
   * @param rf is the resource finder
@@ -234,6 +234,7 @@ struct IpoptParam
     int print_level;
     std::string object_class;
     int optimizer_points;
+    bool random_sampling;
 };
 
 

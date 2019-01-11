@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
     params.print_level=0;
     params.object_class="default";
     params.optimizer_points=50;
+    params.random_sampling=true;
 
     /*******************************************/
     // Read point cloud
