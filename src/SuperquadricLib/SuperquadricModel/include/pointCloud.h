@@ -5,6 +5,8 @@
 #include <Eigen/SVD>
 #include <deque>
 
+typedef Eigen::Matrix<double, 3, 2>  Matrix32d;
+
 namespace SuperqModel {
 
 /**
@@ -20,12 +22,12 @@ class PointCloud
 public:
 
     int n_points;
-    std::vector<Eigen::VectorXd> points;
-    std::vector<Eigen::VectorXd> points_for_vis;
+    std::vector<Eigen::Vector3d> points;
+    std::vector<Eigen::Vector3d> points_for_vis;
     std::vector<std::vector<unsigned char>> colors;
     Eigen::Vector3d barycenter;
     Eigen::Matrix3d orientation;
-    Eigen::MatrixXd bounding_box;
+    Matrix32d bounding_box;
 
     /**
     * Constructor
@@ -42,7 +44,7 @@ public:
      * @param p is a deque of 3d or 6d eigen vectors
      * @return true is number of points > 0 and if they are 3d or 6d
      */
-    bool setPoints(std::deque<Eigen::VectorXd> &p);
+    bool setPoints(std::deque<Eigen::Vector3d> &p);
 
     /**
      * set colors of the point cloud

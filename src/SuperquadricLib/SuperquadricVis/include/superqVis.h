@@ -11,6 +11,8 @@
 
 #include <Eigen/Dense>
 
+typedef Eigen::Matrix<double, 11, 1> Vector11d;
+
 namespace SuperqVis {
 
 /**
@@ -32,7 +34,7 @@ public:
     /**
     * Constructor
     */
-    SuperquadricVis(const Eigen::VectorXd &s);
+    SuperquadricVis(const Vector11d &s);
 
     /**
     * Destructory
@@ -43,7 +45,7 @@ public:
      * Set superquadric parameters
      * @param s is a Eigen vector of 11 parameters
      */
-    void set_parameters(const Eigen::VectorXd &s);
+    void set_parameters(const Vector11d &s);
 
 };
 

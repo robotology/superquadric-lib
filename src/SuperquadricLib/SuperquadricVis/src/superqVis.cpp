@@ -8,7 +8,7 @@ using namespace SuperqVis;
 
 
 /**********************************************/
-SuperquadricVis::SuperquadricVis(const VectorXd &r)
+SuperquadricVis::SuperquadricVis(const Vector11d &r)
 {
     double bx=2.0*r(7);
     double by=2.0*r(8);
@@ -50,7 +50,7 @@ SuperquadricVis::SuperquadricVis(const VectorXd &r)
 }
 
 /**********************************************/
-void SuperquadricVis::set_parameters(const VectorXd &r)
+void SuperquadricVis::set_parameters(const Vector11d &r)
 {
     double bx=2.0*r(7);
     double by=2.0*r(8);

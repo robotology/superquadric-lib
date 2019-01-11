@@ -22,10 +22,10 @@ void PoseVis::setvtkTransform(const VectorXd &pose_vect)
     if (pose_vect.size()==6)
     {
         pose.block<3,3>(0,0) = (AngleAxisd(pose_vect(0), Vector3d::UnitZ())*
-                            AngleAxisd(pose_vect(1), Vector3d::UnitY())*
-                            AngleAxisd(pose_vect(2), Vector3d::UnitZ())).toRotationMatrix();
+                              AngleAxisd(pose_vect(1), Vector3d::UnitY())*
+                              AngleAxisd(pose_vect(2), Vector3d::UnitZ())).toRotationMatrix();
 
-                pose.block<3,1>(0,3)=pose_vect.head(3);
+        pose.block<3,1>(0,3)=pose_vect.head(3);
 
         vtkSmartPointer<vtkMatrix4x4> m_vtk = vtkSmartPointer<vtkMatrix4x4>::New();
         m_vtk->Zero();

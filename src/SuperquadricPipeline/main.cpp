@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     /*******************************************/
     // Read point cloud
-    deque<VectorXd> all_points;
+    deque<Vector3d> all_points;
     vector<vector<unsigned char>> all_colors;
 
     ifstream fin(argv[1]);

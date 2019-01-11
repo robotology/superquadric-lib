@@ -8,6 +8,9 @@
 #include "superquadric.h"
 #include "pointCloud.h"
 
+typedef Eigen::Matrix<double, 11, 2>  Matrix112d;
+typedef Eigen::Matrix<double, 3, 2>  Matrix32d;
+
 namespace SuperqModel {
 
 /**
@@ -21,8 +24,8 @@ namespace SuperqModel {
 class SuperqEstimator : public Ipopt::TNLP
 {
 protected:
-  Eigen::VectorXd x0;
-  Eigen::MatrixXd bounds;
+  Vector11d x0;
+  Matrix112d bounds;
   std::string obj_class;
   double aux_objvalue;
   int used_points;
@@ -108,7 +111,7 @@ protected:
     * @return cost function value
     */
     /****************************************************************/
-    double F_v(const Eigen::VectorXd &x);
+    double F_v(const Vector11d &x);
 
     /** Auxiliary function for computing the gradient cost function of the nonlinear problem
     * @param obj is the Vector of the object
@@ -117,7 +120,7 @@ protected:
     * @return a part of the cost function value
     */
     /****************************************************************/
-    double f_v(const Eigen::VectorXd &x, const Eigen::Vector3d &point);
+    double f_v(const Vector11d &x, const Eigen::Vector3d &point);
 
     /** Gradient of the cost function of the nonlinear problem
     * @param x is the variable
@@ -162,7 +165,7 @@ protected:
     * @param point_cloud is the object point cloud
     */
     /****************************************************************/
-    void computeX0(Eigen::VectorXd &x0);
+    void computeX0(Vector11d &x0);
 
     /** Finalize the solution
     * @param n is the dimension of the variable

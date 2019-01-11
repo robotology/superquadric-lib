@@ -34,16 +34,17 @@ void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_po
 }
 
 /****************************************************************/
-void SuperqEstimator::computeX0(VectorXd &x0)
+void SuperqEstimator::computeX0(Vector11d &x0)
 {
     x0(3)=(bounds(3,0)+bounds(3,1))/2;
     x0(4)=(bounds(4,0)+bounds(4,1))/2;
     x0(5)=x0(6)=x0(7)=0.0;
 
-    Matrix3d orientation=points_downsampled.getAxes();
+    Matrix3d orientation;
+    orientation=points_downsampled.getAxes();
     x0.segment(8,3)=orientation.eulerAngles(2,1,2);
 
-    MatrixXd bounding_box(3,2);
+    Matrix32d bounding_box(3,2);
     bounding_box=points_downsampled.getBoundingBox();
 
     x0(0)=(-bounding_box(0,0)+bounding_box(0,1))/2;
@@ -168,7 +169,7 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
  }
 
  /****************************************************************/
- double SuperqEstimator::F_v(const VectorXd &x)
+ double SuperqEstimator::F_v(const Vector11d &x)
  {
      double value=0.0;
 
@@ -184,7 +185,7 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
  }
 
    /****************************************************************/
-  double SuperqEstimator::f_v(const VectorXd &x, const Vector3d &point_cloud)
+  double SuperqEstimator::f_v(const Vector11d &x, const Vector3d &point_cloud)
   {
       Matrix3d R;
       R = AngleAxisd(x(8), Vector3d::UnitZ())*              // To make it more efficient
@@ -203,7 +204,7 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
  bool SuperqEstimator::eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x,
                   Ipopt::Number *grad_f)
  {
-     VectorXd x_tmp(n);
+     Vector11d x_tmp(n);
      double grad_p, grad_n;
      double eps=1e-8;
 
@@ -287,7 +288,7 @@ void SuperqEstimator::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index
                       Ipopt::Number obj_value, const Ipopt::IpoptData *ip_data,
                       Ipopt::IpoptCalculatedQuantities *ip_cq)
 {
-   VectorXd params_sol(n);
+   Vector11d params_sol(n);
    for (Ipopt::Index i=0; i<n; i++)
        params_sol[i]=x[i];
 
@@ -349,7 +350,7 @@ Superquadric EstimatorApp::computeSuperq(IpoptParam &pars, PointCloud &point_clo
     else
     {
         cerr<<"|| Not solution found"<<endl;
-        VectorXd x(11);
+        Vector11d x(11);
         x.setZero();
 
         superq.setSuperqParams(x);

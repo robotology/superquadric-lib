@@ -32,7 +32,7 @@ public:
     /**
     * Constructor
     */
-    PointsVis(const std::vector<Eigen::VectorXd> &points, const int point_size);
+    PointsVis(const std::vector<Eigen::Vector3d> &points, const int point_size);
 
     /**
     * Destructory
@@ -43,7 +43,7 @@ public:
      * Set the points to visualize
      * @param points is a vector of 3d or 6d Eigen vectors of points
      */
-    void set_points(const std::vector<Eigen::VectorXd> &points);
+    void set_points(const std::vector<Eigen::Vector3d> &points);
 
     /**
      * Set the color of the points for visualization

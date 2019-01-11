@@ -17,6 +17,8 @@ namespace SuperqGrasp {
 class graspComputation : public Ipopt::TNLP
 {
 public:
+
+
 };
 
 

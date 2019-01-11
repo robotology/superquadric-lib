@@ -24,7 +24,7 @@ PointCloud::~PointCloud()
 }
 
 /*********************************************/
-bool PointCloud::setPoints(deque<VectorXd> &p)
+bool PointCloud::setPoints(deque<Vector3d> &p)
 {
     if (p[0].size()==3)
     {
@@ -78,7 +78,6 @@ void PointCloud::deletePoints()
 /*********************************************/
 MatrixXd PointCloud::getBoundingBox()
 {
-  bounding_box.resize(3,2);
   bounding_box(0,0)=numeric_limits<double>::infinity();
   bounding_box(1,0)=numeric_limits<double>::infinity();
   bounding_box(2,0)=numeric_limits<double>::infinity();

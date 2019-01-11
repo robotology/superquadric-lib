@@ -3,6 +3,8 @@
 
 #include <Eigen/Dense>
 
+typedef Eigen::Matrix<double, 11, 1> Vector11d;
+
 namespace SuperqModel {
 
 /**
@@ -18,7 +20,7 @@ class Superquadric
 public:
 
     int n_params;
-    Eigen::VectorXd params;
+    Vector11d params;
     Eigen::Vector3d dim;
     Eigen::Vector2d exp;
     Eigen::Vector4d axisangle;
@@ -42,7 +44,7 @@ public:
      * containing the superquadric parameters
      * @return true/false if the parameters are consistent
      */
-    bool setSuperqParams(Eigen::VectorXd &p);
+    bool setSuperqParams(Vector11d &p);
 
     /**
      * Set  superquadric dimensions
@@ -88,7 +90,7 @@ public:
      * Get all superquadric parameters
      * @return a 11D vector containing the parameters
      */
-    Eigen::VectorXd getSuperqParams();
+    Vector11d getSuperqParams();
 
     /**
      * Get  superquadric dimensions
@@ -132,7 +134,7 @@ public:
      * @param point is a point where we want to evaluate the inside-ouside function
      * @return the value of the inside-outside function
      */
-    double insideOutsideF(Eigen::VectorXd &pose, Eigen::Vector3d &point);
+    double insideOutsideF(Vector11d &pose, Eigen::Vector3d &point);
 };
 
 }

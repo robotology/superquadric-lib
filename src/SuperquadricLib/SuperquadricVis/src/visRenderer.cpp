@@ -48,7 +48,7 @@ Visualizer::~Visualizer()
 /**********************************************/
 void Visualizer::addPoints(PointCloud &point_cloud, bool show_downsample)
 {
-    vector<VectorXd> &all_points=point_cloud.points_for_vis;
+    vector<Vector3d> &all_points=point_cloud.points_for_vis;
     vector<vector<unsigned char>> all_colors=point_cloud.colors;
 
     size_points=4;
@@ -60,7 +60,7 @@ void Visualizer::addPoints(PointCloud &point_cloud, bool show_downsample)
     if (show_downsample)
     {
         size_points=8;
-        vector<VectorXd> &dwn_points=point_cloud.points;
+        vector<Vector3d> &dwn_points=point_cloud.points;
         vtk_dwn_points=unique_ptr<PointsVis>(new PointsVis(dwn_points,size_points));
         vtk_dwn_points->get_actor()->GetProperty()->SetColor(1.0,0.0,0.0);
         vtk_renderer->AddActor(vtk_dwn_points->get_actor());
@@ -89,7 +89,7 @@ void Visualizer::addPlane(double &z)
 /**********************************************/
 void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
 {
-    VectorXd r;
+    Vector11d r;
 
     for (auto sup:s)
     {   r.resize(12);

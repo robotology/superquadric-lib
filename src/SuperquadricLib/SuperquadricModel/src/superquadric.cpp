@@ -15,7 +15,7 @@ Superquadric::Superquadric()
 }
 
 /*********************************************/
-bool Superquadric::setSuperqParams(VectorXd &p)
+bool Superquadric::setSuperqParams(Vector11d &p)
 {
     bool params_ok=true;
 
@@ -45,7 +45,7 @@ bool Superquadric::setSuperqParams(VectorXd &p)
 }
 
 /*********************************************/
-VectorXd Superquadric::getSuperqParams()
+Vector11d Superquadric::getSuperqParams()
 {
     return params;
 }
@@ -158,7 +158,7 @@ Vector4d Superquadric::getSuperqAxisAngle()
 }
 
 /*********************************************/
-double Superquadric::insideOutsideF(VectorXd &pose, Vector3d &point)
+double Superquadric::insideOutsideF(Vector11d &pose, Vector3d &point)
 {
     Vector3d c=pose.head(3);
     Vector3d ea=pose.tail(3);
