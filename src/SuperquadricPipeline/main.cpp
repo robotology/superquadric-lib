@@ -116,8 +116,7 @@ int main(int argc, char* argv[])
     GraspParams params_grasp;
     params_grasp.left_or_right="left";
     params_grasp.pl << 0.0, 0.0, 1.0, 0.18;
-    params_grasp.disp <<  0.05, 0.0, 0.0;
-    params_grasp.n_hands = 48;
+    params_grasp.disp <<  0.0, 0.0, 0.0;
     params_grasp.object_superq = superq;
     params_grasp.max_superq = 4;
     params_grasp.bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.2, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;

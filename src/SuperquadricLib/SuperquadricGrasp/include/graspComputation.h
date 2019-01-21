@@ -19,7 +19,6 @@ struct GraspParams
     int max_superq;
     Eigen::Vector4d pl;
     Eigen::Vector3d disp;
-    int n_hands;
     SuperqModel::Superquadric object_superq;
     SuperqModel::Superquadric hand_superq;
     std::deque<SuperqModel::Superquadric> obstacles_superq;
