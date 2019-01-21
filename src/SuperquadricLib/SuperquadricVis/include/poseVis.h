@@ -22,12 +22,12 @@ namespace SuperqVis {
 */
 class PoseVis : public Object
 {
-protected:
+public:
     vtkSmartPointer<vtkAxesActor> pose_vtk_actor;
     vtkSmartPointer<vtkCaptionActor2D> pose_vtk_caption_actor;
     vtkSmartPointer<vtkTransform> pose_vtk_transform;
     Eigen::Matrix4d pose;
-public:
+
     /**
     * Constructor
     */

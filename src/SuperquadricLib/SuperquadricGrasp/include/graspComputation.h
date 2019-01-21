@@ -4,7 +4,7 @@
 #include "superquadricEstimator.h"
 #include "graspPoses.h"
 
-typedef Eigen::Matrix<double, 6, 1> Vector6d;
+//typedef Eigen::Matrix<double, 6, 1> Vector6d;
 typedef Eigen::Matrix<double, 6, 2> Matrix62d;
 
 namespace SuperqGrasp {

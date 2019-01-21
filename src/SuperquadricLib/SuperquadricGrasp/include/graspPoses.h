@@ -5,6 +5,8 @@
 
 #include "superquadric.h"
 
+typedef Eigen::Matrix<double, 6, 1> Vector6d;
+
 namespace SuperqGrasp {
 
 /**
@@ -23,6 +25,9 @@ public:
     Eigen::Vector3d ea;
     Eigen::Matrix3d axes;
     Eigen::VectorXd params;
+
+    double cost;
+    std::string hand;
 
     /**
     * Constructor
@@ -95,6 +100,12 @@ public:
      * @return a 3x3 Matrix containing the axes
      */
     Eigen::Matrix3d getGraspAxes();
+
+    /*********************************************/
+    std::string getHandName();
+
+    /*********************************************/
+    void setHandName(std::string h);
 
 
 };

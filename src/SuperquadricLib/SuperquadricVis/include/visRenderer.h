@@ -1,6 +1,7 @@
 #ifndef VTKRENDERER_H
 #define VTKRENDERER_H
 
+#include <memory>
 #include <vtkSmartPointer.h>
 #include <vtkCommand.h>
 #include <vtkActor.h>
@@ -22,6 +23,7 @@
 #include "superqVis.h"
 #include "superquadric.h"
 #include "pointCloud.h"
+#include "graspPoses.h"
 
 namespace SuperqVis {
 
@@ -39,6 +41,10 @@ protected:
     std::unique_ptr<SuperqVis::SuperquadricVis> vtk_superquadric;
     std::unique_ptr<SuperqVis::PlaneVis> vtk_plane;
     std::vector<std::vector<unsigned char>> all_colors;
+
+    std::vector<std::shared_ptr<SuperqVis::PoseVis>> pose_candidates;
+    std::vector<vtkSmartPointer<vtkAxesActor>> pose_actors;
+    std::vector<vtkSmartPointer<vtkCaptionActor2D>> pose_captions;
 
     vtkSmartPointer<vtkRenderer> vtk_renderer;
     vtkSmartPointer<vtkRenderWindow> vtk_renderWindow;
@@ -95,7 +101,7 @@ public:
     * @param p is a pose visualizer
     * @return true/false on success/failuer
     */
-    void addPoses(std::vector<Eigen::VectorXd> &poses);
+    void addPoses(std::vector<SuperqGrasp::GraspPoses> &poses);
 };
 }
 #endif

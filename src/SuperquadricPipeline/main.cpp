@@ -36,6 +36,7 @@ int main(int argc, char* argv[])
 
     // Grasp pose
     GraspPoses grasp_pose;
+    vector<GraspPoses> grasp_poses;
 
     // Params for solver in superq estimator
     IpoptParam iparams_superq;
@@ -135,8 +136,19 @@ int main(int argc, char* argv[])
     params_grasp.hand_superq = hand;
 
     /*******************************************/
-    // Compute grasp pose
+    // Compute grasp pose for left hand
     grasp_pose=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
+
+    // Add poses for grasping
+    grasp_poses.push_back(grasp_pose);
+
+    // Compute grasp pose for left hand
+    params_grasp.left_or_right="right";
+    grasp_pose=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
+
+
+    // Add poses for grasping
+    grasp_poses.push_back(grasp_pose);
 
     /*******************************************/
     // Outcome visualization
@@ -152,6 +164,13 @@ int main(int argc, char* argv[])
     // Add points to visualizer
     // (true/false to show downsample points used for superq estimation)
     vis.addPoints(point_cloud, true);
+
+    // Add plane for grasping
+    vis.addPlane(params_grasp.pl(3));
+
+    // Add poses for grasping
+    vis.addPoses(grasp_poses);
+
 
     // Visualize
     vis.visualize();

@@ -9,6 +9,8 @@ using namespace SuperqGrasp;
 GraspPoses::GraspPoses()
 {
     params.resize(6);
+    cost=1e8;
+    hand="right";
 }
 
 /*********************************************/
@@ -121,4 +123,16 @@ Vector4d GraspPoses::getGraspAxisAngle()
 Matrix3d GraspPoses::getGraspAxes()
 {
     return axes;
+}
+
+/*********************************************/
+string GraspPoses::getHandName()
+{
+    return hand;
+}
+
+/*********************************************/
+void GraspPoses::setHandName(string h)
+{
+    hand=h;
 }

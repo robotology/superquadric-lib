@@ -611,6 +611,7 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
       final_obstacles_value=computeFinalObstacleValues(robot_pose);
 
       solution.setGraspParams(solution_vector);
+      solution.setHandName(l_o_r);
 }
 
 /****************************************************************/

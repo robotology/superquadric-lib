@@ -3,6 +3,7 @@
 using namespace std;
 using namespace SuperqVis;
 using namespace SuperqModel;
+using namespace SuperqGrasp;
 using namespace Eigen;
 
 /**********************************************/
@@ -82,6 +83,7 @@ void Visualizer::addPoints(PointCloud &point_cloud, bool show_downsample)
 /**********************************************/
 void Visualizer::addPlane(double &z)
 {
+    z=-z;
     vtk_plane=unique_ptr<PlaneVis>(new PlaneVis(z));
     vtk_renderer->AddActor(vtk_plane->get_actor());
 }
@@ -126,6 +128,69 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
 }
 
 /**********************************************/
+void Visualizer::addPoses(vector<SuperqGrasp::GraspPoses> &poses)
+{
+    Vector6d pose_vect;
+    double offset=0.0;
+    int i=0;
+    for (auto pose:poses)
+    {
+        pose_vect=pose.getGraspParams();
+        vtkSmartPointer<vtkAxesActor> ax_actor = vtkSmartPointer<vtkAxesActor>::New();
+        vtkSmartPointer<vtkCaptionActor2D> cap_actor = vtkSmartPointer<vtkCaptionActor2D>::New();
+        ax_actor->VisibilityOff();
+        cap_actor->VisibilityOff();
+        pose_actors.push_back(ax_actor);
+        pose_captions.push_back(cap_actor);
+        vtk_renderer->AddActor(ax_actor);
+
+        vtk_renderer->AddActor(cap_actor);
+
+        shared_ptr<PoseVis> candidate_pose = shared_ptr<PoseVis>(new PoseVis);
+
+        candidate_pose->setvtkTransform(pose_vect);
+        candidate_pose->pose_vtk_actor->SetUserTransform(candidate_pose->pose_vtk_transform);
+        ax_actor->SetUserTransform(candidate_pose->pose_vtk_transform);
+
+        candidate_pose->pose_vtk_actor->ShallowCopy(ax_actor);
+        ax_actor->AxisLabelsOff();
+        ax_actor->SetTotalLength(0.02, 0.02, 0.02);
+        ax_actor->SetShaftTypeToCylinder();
+        ax_actor->VisibilityOn();
+
+        cap_actor->VisibilityOn();
+        cap_actor->GetTextActor()->SetTextScaleModeToNone();
+
+        stringstream ss;
+        ss<<pose.getHandName()<<"_"<<i%poses.size()<<" : "<<setprecision(3)<<pose.cost;
+        
+        offset += 0.01;
+
+        candidate_pose->setvtkActorCaption(ss.str(), offset);
+        cap_actor->SetCaption(candidate_pose->pose_vtk_caption_actor->GetCaption());
+        cap_actor->BorderOff();
+        cap_actor->LeaderOn();
+        cap_actor->GetCaptionTextProperty()->SetFontSize(15);
+        cap_actor->GetCaptionTextProperty()->FrameOff();
+        cap_actor->GetCaptionTextProperty()->ShadowOff();
+
+        cap_actor->GetCaptionTextProperty()->BoldOff();
+        cap_actor->GetCaptionTextProperty()->ItalicOff();
+        cap_actor->GetCaptionTextProperty()->SetColor(0.1, 0.1, 0.1);
+
+        // This should be done only for best pose
+        cap_actor->GetCaptionTextProperty()->BoldOn();
+        cap_actor->GetCaptionTextProperty()->SetColor(0., 0.35, 0.0);
+        cap_actor->GetCaptionTextProperty()->SetFontSize(20);
+
+        cap_actor->SetAttachmentPoint(candidate_pose->pose_vtk_caption_actor->GetAttachmentPoint());
+
+        i++;
+        pose_candidates.push_back(candidate_pose);
+    }
+
+}
+/**********************************************/
 void Visualizer::visualize()
 {
     vtk_renderWindowInteractor->Initialize();
@@ -137,7 +202,6 @@ void Visualizer::visualize()
     vtk_renderWindowInteractor->AddObserver(vtkCommand::TimerEvent,vtk_updateCallback);
 
     vtk_renderWindowInteractor->Start();
-
 }
 
 /**********************************************/
@@ -148,9 +212,8 @@ void Visualizer::saveScreenshot(string &object, int &number)
     vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter =
     vtkSmartPointer<vtkWindowToImageFilter>::New();
     windowToImageFilter->SetInput(vtk_renderWindow);
-    windowToImageFilter->SetScale(1); //set the resolution of the output image (3 times the current resolution of vtk render window)
-    //windowToImageFilter->SetInputBufferTypeToRGBA(); //also record the alpha (transparency) channel
-    windowToImageFilter->ReadFrontBufferOff(); // read from the back buffer
+    windowToImageFilter->SetScale(1);
+    windowToImageFilter->ReadFrontBufferOff();
     windowToImageFilter->Update();
 
     vtkSmartPointer<vtkPNGWriter> writer =
