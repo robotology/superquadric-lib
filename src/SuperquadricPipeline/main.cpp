@@ -1,16 +1,17 @@
 #include "superquadricEstimator.h"
 #include "visRenderer.h"
+#include "graspComputation.h"
 
 #include <cstdlib>
 #include <cmath>
 #include <iostream>
 
 
-
 using namespace std;
 using namespace Eigen;
 using namespace SuperqModel;
 using namespace SuperqVis;
+using namespace SuperqGrasp;
 
 
 int main(int argc, char* argv[])
@@ -28,21 +29,40 @@ int main(int argc, char* argv[])
     Visualizer vis;
 
     // Superq Estimator
-    EstimatorApp estim;
+    SuperqEstimatorApp estim;
 
-    // Params for solver in estimator
-    IpoptParam params;
-    params.tol=1e-5;
-    params.acceptable_iter=0;
-    params.mu_strategy="adaptive";
-    params.max_iter=1000000;
-    params.max_cpu_time=5.0;
-    params.nlp_scaling_method="gradient-based";
-    params.hessian_approximation="limited-memory";
-    params.print_level=0;
-    params.object_class="default";
-    params.optimizer_points=50;
-    params.random_sampling=true;
+    // Superq Estimator
+    GraspEstimatorApp grasp_estim;
+
+    // Grasp pose
+    GraspPoses grasp_pose;
+
+    // Params for solver in superq estimator
+    IpoptParam iparams_superq;
+    iparams_superq.tol=1e-5;
+    iparams_superq.acceptable_iter=0;
+    iparams_superq.mu_strategy="adaptive";
+    iparams_superq.max_iter=1000000;
+    iparams_superq.max_cpu_time=5.0;
+    iparams_superq.nlp_scaling_method="gradient-based";
+    iparams_superq.hessian_approximation="limited-memory";
+    iparams_superq.print_level=0;
+    iparams_superq.object_class="default";
+    iparams_superq.optimizer_points=50;
+    iparams_superq.random_sampling=true;
+
+    // Params for solver in grasp estimator
+    IpoptParam iparams_grasp;
+    iparams_grasp.tol=1e-5;
+    iparams_grasp.constr_tol=1e-4;
+    iparams_grasp.acceptable_iter=0;
+    iparams_grasp.mu_strategy="adaptive";
+    iparams_grasp.max_iter=1000000;
+    iparams_grasp.max_cpu_time=5.0;
+    iparams_grasp.nlp_scaling_method="gradient-based";
+    iparams_grasp.hessian_approximation="limited-memory";
+    iparams_grasp.print_level=0;
+
 
     /*******************************************/
     // Read point cloud
@@ -89,7 +109,34 @@ int main(int argc, char* argv[])
 
     /*******************************************/
     // Compute superq
-    superq=estim.computeSuperq(params, point_cloud);
+    superq=estim.computeSuperq(iparams_superq, point_cloud);
+
+    // Params for grasp computation
+    GraspParams params_grasp;
+    params_grasp.left_or_right="left";
+    params_grasp.pl << 0.0, 0.0, 1.0, 0.18;
+    params_grasp.disp <<  0.05, 0.0, 0.0;
+    params_grasp.n_hands = 48;
+    params_grasp.object_superq = superq;
+    params_grasp.max_superq = 4;
+    params_grasp.bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.2, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
+    params_grasp.bounds_right << -0.5, 0.0, -0.2, 0.2, -0.2, 0.3,  -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
+    params_grasp.bounds_constr_left.resize(8,2);
+    params_grasp.bounds_constr_left << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
+                                        10.0, 0.0, 1.0, 0.001, 10.0, 0.001, 10.0, 0.001, 10.0;
+    params_grasp.bounds_constr_right.resize(8,2);
+    params_grasp.bounds_constr_right << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
+                                        10.0, 0.0, 1.0, 0.001, 10.0, 0.001, 10.0, 0.001, 10.0;
+
+    Superquadric hand;
+    Vector11d hand_vector;
+    hand_vector << 0.03, 0.06, 0.03, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    hand.setSuperqParams(hand_vector);
+    params_grasp.hand_superq = hand;
+
+    /*******************************************/
+    // Compute grasp pose
+    grasp_pose=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 
     /*******************************************/
     // Outcome visualization

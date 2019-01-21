@@ -150,8 +150,8 @@ bool graspComputation::get_nlp_info(Ipopt::Index &n, Ipopt::Index &m,Ipopt::Inde
     nnz_jac_g=n*m;
     nnz_h_lag=0;
     index_style=TNLP::C_STYLE;
-    bounds.resize(n,2);
-    bounds_constr.resize(m,2);
+    //bounds.resize(n,2);
+    //bounds_constr.resize(m,2);
 
     return true;
 }
@@ -332,11 +332,11 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
 
      Vector3d x_hand, y_hand, z_hand;
 
-     x_hand=H.col(0).segment(3,1);
+     x_hand=H.col(0).segment(0,3);
 
-     y_hand=H.col(1).segment(3,1);
+     y_hand=H.col(1).segment(0,3);
 
-     z_hand=H.col(2).segment(3,1);
+     z_hand=H.col(2).segment(0,3);
 
      F_x=coneImplicitFunction(x_hand, d_x, theta_x);
      F_y=coneImplicitFunction(y_hand, d_y, theta_y);
@@ -409,11 +409,11 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
 
      Vector3d x_hand, y_hand, z_hand;
 
-     x_hand=H.col(0).segment(3,1);
+     x_hand=H.col(0).segment(0,3);
 
-     y_hand=H.col(1).segment(3,1);
+     y_hand=H.col(1).segment(0,3);
 
-     z_hand=H.col(2).segment(3,1);
+     z_hand=H.col(2).segment(0,3);
 
      F_x=coneImplicitFunction(x_hand, d_x, theta_x);
      F_y=coneImplicitFunction(y_hand, d_y, theta_y);
@@ -476,7 +476,6 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
                  Ipopt::Index m, Ipopt::Index nele_jac, Ipopt::Index *iRow,
                  Ipopt::Index *jCol, Ipopt::Number *values)
  {
-     Vector6d x_tmp;
      double grad_p, grad_n;
      double eps=1e-6;
 
@@ -490,10 +489,10 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
          {
              for(Ipopt::Index j=0;j<n;j++)
              {
-                 x_tmp(j)=x_tmp[j]+eps;
+                 x_tmp(j)=x_tmp(j)+eps;
 
                  grad_p=G_v(x_tmp,i,m);
-                 x_tmp(j)=x_tmp[j]-eps;
+                 x_tmp(j)=x_tmp(j)-eps;
 
                  grad_n=G_v(x_tmp,i,m);
 
@@ -545,6 +544,7 @@ void graspComputation::configure(GraspParams &g_params)
     max_superq = g_params.max_superq;
 
     bounds_constr.resize(5 + max_superq -1, 2);
+
     if (l_o_r=="right")
         bounds_constr = g_params.bounds_constr_right;
     else if (l_o_r=="left")
@@ -853,10 +853,11 @@ double graspComputation::f_v2(Vector11d &obj, Vector3d &point_tr)
  }
 
 /*****************************************************************/
-GraspPoses GraspEstimatorApp::computeGraspPoses(IpoptParam &pars, GraspParams &g_params, Superquadric &object_superq)
+GraspPoses GraspEstimatorApp::computeGraspPoses(IpoptParam &pars, GraspParams &g_params)
 {
     Ipopt::SmartPtr<Ipopt::IpoptApplication> app=new Ipopt::IpoptApplication;
     app->Options()->SetNumericValue("tol",pars.tol);
+    app->Options()->SetNumericValue("constr_viol_tol",pars.constr_tol);
     app->Options()->SetIntegerValue("acceptable_iter",pars.acceptable_iter);
     app->Options()->SetStringValue("mu_strategy",pars.mu_strategy);
     app->Options()->SetIntegerValue("max_iter",pars.max_iter);
@@ -885,22 +886,28 @@ GraspPoses GraspEstimatorApp::computeGraspPoses(IpoptParam &pars, GraspParams &g
     if (status==Ipopt::Solve_Succeeded)
     {
         pose_hand=estim->get_result();
-        cout<<"|| Solution found            : ";
+        cout<<"|| ---------------------------------------------------- ||"<<endl;
+        cout<<"|| Grasp poses for "<<g_params.left_or_right<< " hand estimated            : ";
         cout<<pose_hand.getGraspParams().format(CommaInitFmt)<<endl<<endl;
-        cout<<"|| Computed in               :  ";
+        cout<<"|| Computed in                                    :  ";
         cout<<   computation_time<<" [s]"<<endl;
+        cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
         return pose_hand;
     }
     else if(status==Ipopt::Maximum_CpuTime_Exceeded)
     {
         pose_hand=estim->get_result();
-        cout<<"|| Time expired              :"<<pose_hand.getGraspParams().format(CommaInitFmt)<<endl<<endl;
-        cout<<"|| Computed in               :  "<<   computation_time<<" [s]"<<endl;
+        cout<<"|| ---------------------------------------------------- ||"<<endl;
+        cout<<"|| Time expired                                   :  "<<pose_hand.getGraspParams().format(CommaInitFmt)<<endl<<endl;
+        cout<<"|| Grasp poses for "<<g_params.left_or_right<< " hand estimated in            :  "<<   computation_time<<" [s]"<<endl;
+        cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
         return pose_hand;
     }
     else
     {
-        cerr<<"|| Not solution found"<<endl;
+      cout<<"|| ---------------------------------------------------- ||"<<endl;
+        cerr<<"|| Not solution found for "<<g_params.left_or_right<< " hand"<<endl;
+        cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
         Vector6d x;
         x.setZero();
 

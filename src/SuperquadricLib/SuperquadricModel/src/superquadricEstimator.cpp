@@ -30,22 +30,24 @@ void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_po
 
     x0.resize(11);
     x0.setZero();
-    computeX0(x0);
+    computeX0(x0, point_cloud);
 }
 
 /****************************************************************/
-void SuperqEstimator::computeX0(Vector11d &x0)
+void SuperqEstimator::computeX0(Vector11d &x0, PointCloud &point_cloud)
 {
     x0(3)=(bounds(3,0)+bounds(3,1))/2;
     x0(4)=(bounds(4,0)+bounds(4,1))/2;
     x0(5)=x0(6)=x0(7)=0.0;
 
     Matrix3d orientation;
-    orientation=points_downsampled.getAxes();
+    orientation=point_cloud.getAxes();
+
     x0.segment(8,3)=orientation.eulerAngles(2,1,2);
 
     Matrix32d bounding_box(3,2);
-    bounding_box=points_downsampled.getBoundingBox();
+    bounding_box=point_cloud.getBoundingBox();
+
 
     x0(0)=(-bounding_box(0,0)+bounding_box(0,1))/2;
     x0(1)=(-bounding_box(1,0)+bounding_box(1,1))/2;
@@ -302,7 +304,7 @@ Superquadric SuperqEstimator::get_result() const
 }
 
 /****************************************************************/
-Superquadric EstimatorApp::computeSuperq(IpoptParam &pars, PointCloud &point_cloud)
+Superquadric SuperqEstimatorApp::computeSuperq(IpoptParam &pars, PointCloud &point_cloud)
 {
     Ipopt::SmartPtr<Ipopt::IpoptApplication> app=new Ipopt::IpoptApplication;
     app->Options()->SetNumericValue("tol",pars.tol);
@@ -334,22 +336,28 @@ Superquadric EstimatorApp::computeSuperq(IpoptParam &pars, PointCloud &point_clo
     if (status==Ipopt::Solve_Succeeded)
     {
         superq=estim->get_result();
-        cout<<"|| Solution found            : ";
+        cout<<"|| ---------------------------------------------------- ||"<<endl;
+        cout<<"|| Superquadric estimated                         : ";
         cout<<superq.getSuperqParams().format(CommaInitFmt)<<endl<<endl;
-        cout<<"|| Computed in               :  ";
+        cout<<"|| Computed in                                    :  ";
         cout<<   computation_time<<" [s]"<<endl;
+        cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
         return superq;
     }
     else if(status==Ipopt::Maximum_CpuTime_Exceeded)
     {
         superq=estim->get_result();
-        cout<<"|| Time expired              :"<<superq.getSuperqParams().format(CommaInitFmt)<<endl<<endl;
-        cout<<"|| Computed in               :  "<<   computation_time<<" [s]"<<endl;
+        cout<<"|| ---------------------------------------------------- ||"<<endl;
+        cout<<"|| Time expired                                         :"<<superq.getSuperqParams().format(CommaInitFmt)<<endl<<endl;
+        cout<<"|| Superquadric estimated in                            :  "<<   computation_time<<" [s]"<<endl;
+        cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
         return superq;
     }
     else
     {
+        cout<<"|| ---------------------------------------------------- ||"<<endl;
         cerr<<"|| Not solution found"<<endl;
+        cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
         Vector11d x(11);
         x.setZero();
 

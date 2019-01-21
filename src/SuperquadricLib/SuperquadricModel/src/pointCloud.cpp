@@ -125,6 +125,7 @@ Matrix3d PointCloud::getAxes()
 {
     Matrix3d M;
     M.setZero();
+    barycenter.setZero();
 
     for (auto& point: points)
     {

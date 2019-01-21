@@ -165,7 +165,7 @@ protected:
     * @param point_cloud is the object point cloud
     */
     /****************************************************************/
-    void computeX0(Vector11d &x0);
+    void computeX0(Vector11d &x0, SuperqModel::PointCloud &point_cloud);
 
     /** Finalize the solution
     * @param n is the dimension of the variable
@@ -225,6 +225,7 @@ public:
 struct IpoptParam
 {
     double tol;
+    double constr_tol;
     int acceptable_iter;
     std::string mu_strategy;
     int max_iter;
@@ -238,7 +239,7 @@ struct IpoptParam
 };
 
 
-class EstimatorApp
+class SuperqEstimatorApp
 {
 public:
     SuperqModel::Superquadric computeSuperq(SuperqModel::IpoptParam &pars, PointCloud &point_cloud);

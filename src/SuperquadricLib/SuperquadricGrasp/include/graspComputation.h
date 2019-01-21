@@ -166,7 +166,7 @@ public:
 class GraspEstimatorApp
 {
 public:
-     GraspPoses computeGraspPoses(SuperqModel::IpoptParam &pars, GraspParams &g_params, SuperqModel::Superquadric &object_superq);
+     GraspPoses computeGraspPoses(SuperqModel::IpoptParam &pars, GraspParams &g_params);
 };
 
 }
