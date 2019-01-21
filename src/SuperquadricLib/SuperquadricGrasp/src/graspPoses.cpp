@@ -14,38 +14,38 @@ GraspPoses::GraspPoses()
 /*********************************************/
 bool GraspPoses::setGraspParams(Eigen::VectorXd &p)
 {
-  bool params_ok=true;
+    bool params_ok=true;
 
-  params_ok=params_ok && ((p.size()==6) || (p.size()==7));
+    params_ok=params_ok && ((p.size()==6) || (p.size()==7));
 
-  if (params_ok)
-      params=p;
-  else
-      return false;
+    if (params_ok)
+        params=p;
+    else
+        return false;
 
-  position=params.head(3);
-  if (p.size()==6)
-  {
-      ea=params.segment(3,3);
+    position=params.head(3);
+    if (p.size()==6)
+    {
+        ea=params.segment(3,3);
 
-      axes = AngleAxisd(ea(0), Vector3d::UnitZ())*
-             AngleAxisd(ea(1), Vector3d::UnitY())*
-             AngleAxisd(ea(2), Vector3d::UnitZ());
+        axes = AngleAxisd(ea(0), Vector3d::UnitZ())*
+               AngleAxisd(ea(1), Vector3d::UnitY())*
+               AngleAxisd(ea(2), Vector3d::UnitZ());
 
-      AngleAxisd aa_pose(axes);
+        AngleAxisd aa_pose(axes);
 
-      axisangle.head(3)=aa_pose.axis();
-      axisangle(3)=aa_pose.angle();
+        axisangle.head(3)=aa_pose.axis();
+        axisangle(3)=aa_pose.angle();
 
-  }
-  else if (p.size()==7)
-  {
-      axisangle=params.segment(3,4);
-      axes = AngleAxisd(axisangle(3), axisangle.head(3));
-      ea = axes.eulerAngles(2,1,2);
-  }
+    }
+    else if (p.size()==7)
+    {
+        axisangle=params.segment(3,4);
+        axes = AngleAxisd(axisangle(3), axisangle.head(3));
+        ea = axes.eulerAngles(2,1,2);
+    }
 
-  return params_ok;
+    return params_ok;
 }
 
 /*********************************************/

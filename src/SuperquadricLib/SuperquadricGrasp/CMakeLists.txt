@@ -21,6 +21,12 @@ set(${LIBRARY_TARGET_NAME}_HDR
 		include/graspPoses.h
 )
 
+find_package(Eigen3 QUIET CONFIG)
+if(NOT EIGEN3_FOUND)
+    find_package(Eigen3 REQUIRED)
+endif()
+
+
 # You can add an external dependency using the find_package() function call
 # See: https://cmake.org/cmake/help/latest/command/find_package.html
 # Note that the imported objects resulting from the find_package() depends upon
@@ -56,6 +62,14 @@ target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC "$<BUILD_INTERFACE:${CM
                                                          "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
 
 target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC SuperquadricLibModel)
+
+if(NOT TARGET Eigen3)
+    target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
+
+	target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+else()
+    target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC Eigen3::Eigen)
+endif()
 
 # If you used find_package() you need to use target_include_directories() and/or
 # target_link_libraries(). As explained previously, depending on the imported
