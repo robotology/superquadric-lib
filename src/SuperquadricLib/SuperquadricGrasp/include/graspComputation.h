@@ -19,6 +19,11 @@ struct GraspParams
     int max_superq;
     Eigen::Vector4d pl;
     Eigen::Vector3d disp;
+    int n_hands;
+    SuperqModel::Superquadric object_superq;
+    SuperqModel::Superquadric hand_superq;
+    std::deque<SuperqModel::Superquadric> obstacles_superq;
+
 };
 
 class graspComputation : public Ipopt::TNLP
@@ -36,6 +41,7 @@ protected:
     Eigen::VectorXd g;
     Vector6d x_tmp;
     Eigen::Vector4d point_tr, point_tmp;
+    Vector6d solution_vector;
 
     double theta_x, theta_y, theta_z;
 
@@ -45,19 +51,19 @@ protected:
 
     int num_superq;
     int max_superq;
+    int n_hands;
     double aux_objvalue;
     std::string l_o_r;
     double top_grasp;
 
-    Vector6d solution;
+    GraspPoses solution;
     Vector6d robot_pose;
     double final_F_value;
     std::deque<double> final_obstacles_value;
 
 public:
     /****************************************************************/
-    void init(SuperqModel::Superquadric &object_superq, SuperqModel::Superquadric &hand_superq,
-                                const std::deque<SuperqModel::Superquadric> &obstacles_superq, int &n_handpoints, const std::string &str_hand);
+    void init(GraspParams &g_params);
 
 
     /****************************************************************/
@@ -127,10 +133,10 @@ public:
                           Ipopt::IpoptCalculatedQuantities *ip_cq);
 
     /****************************************************************/
-    Vector6d get_result() const;
+    GraspPoses get_result() const;
 
     /****************************************************************/
-    Vector11d get_hand() const;
+    SuperqModel::Superquadric get_hand() const;
 
     /****************************************************************/
     double get_final_F() const;
@@ -160,7 +166,7 @@ public:
 class GraspEstimatorApp
 {
 public:
-     SuperqGrasp::GraspPoses computeGraspPoses(SuperqModel::IpoptParam &pars, SuperqModel::Superquadric);
+     GraspPoses computeGraspPoses(SuperqModel::IpoptParam &pars, GraspParams &g_params, SuperqModel::Superquadric &object_superq);
 };
 
 }

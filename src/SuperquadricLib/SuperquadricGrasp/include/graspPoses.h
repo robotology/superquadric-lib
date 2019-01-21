@@ -40,7 +40,7 @@ public:
      * containing the grasping pose parameters
      * @return true/false if the parameters are consistent
      */
-    bool setGraspParams(Eigen::VectorXd &p);
+    bool setGraspParams(const Eigen::VectorXd &p);
 
     /**
      * Set grasp position coordinates

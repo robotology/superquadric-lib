@@ -44,7 +44,7 @@ public:
      * containing the superquadric parameters
      * @return true/false if the parameters are consistent
      */
-    bool setSuperqParams(Vector11d &p);
+    bool setSuperqParams(const Vector11d &p);
 
     /**
      * Set  superquadric dimensions

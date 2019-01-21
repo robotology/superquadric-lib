@@ -15,7 +15,7 @@ Superquadric::Superquadric()
 }
 
 /*********************************************/
-bool Superquadric::setSuperqParams(Vector11d &p)
+bool Superquadric::setSuperqParams(const Vector11d &p)
 {
     bool params_ok=true;
 

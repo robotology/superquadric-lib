@@ -13,21 +13,23 @@ using namespace SuperqGrasp;
 
 
 /****************************************************************/
-void graspComputation::init(Superquadric &object_superq, Superquadric &hand_superq, const deque<Superquadric> &obstacles_superq, int &n_handpoints, const string &str_hand)
+void graspComputation::init(GraspParams &g_params)
 {
-    hand = hand_superq.getSuperqParams();
-    object = object_superq.getSuperqParams();
+    hand = g_params.hand_superq.getSuperqParams();
+    object = g_params.object_superq.getSuperqParams();
+    n_hands = g_params.n_hands;
+    l_o_r = g_params.left_or_right;
 
-    for (size_t i=0; i<obstacles_superq.size(); i++)
+    for (size_t i=0; i<g_params.obstacles_superq.size(); i++)
     {
-        Superquadric obst=obstacles_superq[i];
+        Superquadric obst=g_params.obstacles_superq[i];
         obstacles.push_back(obst.getSuperqParams());
     }
 
-    if (obstacles_superq.size()!= num_superq)
-        num_superq = obstacles_superq.size();
+    if (g_params.obstacles_superq.size()!= num_superq)
+        num_superq = g_params.obstacles_superq.size();
 
-    Vector3d euler_obj = object_superq.getSuperqEulerZYZ();
+    Vector3d euler_obj = g_params.object_superq.getSuperqEulerZYZ();
 
     Matrix3d R;
     R = AngleAxisd(euler_obj(0), Vector3d::UnitZ())*         // To make it more efficient
@@ -36,24 +38,24 @@ void graspComputation::init(Superquadric &object_superq, Superquadric &hand_supe
 
     H_o2w.block(0,0,3,3) = R;
 
-    H_o2w.col(3).segment(3,1)=object_superq.getSuperqCenter();
+    H_o2w.col(3).segment(3,1)=g_params.object_superq.getSuperqCenter();
     H_o2w.transposeInPlace();
 
-    Vector3d euler_hand = hand_superq.getSuperqEulerZYZ();
+    Vector3d euler_hand = g_params.hand_superq.getSuperqEulerZYZ();
     R = AngleAxisd(euler_hand(0), Vector3d::UnitZ())*         // To make it more efficient
         AngleAxisd(euler_hand(1), Vector3d::UnitY())*
         AngleAxisd(euler_hand(2), Vector3d::UnitZ());
 
     H_h2w.block(0,0,3,3) = R;
-    H_h2w.col(3).segment(3,1)=hand_superq.getSuperqCenter();
+    H_h2w.col(3).segment(3,1)=g_params.hand_superq.getSuperqCenter();
 
-    for (auto i: irange(0, (int)sqrt(n_handpoints), 1))
+    for (auto i: irange(0, (int)sqrt(n_hands), 1))
     {
-        for (double theta=0; theta < 2*M_PI; theta+= M_PI/((int)sqrt(n_handpoints)))
+        for (double theta=0; theta < 2*M_PI; theta+= M_PI/((int)sqrt(n_hands)))
         {
-            Vector3d point=computePointsHand(hand,i, (int)sqrt(n_handpoints), str_hand, theta);
+            Vector3d point=computePointsHand(hand,i, (int)sqrt(n_hands), l_o_r, theta);
 
-            if (str_hand=="right")
+            if (l_o_r=="right")
             {
                 if (point[0] + point[2] <= 0)
                 {
@@ -244,13 +246,6 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
      Vector3d point3=point_tr.segment(0,3);
 
      return f_v2(object,point3);
-     // double num1=H_o2w(0,0)*point_tr(0)+H_o2w(0,1)*point_tr(1)+H_o2w(0,2)*point_tr(2)-object(5)*H_o2w(0,0)-object(6)*H_o2w(0,1)-object(7)*H_o2w(0,2);
-     // double num2=H_o2w(1,0)*point_tr(0)+H_o2w(1,1)*point_tr(1)+H_o2w(1,2)*point_tr(2)-object(5)*H_o2w(1,0)-object(6)*H_o2w(1,1)-object(7)*H_o2w(1,2);
-     // double num3=H_o2w(2,0)*point_tr(0)+H_o2w(2,1)*point_tr(1)+H_o2w(2,2)*point_tr(2)-object(5)*H_o2w(2,0)-object(6)*H_o2w(2,1)-object(7)*H_o2w(2,2);
-     //
-     // double tmp=pow(abs(num1/object(0)),2.0/object(4)) + pow(abs(num2/object(1)),2.0/object(4));
-     //
-     // return pow( abs(tmp),object(4)/object(3)) + pow( abs(num3/object(2)),(2.0/object(3)));
  }
 
  /****************************************************************/
@@ -279,14 +274,6 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
      Vector3d point3=point_tr.segment(0,3);
 
      return f_v2(object,point3);
-
-     // double num1=H_o2w(0,0)*point_tr(0)+H_o2w(0,1)*point_tr(1)+H_o2w(0,2)*point_tr(2)-object(5)*H_o2w(0,0)-object(6)*H_o2w(0,1)-object(7)*H_o2w(0,2);
-     // double num2=H_o2w(1,0)*point_tr(0)+H_o2w(1,1)*point_tr(1)+H_o2w(1,2)*point_tr(2)-object(5)*H_o2w(1,0)-object(6)*H_o2w(1,1)-object(7)*H_o2w(1,2);
-     // double num3=H_o2w(2,0)*point_tr(0)+H_o2w(2,1)*point_tr(1)+H_o2w(2,2)*point_tr(2)-object(5)*H_o2w(2,0)-object(6)*H_o2w(2,1)-object(7)*H_o2w(2,2);
-     //
-     // double tmp=pow(abs(num1/object(0)),2.0/object(4)) + pow(abs(num2/object(1)),2.0/object(4));
-     //
-     // return pow( abs(tmp),object(4)/object(3)) + pow( abs(num3/object(2)),(2.0/object(3)));
  }
 
  /****************************************************************/
@@ -578,31 +565,31 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
                       Ipopt::IpoptCalculatedQuantities *ip_cq)
 {
      for (auto i: irange(0,6,1))
-         solution(i)=x[i];
+         solution_vector(i)=x[i];
 
-     H_x = computeMatrix(solution);
+     H_x = computeMatrix(solution_vector);
 
      if (notAlignedPose(H_x))
          alignPose(H_x);
 
      Matrix3d R = H_x.block(0,0,3,3);
 
-     solution.segment(3,3)= R.eulerAngles(2,1,2);
+     solution_vector.segment(3,3)= R.eulerAngles(2,1,2);
 
      for (Ipopt::Index i=0; i<3; i++)
-         solution(i)=H_x(i,3);
+         solution_vector(i)=H_x(i,3);
 
-      robot_pose = solution;
+      robot_pose = solution_vector;
 
       if (l_o_r=="right")
       {
-          robot_pose.segment(0,3) = solution.segment(0,3)-(hand(0)+displacement(2))*(H_x.col(2).segment(3,1));
+          robot_pose.segment(0,3) = solution_vector.segment(0,3)-(hand(0)+displacement(2))*(H_x.col(2).segment(3,1));
           robot_pose.segment(0,3).noalias() = robot_pose.segment(0,3)-(hand(0) + displacement(0))*(H_x.col(0).segment(3,1));
           robot_pose.segment(0,3).noalias() = robot_pose.segment(0,3)-(displacement(1))*(H_x.col(1).segment(3,1));
       }
       else
       {
-          robot_pose.segment(0,3) = solution.segment(0,3)+(hand(0)+displacement(2))*(H_x.col(2).segment(3,1));
+          robot_pose.segment(0,3) = solution_vector.segment(0,3)+(hand(0)+displacement(2))*(H_x.col(2).segment(3,1));
           robot_pose.segment(0,3).noalias() = robot_pose.segment(0,3)-(hand(0) + displacement(0))*(H_x.col(0).segment(3,1));
           robot_pose.segment(0,3).noalias() = robot_pose.segment(0,3)-(displacement(1))*(H_x.col(1).segment(3,1));
       }
@@ -611,7 +598,7 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
 
       for(auto point : points_on)
       {
-          final_F_value += pow( pow(f_v(solution,point),object(3))-1,2 );
+          final_F_value += pow( pow(f_v(solution_vector,point),object(3))-1,2 );
       }
 
       final_F_value/=points_on.size();
@@ -622,18 +609,22 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
           x_aux(i)=x[i];
 
       final_obstacles_value=computeFinalObstacleValues(robot_pose);
+
+      solution.setGraspParams(solution_vector);
 }
 
 /****************************************************************/
-Vector6d graspComputation::get_result() const
+GraspPoses graspComputation::get_result() const
 {
    return solution;
 }
 
 /****************************************************************/
-Vector11d graspComputation::get_hand() const
+Superquadric graspComputation::get_hand() const
 {
-   return hand;
+   Superquadric hand_superq;
+   hand_superq.setSuperqParams(hand);
+   return hand_superq;
 }
 
 /****************************************************************/
@@ -862,7 +853,60 @@ double graspComputation::f_v2(Vector11d &obj, Vector3d &point_tr)
  }
 
 /*****************************************************************/
-GraspPoses GraspEstimatorApp::computeGraspPoses(IpoptParam &pars, Superquadric)
+GraspPoses GraspEstimatorApp::computeGraspPoses(IpoptParam &pars, GraspParams &g_params, Superquadric &object_superq)
 {
+    Ipopt::SmartPtr<Ipopt::IpoptApplication> app=new Ipopt::IpoptApplication;
+    app->Options()->SetNumericValue("tol",pars.tol);
+    app->Options()->SetIntegerValue("acceptable_iter",pars.acceptable_iter);
+    app->Options()->SetStringValue("mu_strategy",pars.mu_strategy);
+    app->Options()->SetIntegerValue("max_iter",pars.max_iter);
+    app->Options()->SetNumericValue("max_cpu_time",pars.max_cpu_time);
+    app->Options()->SetStringValue("nlp_scaling_method",pars.nlp_scaling_method);
+    app->Options()->SetStringValue("hessian_approximation",pars.hessian_approximation);
+    app->Options()->SetIntegerValue("print_level",pars.print_level);
+    //app->Options()->SetStringValue("derivative_test","first-order");
+
+    app->Initialize();
+
+    Ipopt::SmartPtr<graspComputation> estim = new graspComputation;
+    estim->init(g_params);
+    estim->configure(g_params);
+
+    clock_t tStart = clock();
+
+    Ipopt::ApplicationReturnStatus status=app->OptimizeTNLP(GetRawPtr(estim));
+
+    double computation_time=(double)(clock() - tStart)/CLOCKS_PER_SEC;
+
+    GraspPoses pose_hand;
+
+    IOFormat CommaInitFmt(StreamPrecision, DontAlignCols,", ", ", ", "", "", " [ ", "]");
+
+    if (status==Ipopt::Solve_Succeeded)
+    {
+        pose_hand=estim->get_result();
+        cout<<"|| Solution found            : ";
+        cout<<pose_hand.getGraspParams().format(CommaInitFmt)<<endl<<endl;
+        cout<<"|| Computed in               :  ";
+        cout<<   computation_time<<" [s]"<<endl;
+        return pose_hand;
+    }
+    else if(status==Ipopt::Maximum_CpuTime_Exceeded)
+    {
+        pose_hand=estim->get_result();
+        cout<<"|| Time expired              :"<<pose_hand.getGraspParams().format(CommaInitFmt)<<endl<<endl;
+        cout<<"|| Computed in               :  "<<   computation_time<<" [s]"<<endl;
+        return pose_hand;
+    }
+    else
+    {
+        cerr<<"|| Not solution found"<<endl;
+        Vector6d x;
+        x.setZero();
+
+        pose_hand.setGraspParams(x);
+        return pose_hand;
+    }
+
 
 }

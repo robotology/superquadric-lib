@@ -12,7 +12,7 @@ GraspPoses::GraspPoses()
 }
 
 /*********************************************/
-bool GraspPoses::setGraspParams(Eigen::VectorXd &p)
+bool GraspPoses::setGraspParams(const VectorXd &p)
 {
     bool params_ok=true;
 
