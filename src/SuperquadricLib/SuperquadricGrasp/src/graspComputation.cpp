@@ -56,13 +56,13 @@ void graspComputation::init(GraspParams &g_params)
 
     for (auto i: irange(0, (int)sqrt(n_hands), 1))
     {
-        for (double theta=0; theta < 2*M_PI; theta+= M_PI/((int)sqrt(n_hands)))
+        for (double theta=0; theta <= 2*M_PI; theta+= M_PI/((int)sqrt(n_hands)))
         {
             Vector3d point=computePointsHand(hand, i, (int)sqrt(n_hands), l_o_r, theta);
 
             if (l_o_r=="right")
             {
-                if (point[0] + point[2] <= 0)
+                if (point(0) + point(2) <= 0)
                 {
                     Vector4d point_tmp;
                     point_tmp.segment(0,3)=point;
@@ -74,7 +74,7 @@ void graspComputation::init(GraspParams &g_params)
             }
             else
             {
-                if (point[0] - point[2] < 0)
+                if (point(0) - point(2) < 0)
                 {
                     Vector4d point_tmp;
                     point_tmp.segment(0,3)=point;
@@ -84,6 +84,9 @@ void graspComputation::init(GraspParams &g_params)
                     points_on.push_back(point);
                 }
             }
+
+
+
         }
     }
 
@@ -100,6 +103,10 @@ void graspComputation::init(GraspParams &g_params)
         d_y(0)= 0.0; d_y(1)= -0.7; d_y(2)=-0.7;
         d_z(0)=0.0; d_z(1)=-0.7; d_z(2)= 0.7;
     }
+
+    d_x=d_x/d_x.norm();
+    d_y=d_y/d_y.norm();
+    d_z=d_z/d_z.norm();
 
     if (num_superq>0)
        theta_x=M_PI/4.0;
@@ -118,7 +125,7 @@ Vector3d graspComputation::computePointsHand(Vector11d &hand, int j, int l, cons
     double omega;
     double ce,se,co,so;
 
-    if (object.segment(0,3).maxCoeff()> object.segment(0,3).maxCoeff())
+    if (object.segment(0,3).maxCoeff()> hand.segment(0,3).maxCoeff())
         hand(1)=object.segment(0,3).maxCoeff();
 
     omega=j*M_PI/(l);
@@ -329,10 +336,6 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
 
      H.noalias()=H_x*H_h2w;
 
-     d_x=d_x/d_x.norm();
-     d_y=d_y/d_y.norm();
-     d_z=d_z/d_z.norm();
-
      double F_x, F_y, F_z;
 
      Vector3d x_hand, y_hand, z_hand;
@@ -374,13 +377,13 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
 
      if (l_o_r=="right")
      {
-        robotPose=x_tmp.segment(0,3)-hand(0)*z_hand;
-        robotPose = robotPose-hand(0)*x_hand;
+        robotPose = x_tmp.segment(0,3)-hand(0)*z_hand;
+        robotPose.noalias() = robotPose-hand(0)*x_hand;
      }
      else
      {
-         robotPose=x_tmp.segment(0,3)+hand(0)*z_hand;
-         robotPose = robotPose-hand(0)*x_hand;
+         robotPose = x_tmp.segment(0,3)+hand(0)*z_hand;
+         robotPose.noalias() = robotPose-hand(0)*x_hand;
      }
 
      g[4]=object(0)*object(1)*object(2)*(pow(f_v2(object,robotPose), object(3)) -1);
@@ -405,10 +408,6 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
      H_x = computeMatrix(x);
 
      H.noalias()=H_x*H_h2w;
-
-     d_x=d_x/d_x.norm();
-     d_y=d_y/d_y.norm();
-     d_z=d_z/d_z.norm();
 
      double F_x, F_y, F_z;
 
@@ -461,6 +460,7 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
      }
 
      g[4]=object(0)*object(1)*object(2)*(pow(f_v2(object,robotPose), object(3)) -1);
+
 
 
      if (num_superq>0)
@@ -842,7 +842,7 @@ void graspComputation::alignPose(Matrix4d &final_H)
         rot_x=AngleAxisd(axis(3), axis.segment(0,3));
     }
 
-    final_H.block(0,0,3,3).noalias()= rot_x * final_H.block(0,0,3,3);
+    final_H.block(0,0,3,3)= rot_x * final_H.block(0,0,3,3);
 
 }
 
