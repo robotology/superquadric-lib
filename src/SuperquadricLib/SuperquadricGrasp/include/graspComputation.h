@@ -46,8 +46,7 @@ protected:
 
     Vector11d hand, object;
     std::deque<Vector11d> obstacles;
-    std::deque<Eigen::Vector3d> points_on;
-
+    
     int num_superq;
     int max_superq;
     int n_hands;
@@ -61,6 +60,8 @@ protected:
     std::deque<double> final_obstacles_value;
 
 public:
+
+    std::deque<Eigen::Vector3d> points_on;
     /****************************************************************/
     void init(GraspParams &g_params);
 
@@ -166,6 +167,7 @@ struct GraspResults
 {
     SuperqModel::Superquadric hand_superq;
     GraspPoses grasp_pose;
+    std::deque<Eigen::Vector3d> points_on;
 
 };
 class GraspEstimatorApp

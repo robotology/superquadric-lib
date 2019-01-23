@@ -22,6 +22,8 @@ int main(int argc, char* argv[])
     // PointCloud class
     PointCloud point_cloud;
 
+    PointCloud points_hand;
+
     // Create Superquadric
     Superquadric superq;
     vector<Superquadric> superqs;
@@ -114,15 +116,10 @@ int main(int argc, char* argv[])
     // Compute superq
     superq=estim.computeSuperq(iparams_superq, point_cloud);
 
-    // TEST
-    Vector11d tmp;
-    tmp<<0.0316777347893454, 0.0651728246997562, 0.0321984629140744,  0.535737688650518, 0.407641480297983, -0.400037047752872, -0.00839133728052138, -0.0816950932331558,  0.854,  1.667,  1.609;
-    superq.setSuperqParams(tmp);
-
     // Params for grasp computation
     GraspParams params_grasp;
     params_grasp.left_or_right="left";
-    params_grasp.pl << 0.0, 0.0, 1.0, 0.18;
+    params_grasp.pl << 0.0, 0.0, 1.0, 0.24;
     params_grasp.disp <<  0.0, 0.0, 0.0;
     params_grasp.object_superq = superq;
 
@@ -173,7 +170,7 @@ int main(int argc, char* argv[])
 
     // Add points to visualizer
     // (true/false to show downsample points used for superq estimation)
-    vis.addPoints(point_cloud, true);
+    //vis.addPoints(point_cloud, true);
 
     // Add plane for grasping
     vis.addPlane(params_grasp.pl(3));
@@ -181,6 +178,9 @@ int main(int argc, char* argv[])
     // Add poses for grasping
     vis.addPoses(grasp_poses);
     vis.addSuperq(hand_superqs);
+
+    points_hand.setPoints(grasp_res.points_on);
+    vis.addPoints(points_hand, false);
 
 
     // Visualize

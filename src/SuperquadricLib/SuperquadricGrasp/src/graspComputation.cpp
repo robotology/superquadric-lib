@@ -85,8 +85,6 @@ void graspComputation::init(GraspParams &g_params)
                 }
             }
 
-
-
         }
     }
 
@@ -587,9 +585,24 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
      //if (notAlignedPose(H_x))
     //     alignPose(H_x);
 
-     //Matrix3d R = H_x.block(0,0,3,3);
+     Matrix3d R = H_x.block(0,0,3,3);
+     solution_vector.segment(3,3)= R.eulerAngles(2,1,2);
 
-     //solution_vector.segment(3,3)= R.eulerAngles(2,1,2);
+     deque<Vector3d> aux;
+
+     for (auto point : points_on)
+     {
+          Vector4d p;
+          p(3)=1.0;
+          p.segment(0,3)=point;
+          p=H_x * p;
+          Vector3d p3=p.head(3);
+          aux.push_back(p3);
+
+     }
+
+     points_on.clear();
+     points_on=aux;
 
      for (Ipopt::Index i=0; i<3; i++)
          solution_vector(i)=H_x(i,3);
@@ -643,6 +656,7 @@ Superquadric graspComputation::get_hand() const
    hand_superq.setSuperqExps(hand.segment(3,2));
    hand_superq.setSuperqCenter(solution_vector.segment(0,3));
    hand_superq.setSuperqOrientation(solution_vector.segment(3,3));
+
    return hand_superq;
 }
 
@@ -804,17 +818,17 @@ deque<double> graspComputation::computeFinalObstacleValues(Vector6d &pose_hand)
 /****************************************************************/
 bool graspComputation::notAlignedPose(Matrix4d &final_H)
 {
-    if ((final_H(2,1)< 0.0 && final_H(2,1) > -0.5) ||  (final_H(2,1) < -0.8 && final_H(2,1) > -1.0))
-    {
+    //if ((final_H(2,1)< 0.0 && final_H(2,1) > -0.5) ||  (final_H(2,1) < -0.8 && final_H(2,1) > -1.0))
+    //{
         if ((final_H(2,1)< 0.0 && final_H(2,1) > -0.5))
             top_grasp=true;
         else
             top_grasp=false;
 
         return true;
-    }
-    else
-         return false;
+    //}
+    //else
+    //     return false;
 }
 
 /****************************************************************/
@@ -914,6 +928,7 @@ GraspResults GraspEstimatorApp::computeGraspPoses(IpoptParam &pars, GraspParams 
 
         results.grasp_pose=pose_hand;
         results.hand_superq=estim->get_hand();
+        results.points_on=estim->points_on;
         return results;
     }
     else if(status==Ipopt::Maximum_CpuTime_Exceeded)

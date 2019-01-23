@@ -8,7 +8,7 @@ using namespace SuperqGrasp;
 /*********************************************/
 GraspPoses::GraspPoses()
 {
-    params.resize(6);
+    //params.resize(6);
     cost=1e8;
     hand="right";
 }

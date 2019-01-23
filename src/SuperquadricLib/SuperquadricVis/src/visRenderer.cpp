@@ -58,6 +58,9 @@ void Visualizer::addPoints(PointCloud &point_cloud, bool show_downsample)
 
     vtk_renderer->AddActor(vtk_all_points->get_actor());
 
+// temp
+    vtk_all_points->get_actor()->GetProperty()->SetColor(1.0,0.0,0.0);
+
     if (show_downsample)
     {
         size_points=8;
@@ -163,7 +166,7 @@ void Visualizer::addPoses(vector<SuperqGrasp::GraspPoses> &poses)
 
         stringstream ss;
         ss<<pose.getHandName()<<"_"<<i%poses.size()<<" : "<<setprecision(3)<<pose.cost;
-        
+
         offset += 0.01;
 
         candidate_pose->setvtkActorCaption(ss.str(), offset);

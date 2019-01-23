@@ -64,5 +64,5 @@ void SuperquadricVis::set_parameters(const Vector11d &r)
 
     vtk_transform->Identity();
     vtk_transform->Translate(r.segment(0,2).data());
-    vtk_transform->RotateWXYZ((180.0/M_PI)*r(6),r.segment(3,5).data());
+    vtk_transform->RotateWXYZ((180.0/M_PI)*r(6),r.segment(3,3).data());
 }

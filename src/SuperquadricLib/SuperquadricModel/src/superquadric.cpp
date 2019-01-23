@@ -123,6 +123,11 @@ bool Superquadric::setSuperqOrientation(const VectorXd &o)
                AngleAxisd(o(1), Vector3d::UnitY())*
                AngleAxisd(o(2), Vector3d::UnitZ());
 
+        AngleAxisd aa_pose(axes);
+
+        axisangle.head(3)=aa_pose.axis();
+        axisangle(3)=aa_pose.angle();
+
         return true;
     }
     else if (o.size()==4)
