@@ -173,7 +173,7 @@ void Visualizer::addPoses(vector<SuperqGrasp::GraspPoses> &poses)
         cap_actor->GetTextActor()->SetTextScaleModeToNone();
 
         stringstream ss;
-        ss<<pose.getHandName()<<"_"<<i%poses.size()<<" : "<<setprecision(3)<<pose.cost;
+        ss<<pose.getHandName();//<<"_"<<i%poses.size(); //<<" : "<<setprecision(3)<<pose.cost;
 
         offset += 0.01;
 
