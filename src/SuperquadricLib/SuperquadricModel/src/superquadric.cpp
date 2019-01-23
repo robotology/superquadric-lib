@@ -51,7 +51,7 @@ Vector11d Superquadric::getSuperqParams()
 }
 
 /*********************************************/
-bool Superquadric::setSuperqDims(Vector3d &d)
+bool Superquadric::setSuperqDims(const Vector3d &d)
 {
     bool params_ok=true;
 
@@ -73,7 +73,7 @@ Vector3d Superquadric::getSuperqDims()
 }
 
 /*********************************************/
-bool Superquadric::setSuperqExps(Vector2d &e)
+bool Superquadric::setSuperqExps(const Vector2d &e)
 {
     bool params_ok=true;
 
@@ -95,7 +95,7 @@ Vector2d Superquadric::getSuperqExps()
 }
 
 /*********************************************/
-bool Superquadric::setSuperqCenter(Vector3d &c)
+bool Superquadric::setSuperqCenter(const Vector3d &c)
 {
     params.segment(5,3)=c;
     center=params.segment(5,3);
@@ -111,17 +111,39 @@ Vector3d Superquadric::getSuperqCenter()
 }
 
 /*********************************************/
-bool Superquadric::setSuperqOrientation(Vector3d &o)
+bool Superquadric::setSuperqOrientation(const VectorXd &o)
 {
-    params.segment(8,3)=o;
+    if (o.size()==3)
+    {
+        params.segment(8,3)=o;
 
-    ea = params.segment(8,3);
+        ea = params.segment(8,3);
 
-    axes = AngleAxisd(o(0), Vector3d::UnitZ())*
-           AngleAxisd(o(1), Vector3d::UnitY())*
-           AngleAxisd(o(2), Vector3d::UnitZ());
+        axes = AngleAxisd(o(0), Vector3d::UnitZ())*
+               AngleAxisd(o(1), Vector3d::UnitY())*
+               AngleAxisd(o(2), Vector3d::UnitZ());
 
-    return true;
+        return true;
+    }
+    else if (o.size()==4)
+    {
+        bool params_ok=true;
+
+        params_ok=params_ok && (o.head(3).norm()==1);
+
+        if (params_ok)
+        {
+           axes = AngleAxisd(o(3), o.head(3));
+
+           axisangle=o;
+
+           ea = axes.eulerAngles(2,1,2);
+
+           params.segment(8,3)=ea;
+        }
+
+        return params_ok;
+    }
 
 }
 
@@ -132,33 +154,13 @@ Vector3d Superquadric::getSuperqEulerZYZ()
 }
 
 /*********************************************/
-bool Superquadric::setSuperqOrientation(Vector4d &o)
-{
-    bool params_ok=true;
-    params_ok=params_ok && (o.head(3).norm()==1);
-
-    if (params_ok)
-    {
-       axes = AngleAxisd(o(3), o.head(3));
-
-       axisangle=o;
-
-       ea = axes.eulerAngles(2,1,2);
-
-       params.segment(8,3)=ea;
-    }
-
-    return params_ok;
-}
-
-/*********************************************/
 Vector4d Superquadric::getSuperqAxisAngle()
 {
     return axisangle;
 }
 
 /*********************************************/
-double Superquadric::insideOutsideF(Vector11d &pose, Vector3d &point)
+double Superquadric::insideOutsideF(const Vector11d &pose, const Vector3d &point)
 {
     Vector3d c=pose.head(3);
     Vector3d ea=pose.tail(3);

@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
 
     // Create Superquadric
     Superquadric superq;
+    vector<Superquadric> superqs;
 
     // VTK visualizer
     Visualizer vis;
@@ -35,8 +36,9 @@ int main(int argc, char* argv[])
     GraspEstimatorApp grasp_estim;
 
     // Grasp pose
-    GraspPoses grasp_pose;
+    GraspResults grasp_res;
     vector<GraspPoses> grasp_poses;
+    vector<Superquadric> hand_superqs;
 
     // Params for solver in superq estimator
     IpoptParam iparams_superq;
@@ -50,7 +52,7 @@ int main(int argc, char* argv[])
     iparams_superq.print_level=0;
     iparams_superq.object_class="default";
     iparams_superq.optimizer_points=50;
-    iparams_superq.random_sampling=true;
+    iparams_superq.random_sampling=false;
 
     // Params for solver in grasp estimator
     IpoptParam iparams_grasp;
@@ -58,7 +60,7 @@ int main(int argc, char* argv[])
     iparams_grasp.constr_tol=1e-4;
     iparams_grasp.acceptable_iter=0;
     iparams_grasp.mu_strategy="adaptive";
-    iparams_grasp.max_iter=1000000;
+    iparams_grasp.max_iter=10000;
     iparams_grasp.max_cpu_time=5.0;
     iparams_grasp.nlp_scaling_method="gradient-based";
     iparams_grasp.hessian_approximation="limited-memory";
@@ -112,12 +114,19 @@ int main(int argc, char* argv[])
     // Compute superq
     superq=estim.computeSuperq(iparams_superq, point_cloud);
 
+    // TEST
+    Vector11d tmp;
+    tmp<<0.0316777347893454, 0.0651728246997562, 0.0321984629140744,  0.535737688650518, 0.407641480297983, -0.400037047752872, -0.00839133728052138, -0.0816950932331558,  0.854,  1.667,  1.609;
+    superq.setSuperqParams(tmp);
+
     // Params for grasp computation
     GraspParams params_grasp;
     params_grasp.left_or_right="left";
     params_grasp.pl << 0.0, 0.0, 1.0, 0.18;
     params_grasp.disp <<  0.0, 0.0, 0.0;
     params_grasp.object_superq = superq;
+
+
     params_grasp.max_superq = 4;
     params_grasp.bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.2, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
     params_grasp.bounds_right << -0.5, 0.0, -0.2, 0.2, -0.2, 0.3,  -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
@@ -136,25 +145,27 @@ int main(int argc, char* argv[])
 
     /*******************************************/
     // Compute grasp pose for left hand
-    grasp_pose=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
+    grasp_res=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 
     // Add poses for grasping
-    grasp_poses.push_back(grasp_pose);
+    grasp_poses.push_back(grasp_res.grasp_pose);
+    hand_superqs.push_back(grasp_res.hand_superq);
+
+
 
     // Compute grasp pose for left hand
     params_grasp.left_or_right="right";
-    grasp_pose=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
+    grasp_res=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 
 
     // Add poses for grasping
-    grasp_poses.push_back(grasp_pose);
+    grasp_poses.push_back(grasp_res.grasp_pose);
+    hand_superqs.push_back(grasp_res.hand_superq);
 
     /*******************************************/
     // Outcome visualization
 
     // VTK need to receive a vector of Superquadrics
-    vector<Superquadric> superqs;
-    //superq.setSuperqParams(params);
     superqs.push_back(superq);
 
     // Add superquadric to visualizer
@@ -169,6 +180,7 @@ int main(int argc, char* argv[])
 
     // Add poses for grasping
     vis.addPoses(grasp_poses);
+    vis.addSuperq(hand_superqs);
 
 
     // Visualize

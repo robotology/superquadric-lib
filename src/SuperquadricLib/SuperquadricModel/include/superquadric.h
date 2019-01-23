@@ -52,7 +52,7 @@ public:
      * containing the superquadric dimensions
      * @return true/false if the parameters are consistent
      */
-    bool setSuperqDims(Eigen::Vector3d &d);
+    bool setSuperqDims(const Eigen::Vector3d &d);
 
     /**
      * Set  superquadric exponents
@@ -60,7 +60,7 @@ public:
      * containing the superquadric exponents
      * @return true/false if the parameters are consistent
      */
-    bool setSuperqExps(Eigen::Vector2d &e);
+    bool setSuperqExps(const Eigen::Vector2d &e);
 
     /**
      * Set  superquadric center coordinates
@@ -68,23 +68,18 @@ public:
      * containing the superquadric center
      * @return true/false if the parameters are consistent
      */
-    bool setSuperqCenter(Eigen::Vector3d &c);
+    bool setSuperqCenter(const Eigen::Vector3d &c);
+
 
     /**
      * Set  superquadric orientation
-     * @param o is a eigen vector of dimension 4
-     * containing the superquadric orientation as axis angle
-     * @return true/false if the parameters are consistent
-     */
-    bool setSuperqOrientation(Eigen::Vector4d &o);
-
-    /**
-     * Set  superquadric orientation
-     * @param o is a eigen vector of dimension 3
+     * @param o is a eigen vector of dimension 3 or 4
      * containing the superquadric orientation as euler angles zyz
+     * if dimensions is 3, or containing the axis angle SetOrientationMarker
+     * if dimensions is 4.
      * @return true/false if the parameters are consistent
      */
-    bool setSuperqOrientation(Eigen::Vector3d &a);
+    bool setSuperqOrientation(const Eigen::VectorXd &a);
 
     /**
      * Get all superquadric parameters
@@ -134,7 +129,7 @@ public:
      * @param point is a point where we want to evaluate the inside-ouside function
      * @return the value of the inside-outside function
      */
-    double insideOutsideF(Vector11d &pose, Eigen::Vector3d &point);
+    double insideOutsideF(const Vector11d &pose, const Eigen::Vector3d &point);
 };
 
 }

@@ -30,8 +30,8 @@ class graspComputation : public Ipopt::TNLP
 protected:
     Eigen::Matrix4d H_o2w;
     Eigen::Matrix4d H_h2w;
-    Eigen::Matrix4d H_x;
-    Eigen::Matrix4d H;
+    //Eigen::Matrix4d H_x;
+    //Eigen::Matrix4d H;
     Eigen::Vector3d d_x, d_y, d_z;
     Eigen::Vector3d displacement;
     Eigen::Vector4d plane;
@@ -39,7 +39,7 @@ protected:
     Eigen::MatrixXd bounds_constr;
     Eigen::VectorXd g;
     Vector6d x_tmp;
-    Eigen::Vector4d point_tr, point_tmp;
+    //Eigen::Vector4d point_tr, point_tmp;
     Vector6d solution_vector;
 
     double theta_x, theta_y, theta_z;
@@ -162,10 +162,16 @@ public:
     double f_v2(Vector11d &obj, Eigen::Vector3d &point_tr);
 };
 
+struct GraspResults
+{
+    SuperqModel::Superquadric hand_superq;
+    GraspPoses grasp_pose;
+
+};
 class GraspEstimatorApp
 {
 public:
-     GraspPoses computeGraspPoses(SuperqModel::IpoptParam &pars, GraspParams &g_params);
+     GraspResults computeGraspPoses(SuperqModel::IpoptParam &pars, GraspParams &g_params);
 };
 
 }

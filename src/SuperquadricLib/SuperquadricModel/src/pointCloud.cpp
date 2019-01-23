@@ -173,6 +173,8 @@ void PointCloud::subSample(int desired_points, bool random)
         }
         else
         {
+            // Use always the same seed for reproducibility
+            srand(1);
             set<unsigned int> idx;
             while (idx.size()<desired_points)
             {
