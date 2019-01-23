@@ -8,11 +8,13 @@ Before explaining the code, here is the command  to launch the executable (if in
 $  Superquadric-Pipeline path/to/point_cloud_file
 ```
 
-An example of `point_cloud_file` is provided [here]().
+An example of `point_cloud_file` is provided [here](https://github.com/robotology/superquadric-lib/blob/master/misc/example-bottle).
 
 
 ### Outcome example
 This is the  outcome you should obtain:
+
+<img src="https://github.com/robotology/superquadric-lib/blob/master/misc/example-bottle.png" width = "250">
 
 
 The visualizer shows:
@@ -22,7 +24,7 @@ The visualizer shows:
 - the **grasping candidates** for the right and the left hand.
 
 ### How to write an executable
-Here is a brief description of the main steps required to obtain such an outcome.
+Here is a brief description of the main steps required to play with `superquadric-lib` tools.
 
 1. Instantiate the following quantities:
 ```
@@ -57,8 +59,10 @@ and save them in `all_points`.
 ```
 7. Visualize everything
 ```
-    grasp_poses.push_back(grasp_res.grasp_pose);    // This allows you to visualize multiple poses
+    vector<Superquadric> superqs;  
     superqs.push_back(superq);                      // This allows you to visualize multiple superqs
+    vector<GraspPoses> grasp_poses;
+    grasp_poses.push_back(grasp_res.grasp_pose);    // This allows you to visualize multiple poses
     vis.addSuperq(superqs);                         // Add superquadric to visualizer
     vis.addPoints(point_cloud, true);               // Add points to visualizer
                                                     // (true/false to show downsampled points
