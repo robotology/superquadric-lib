@@ -85,9 +85,20 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(EXECUTABLE "Build also the executable" OFF)
-option(SUPERQ_GRASP "Create SuperquadricLibGrasp" OFF)
-option(SUPERQ_VIS "Create SuperquadricLibVis" ON)
+
+option(SUPERQ_GRASP "Create SuperquadricLibGrasp" ON)
+
+if (SUPERQ_GRASP)
+	option(SUPERQ_VIS "Create SuperquadricLibVis" ON)
+elseif()
+	option(SUPERQ_VIS "Create SuperquadricLibVis" OFF)
+endif()
+
+if (SUPERQ_GRASP AND SUPERQ_VIS)
+	option(EXECUTABLE "Build also the executable" ON)
+elseif()
+	option(EXECUTABLE "Build also the executable" OFF)
+endif()
 
 
 # We use
