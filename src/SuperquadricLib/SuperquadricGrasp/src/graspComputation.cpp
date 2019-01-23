@@ -8,17 +8,15 @@
 /**
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
- 
+
 #include <cmath>
 #include <limits>
 #include <iomanip>
-#include <boost/range/irange.hpp>
 
 #include "graspComputation.h"
 
 using namespace std;
 using namespace Eigen;
-using namespace boost;
 using namespace SuperqModel;
 using namespace SuperqGrasp;
 
@@ -63,7 +61,7 @@ void graspComputation::init(GraspParams &g_params)
     H_h2w.col(3).segment(0,3)=g_params.hand_superq.getSuperqCenter();
 
     // Sampled points on the half of the hand ellipsoid closest to the robot palm
-    for (auto i: irange(0, (int)sqrt(n_hands), 1))
+    for (int i=0; i< (int)sqrt(n_hands); i++)
     {
         for (double theta=0; theta <= 2*M_PI; theta+= M_PI/((int)sqrt(n_hands)))
         {
@@ -263,7 +261,7 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
      point_tmp(3)=1;
      point_tmp.segment(0,3)=point;
 
-     for (auto i: irange(0,6,1))
+     for (int i=0; i<6; i++)
         x_tmp(i)=x[i];
 
      Matrix4d H_x;
@@ -345,7 +343,7 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
  {
      // Compute constraints
      Vector6d x_tmp;
-     for (auto i: irange(0,6,1))
+     for (int i=0; i<6; i++)
         x_tmp(i)=x[i];
 
      Matrix4d H_x;
@@ -408,7 +406,7 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
      // Constraints on obstacle superquadric avoidance
      if (num_superq>0)
      {
-         for (auto j: irange(0,num_superq, 1))
+         for (int j=0; j<num_superq; j++)
          {
              g[5+j]=0;
 
@@ -480,7 +478,7 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
 
      if (num_superq>0)
      {
-         for (auto j: irange(0,num_superq, 1))
+         for (int j=0; j<num_superq; j++)
          {
              g[5+j]=0;
 
@@ -525,9 +523,9 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
     {
         if (num_superq==0)
         {
-            for (auto j: irange(0, m, 1))
+            for (int j=0; j<m; j++)
             {
-                for (auto i: irange(0, n, 1))
+                for (int i=0; i<n; i++)
                 {
                     jCol[j*(n) + i]= i;
                     iRow[j*(n)+ i] = j;
@@ -536,9 +534,9 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
         }
         else
         {
-            for (auto j: irange(0, m, 1))
+            for (int j=0; j<m; j++)
             {
-                for (auto i: irange(0, n, 1))
+                for (int i=0; i<n; i++)
                 {
                     jCol[j*(n) + i]= i;
                     iRow[j*(n)+ i] = j;
@@ -590,7 +588,7 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
                       Ipopt::Number obj_value, const Ipopt::IpoptData *ip_data,
                       Ipopt::IpoptCalculatedQuantities *ip_cq)
 {
-     for (auto i: irange(0,6,1))
+     for (int i=0; i<6; i++)
          solution_vector(i)=x[i];
 
      Matrix4d H_x;
@@ -686,7 +684,7 @@ deque<double> graspComputation::get_final_constr_values() const
 double graspComputation::computeObstacleValues(const Ipopt::Number *x, int k)
 {
     Vector6d pose_hand;
-    for (auto i : irange(0,6,1))
+    for (int i=0; i<6; i++)
         pose_hand(i)=x[i];
 
     Matrix4d H_robot;

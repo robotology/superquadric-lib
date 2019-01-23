@@ -11,12 +11,10 @@
 
 #include "poseVis.h"
 
-#include <boost/range/irange.hpp>
-
 using namespace std;
 using namespace Eigen;
 using namespace SuperqVis;
-using namespace boost;
+
 
 /**********************************************/
 PoseVis::PoseVis()
