@@ -1,3 +1,14 @@
+/******************************************************************************
+ *                                                                            *
+ * Copyright (C) 2018 Fondazione Istituto Italiano di Tecnologia (IIT)        *
+ * All Rights Reserved.                                                       *
+ *                                                                            *
+ ******************************************************************************/
+
+/**
+ * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
+ */
+
 #ifndef POSEVIS_H
 #define POSEVIS_H
 
@@ -12,14 +23,6 @@
 
 namespace SuperqVis {
 
-/**
-* \class SuperqVis::GraspingPose
-* \headerfile graspingPose.h <SuperquadricVis/include/graspingPose.h>
-*
-* \brief A class from SuperqVis namespace.
-*
-* This class implements a VTK class for visualizing a grasping pose.
-*/
 class PoseVis : public Object
 {
 public:

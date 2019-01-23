@@ -1,3 +1,14 @@
+/******************************************************************************
+ *                                                                            *
+ * Copyright (C) 2018 Fondazione Istituto Italiano di Tecnologia (IIT)        *
+ * All Rights Reserved.                                                       *
+ *                                                                            *
+ ******************************************************************************/
+
+/**
+ * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
+ */
+
 #include "visRenderer.h"
 
 using namespace std;
@@ -57,9 +68,6 @@ void Visualizer::addPoints(PointCloud &point_cloud, bool show_downsample)
     vtk_all_points->set_colors(all_colors);
 
     vtk_renderer->AddActor(vtk_all_points->get_actor());
-
-// temp
-    vtk_all_points->get_actor()->GetProperty()->SetColor(1.0,0.0,0.0);
 
     if (show_downsample)
     {
@@ -181,7 +189,7 @@ void Visualizer::addPoses(vector<SuperqGrasp::GraspPoses> &poses)
         cap_actor->GetCaptionTextProperty()->ItalicOff();
         cap_actor->GetCaptionTextProperty()->SetColor(0.1, 0.1, 0.1);
 
-        // This should be done only for best pose
+        // This should be done only for best pose (TO UPDATE)
         cap_actor->GetCaptionTextProperty()->BoldOn();
         cap_actor->GetCaptionTextProperty()->SetColor(0., 0.35, 0.0);
         cap_actor->GetCaptionTextProperty()->SetFontSize(20);
@@ -221,7 +229,6 @@ void Visualizer::saveScreenshot(string &object, int &number)
 
     vtkSmartPointer<vtkPNGWriter> writer =
     vtkSmartPointer<vtkPNGWriter>::New();
-
 
     stringstream ss;
     ss << number;

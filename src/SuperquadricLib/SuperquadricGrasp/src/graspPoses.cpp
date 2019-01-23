@@ -1,3 +1,14 @@
+/******************************************************************************
+ *                                                                            *
+ * Copyright (C) 2018 Fondazione Istituto Italiano di Tecnologia (IIT)        *
+ * All Rights Reserved.                                                       *
+ *                                                                            *
+ ******************************************************************************/
+
+/**
+ * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
+ */
+
 #include "graspPoses.h"
 
 using namespace std;
@@ -8,7 +19,6 @@ using namespace SuperqGrasp;
 /*********************************************/
 GraspPoses::GraspPoses()
 {
-    //params.resize(6);
     cost=1e8;
     hand="right";
 }
@@ -26,19 +36,16 @@ bool GraspPoses::setGraspParams(const VectorXd &p)
         return false;
 
     position=params.head(3);
+
     if (p.size()==6)
     {
         ea=params.segment(3,3);
-
         axes = AngleAxisd(ea(0), Vector3d::UnitZ())*
                AngleAxisd(ea(1), Vector3d::UnitY())*
                AngleAxisd(ea(2), Vector3d::UnitZ());
-
         AngleAxisd aa_pose(axes);
-
         axisangle.head(3)=aa_pose.axis();
         axisangle(3)=aa_pose.angle();
-
     }
     else if (p.size()==7)
     {
@@ -60,7 +67,6 @@ VectorXd GraspPoses::getGraspParams()
 bool GraspPoses::setGraspPosition(Vector3d &d)
 {
     params.head(3)=d;
-
     position=params.head(3);
 
     return true;
@@ -76,11 +82,9 @@ Vector3d GraspPoses::getGraspPosition()
 bool GraspPoses::setGraspOrientation(Vector3d &o)
 {
     params.segment(3,3)=o;
-
     axes = AngleAxisd(o(0), Vector3d::UnitZ())*
            AngleAxisd(o(1), Vector3d::UnitY())*
            AngleAxisd(o(2), Vector3d::UnitZ());
-
     ea=o;
 
     return true;
@@ -102,11 +106,8 @@ bool GraspPoses::setGraspOrientation(Vector4d &o)
     if (params_ok)
     {
        axes = AngleAxisd(o(3), o.head(3));
-
        ea = axes.eulerAngles(2,1,2);
-
        params.segment(3,3) = ea;
-
        axisangle = o;
     }
 

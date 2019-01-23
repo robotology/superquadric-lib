@@ -1,3 +1,14 @@
+/******************************************************************************
+ *                                                                            *
+ * Copyright (C) 2018 Fondazione Istituto Italiano di Tecnologia (IIT)        *
+ * All Rights Reserved.                                                       *
+ *                                                                            *
+ ******************************************************************************/
+
+/**
+ * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
+ */
+
 #ifndef SUPERQMODEL_H
 #define SUPERQMODEL_H
 
@@ -19,13 +30,21 @@ class Superquadric
 {
 public:
 
+    /* Number of superquadric parameters (11 in this implementation)*/
     int n_params;
+    /* Vector with all the parameters */
     Vector11d params;
+    /* Superquadric dimensions */
     Eigen::Vector3d dim;
+    /* Superquadric exponents */
     Eigen::Vector2d exp;
+    /* Superquadric orienation expressed as axisangle */
     Eigen::Vector4d axisangle;
+    /* Superquadric orienation expressed as euler angles */
     Eigen::Vector3d ea;
+    /* Superquadric center */
     Eigen::Vector3d center;
+    /* Superquadric orienation expressed as rotation matrix */
     Eigen::Matrix3d axes;
 
     /**

@@ -1,3 +1,14 @@
+/******************************************************************************
+ *                                                                            *
+ * Copyright (C) 2018 Fondazione Istituto Italiano di Tecnologia (IIT)        *
+ * All Rights Reserved.                                                       *
+ *                                                                            *
+ ******************************************************************************/
+
+/**
+ * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
+ */
+
 #include "poseVis.h"
 
 #include <boost/range/irange.hpp>
@@ -19,7 +30,7 @@ PoseVis::PoseVis()
 /**********************************************/
 void PoseVis::setvtkTransform(const VectorXd &pose_vect)
 {
-    if (pose_vect.size()==6)
+    if (pose_vect.size()==6 and pose_vect.norm()>0.0)
     {
         pose.block<3,3>(0,0) = (AngleAxisd(pose_vect(3), Vector3d::UnitZ())*
                                 AngleAxisd(pose_vect(4), Vector3d::UnitY())*

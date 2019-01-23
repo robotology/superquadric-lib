@@ -1,3 +1,14 @@
+/******************************************************************************
+ *                                                                            *
+ * Copyright (C) 2018 Fondazione Istituto Italiano di Tecnologia (IIT)        *
+ * All Rights Reserved.                                                       *
+ *                                                                            *
+ ******************************************************************************/
+
+/**
+ * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
+ */
+
 #ifndef SUPERQGRASP_H
 #define SUPERQGRASP_H
 
@@ -20,13 +31,20 @@ namespace SuperqGrasp {
 class GraspPoses
 {
 public:
-    Eigen::VectorXd position;
+    /* Position of the robot hand */
+    Eigen::Vector3d position;
+    /* Hand orientation represented with axis angle */
     Eigen::Vector4d axisangle;
+    /* Hand orientation represented with euler angles */
     Eigen::Vector3d ea;
+    /* Hand orientation represented with rotation matrix */
     Eigen::Matrix3d axes;
+    /* All the pose parameters, position and orientation */
     Eigen::VectorXd params;
 
+    /* Cost associated to the grasping pose */
     double cost;
+    /* Hand of the grasping pose */
     std::string hand;
 
     /**
