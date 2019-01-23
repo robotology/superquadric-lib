@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 #include <deque>
+#include <vector>
 
 typedef Eigen::Matrix<double, 3, 2>  Matrix32d;
 
