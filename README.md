@@ -17,12 +17,12 @@ This release provides methods to:
 - _High-level interface_. 
 
 ### Dependencies
- - [Ipopt](https://projects.coin-or.org/Ipopt)
+ - [`Ipopt`](https://projects.coin-or.org/Ipopt)
  - [`Eigen3`](https://bitbucket.org/eigen/eigen/)
  - [`VTK`](https://vtk.org/)
 
  
- ### Build
+ ### How to build
  Here are the instructions to build and  install the library:
  
  ```
@@ -40,8 +40,8 @@ This release provides methods to:
  3. `SuperquadricLibVis`, to visualize everything (it requires 1. and 2.);
  4. `Superquadric-Pipeline`, an executable that computes the object superquadric and the grasping pose starting from an object point cloud and show the results using the visualizer. It requires 1 - 3.
  
- ## Link
- Once the library is installed, you can link it using CMake by writing the following line of code in your project CMakeLists.txt:
+ ## How to link
+ Once the library is installed, you can link it using `CMake` by writing the following line of code in your project `CMakeLists.txt`:
  
  ```
 find_package(SuperquadricLib<tag> 0.1 EXACT REQUIRED)
