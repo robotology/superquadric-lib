@@ -39,6 +39,7 @@ bool PointCloud::setPoints(const deque<Vector3d> &p)
 {
     if (p[0].size()==3)
     {
+        deletePoints();
         for (auto& point:p)
         {
             points.push_back(point);

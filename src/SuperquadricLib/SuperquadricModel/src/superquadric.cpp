@@ -176,6 +176,13 @@ Vector4d Superquadric::getSuperqAxisAngle()
 }
 
 /*********************************************/
+Matrix3d Superquadric::getSuperqAxes()
+{
+    return axes;
+}
+
+
+/*********************************************/
 double Superquadric::insideOutsideF(const Vector11d &pose, const Vector3d &point)
 {
     Vector3d c=pose.head(3);

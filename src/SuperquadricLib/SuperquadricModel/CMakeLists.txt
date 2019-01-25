@@ -18,12 +18,14 @@ set(${LIBRARY_TARGET_NAME}_HDR
         include/pointCloud.h
 		include/superquadricEstimator.h
 		include/superquadric.h
+		include/tree.h
 )
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC
         src/pointCloud.cpp
 		src/superquadric.cpp
 		src/superquadricEstimator.cpp
+		src/tree.cpp
 )
 
 

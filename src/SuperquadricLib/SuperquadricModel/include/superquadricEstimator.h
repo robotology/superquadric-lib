@@ -18,6 +18,7 @@
 
 #include "superquadric.h"
 #include "pointCloud.h"
+#include "tree.h"
 
 typedef Eigen::Matrix<double, 11, 2>  Matrix112d;
 typedef Eigen::Matrix<double, 3, 2>  Matrix32d;
@@ -242,11 +243,68 @@ struct IpoptParam
     bool random_sampling;
 };
 
+struct MultipleParams
+{
+    bool merge_model;
+    int minimum_points;
+    int fraction_pc;
+    double threshold_section1;
+    double threshold_section2;
+    double threshold_axis;
+};
 
 class SuperqEstimatorApp
 {
+   int h_tree;
+   PointCloud *point_cloud_split1;
+   PointCloud *point_cloud_split2;
+
+   MultipleParams m_pars;
+
 public:
+    SuperqModel::SuperqTree *superq_tree;
+    SuperqModel::SuperqTree *superq_tree_new;
+
     SuperqModel::Superquadric computeSuperq(const SuperqModel::IpoptParam &pars, PointCloud &point_cloud);
+
+    /****************************************************************/
+    SuperqModel::Superquadric computeMultipleSuperq(const SuperqModel::IpoptParam &pars, SuperqModel::MultipleParams &m_pars, PointCloud &point_cloud);
+
+    /***********************************************************************/
+    void iterativeModeling(const SuperqModel::IpoptParam &pars, SuperqModel::PointCloud &point_cloud);
+
+    /***********************************************************************/
+    void computeNestedSuperq(const SuperqModel::IpoptParam &pars, SuperqModel::node *newnode);
+
+    /***********************************************************************/
+    void splitPoints(SuperqModel::node *leaf);
+
+    /****************************************************************/
+    void computeSuperqAxis(SuperqModel::node *node);
+
+    /****************************************************************/
+    bool axisParallel(SuperqModel::node *node1, SuperqModel::node *node2, Eigen::Matrix3d &relations);
+
+    /****************************************************************/
+    bool sectionEqual(SuperqModel::node *node1, SuperqModel::node *node2, Eigen::Matrix3d &relations);
+
+    /****************************************************************/
+    double edgesClose(SuperqModel::node *node1, SuperqModel::node *node2);
+
+    /****************************************************************/
+    void computeEdges(SuperqModel::node *node, std::deque<Eigen::Vector3d> &edges);
+
+    /***********************************************************************/
+    void copySuperqChildren(SuperqModel::node *old_node, SuperqModel::node *newnode);
+
+    /****************************************************************/
+    bool findImportantPlanes(SuperqModel::node *current_node);
+
+    /***********************************************************************/
+    bool generateFinalTree(const SuperqModel::IpoptParam &pars, SuperqModel::node *old_node, SuperqModel::node *newnode);
+
+    /****************************************************************/
+    void superqUsingPlane(const SuperqModel::IpoptParam &pars, SuperqModel::node *old_node, SuperqModel::node *newnode);
 };
 
 
