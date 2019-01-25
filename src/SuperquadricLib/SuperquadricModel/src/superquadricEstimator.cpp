@@ -405,7 +405,7 @@ Superquadric SuperqEstimatorApp::computeMultipleSuperq(const IpoptParam &pars, M
     double computation_time2;
 
     cout<<"|| ---------------------------------------------------- ||"<<endl;
-    cout<<"|| Multiple superquadrics estimated in                 : ";
+    cout<<"|| Multiple superquadrics estimated in                  : ";
     cout<<   computation_time1<<" [s]"<<endl;
     cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
 
@@ -886,31 +886,32 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
     superq_tree->root->plane_important=false;
     if (current_node->height < h_tree)
     {
-        //cout<<endl;
-        //yDebug()<<"|| Find important plane LEFT ";
+        cout<<"|| ---------------------------------------------------- ||"<<endl;
+        cout<<"|| Look for relevant planes in left sub-tree         "<<endl;
+
         if (current_node->left !=NULL)
             findImportantPlanes(current_node->left);
-         //cout<<endl;
-        //yDebug()<<"|| Find important plane RIGHT ";
+
+        cout<<"|| ---------------------------------------------------- ||"<<endl;
+
+        cout<<"|| ---------------------------------------------------- ||"<<endl;
+        cout<<"|| Look for relevant planes in right sub-tree         "<<endl;
         if (current_node->right !=NULL)
             findImportantPlanes(current_node->right);
+
+        cout<<"|| ---------------------------------------------------- ||"<<endl;
     }
 
-    // if nothing is changed plane important for root is always true
     if (current_node->height > 1 && current_node->plane_important==false)
     {
         computeSuperqAxis(current_node->left);
         computeSuperqAxis(current_node->right);
 
-        //if (debug)
-        //    yDebug()<<"node->height "<<current_node->height;
-
+        cout<<"|| Node height         "<<current_node->height<<endl;
 
         if (axisParallel(current_node->left, current_node->right, relations) && sectionEqual(current_node->left, current_node->right, relations))
         {
-          //  if (debug)
-          //      yDebug()<<"|| To be merged, no plane important ";
-          //  cout<<endl;
+            cout<<"|| Superquadric to be merged!         "<<endl;
 
             current_node->plane_important=false;
 
@@ -918,16 +919,11 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
             {
                 current_node->left=NULL;
                 current_node->right=NULL;
-
-                //if (debug)
-                //    yDebug()<<"leaves set equal to NULL";
             }
-
         }
         else
         {
-            //yDebug()<<"Plane current node importat";
-            //cout<<endl;
+            cout<<"|| Plane current node is important!       "<<endl;
             current_node->plane_important=true;
 
             node *node_uncle=((current_node==current_node->father->right)?current_node->father->left:current_node->father->right);
@@ -939,44 +935,33 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
                 double distance_right = edgesClose(current_node->right, node_uncle);
                 double distance_left = edgesClose(current_node->left, node_uncle);
 
-                //if (debug)
-                //{
-                //    yDebug()<<"distance right "<<distance_right;
-                //    yDebug()<<"distance left "<<distance_left;
-                //}
-
-                // Check if tolerance is needed
                 if(distance_right < distance_left)
                     current_node->right->uncle_close=node_uncle;
                 else
                     current_node->left->uncle_close=node_uncle;
 
-                // Instead of checking if all the nephews are parallel to the uncle, check only the close one
                 bool parallel_to_uncle;
 
                 if (current_node->left->uncle_close!=NULL)
                 {
                     parallel_to_uncle=(axisParallel(current_node->left, node_uncle, relations) && sectionEqual(current_node->left, node_uncle, relations));
-                  //  if (parallel_to_uncle && debug)
-                  //      yDebug()<<"Left is parallel and with same dimensions of its uncle";
+                    cout<<"|| Left node is parallel and with similar dimensions w.r.t its uncle      "<<endl;
 
                 }
                 else if (current_node->right->uncle_close!=NULL)
                 {
                     parallel_to_uncle=(axisParallel(current_node->right, node_uncle, relations) && sectionEqual(current_node->right, node_uncle, relations));
-                    //if (parallel_to_uncle && debug)
-                    //    yDebug()<<"Right is parallel and with same dimensions of its uncle";
+                    cout<<"|| Right node is parallel and with similar dimensions w.r.t its uncle      "<<endl;
                 }
-
-              //  yDebug()<<" || Parallel to uncle "<<parallel_to_uncle;
 
                 if(parallel_to_uncle==false)
                 {
-                  //  yDebug()<<"|| Plane  father important ";
+                    cout<<"|| Plane father is important      "<<endl;
                     current_node->father->plane_important=true;
                 }
                 else
                 {
+                    cout<<"|| Plane father is not important      "<<endl;
                     current_node->father->plane_important=false;
                 }
             }
@@ -988,19 +973,19 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
         computeSuperqAxis(current_node->left);
         computeSuperqAxis(current_node->right);
 
-        //yDebug()<<"|| Plane of root is important:  "<<current_node->plane_important;
+        if (current_node->plane_important)
+            cout<<"|| Plane of root is important!     "<<endl;
+        else
+            cout<<"|| Plane of root is not important!     "<<endl;
 
         if ( axisParallel(current_node->left, current_node->right, relations) && !sectionEqual(current_node->left, current_node->right, relations))
         {
-             //yDebug()<<__LINE__;
             current_node->plane_important=true;
         }
 
         if ((superq_tree->searchPlaneImportant(current_node->left)==false
                 && superq_tree->searchPlaneImportant(current_node->right)==false))
             current_node->plane_important=true;
-
-        //yDebug()<<"|| Plane of root is important:  "<<current_node->plane_important;
     }
 
     return true;
