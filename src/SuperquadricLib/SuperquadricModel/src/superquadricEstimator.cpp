@@ -996,32 +996,32 @@ bool SuperqEstimatorApp::generateFinalTree(const IpoptParam &pars, node *old_nod
 {
     if (old_node!=NULL && old_node->height <= h_tree)
     {
-        //cout<<endl;
-        //yDebug()<<"node height in merging"<<old_node->height;
+        cout<<"|| ---------------------------------------------------- ||"<<endl;
+        cout<<"|| Node height                        :"<<old_node->height<<endl;
 
         if (old_node->height > 1)
         {
-            //yDebug()<<"|| old_node->plane_important"<<old_node->plane_important;
-            //yDebug()<<"|| old_node->plane_important father"<<old_node->father->plane_important;
             if (old_node->plane_important==true && old_node->father->plane_important==false)
             {
-                //yDebug()<<"|| Current plane is important";
+                cout<<"|| Current plane important!     "<<endl;
                 superqUsingPlane(pars, old_node, newnode);
 
                 generateFinalTree(pars, old_node->left, newnode->left);
                 generateFinalTree(pars, old_node->right, newnode->right);
 
+                cout<<"|| ---------------------------------------------------- ||"<<endl;
+
             }
             else if (old_node->plane_important==true && old_node->father->plane_important==true)
             {
-                //yDebug()<<"|| Current and father's plane are important";
+                cout<<"|| Current  and father's plane important!     "<<endl;
 
-                // Since here I would compute again the superqs using the point cloud and the plane of the node
-                // I can just copy the superq -> faster
                 copySuperqChildren(old_node, newnode);
 
                 generateFinalTree(pars, old_node->left, newnode->left);
                 generateFinalTree(pars, old_node->right, newnode->right);
+
+                cout<<"|| ---------------------------------------------------- ||"<<endl;
             }
             else if (old_node->left!=NULL && old_node->right!=NULL)
             {
@@ -1029,25 +1029,25 @@ bool SuperqEstimatorApp::generateFinalTree(const IpoptParam &pars, node *old_nod
                 {
                     copySuperqChildren(old_node, newnode);
 
-                    // Copy to have structure but not to save superq
-                    //newnode->left->superq.zero();
-                    //newnode->right->superq.zero();
-
                     generateFinalTree(pars, old_node->left, newnode->left);
                     generateFinalTree(pars, old_node->right, newnode->right);
+
+                    cout<<"|| ---------------------------------------------------- ||"<<endl;
                 }
                 else
                 {
                     if (superq_tree->searchPlaneImportant(old_node->left))
                     {
-                        //yDebug()<<"only left important";
+                        cout<<"|| Only left sub-tree important!    "<<endl;
                         generateFinalTree(pars, old_node->left, newnode);
                     }
                     else if (superq_tree->searchPlaneImportant(old_node->right))
                     {
-                        //yDebug()<<"only right important";
+                        cout<<"|| Only right sub-tree important!    "<<endl;
                         generateFinalTree(pars, old_node->right, newnode);
                     }
+
+                    cout<<"|| ---------------------------------------------------- ||"<<endl;
                 }
             }
 
@@ -1059,6 +1059,8 @@ bool SuperqEstimatorApp::generateFinalTree(const IpoptParam &pars, node *old_nod
                 copySuperqChildren(old_node, newnode);
                 generateFinalTree(pars, old_node->left, newnode->left);
                 generateFinalTree(pars, old_node->right, newnode->right);
+
+                cout<<"|| ---------------------------------------------------- ||"<<endl;
             }
             else if (superq_tree->searchPlaneImportant(old_node->left)==true && superq_tree->searchPlaneImportant(old_node->right)==true)
             {
@@ -1066,19 +1068,23 @@ bool SuperqEstimatorApp::generateFinalTree(const IpoptParam &pars, node *old_nod
 
                 generateFinalTree(pars, old_node->left, newnode->left);
                 generateFinalTree(pars, old_node->right, newnode->right);
+
+                cout<<"|| ---------------------------------------------------- ||"<<endl;
             }
             else
             {
                 if (superq_tree->searchPlaneImportant(old_node->left)==true)
                 {
-                    //yDebug()<<"only left ";
+                    cout<<"|| Only left sub-tree important!    "<<endl;
                     generateFinalTree(pars, old_node->left, newnode);
                 }
                 if (superq_tree->searchPlaneImportant(old_node->right)==true)
                 {
-                    //yDebug()<<"only right ";
+                    cout<<"|| Only right sub-tree important!    "<<endl;
                     generateFinalTree(pars, old_node->right, newnode);
                 }
+
+                cout<<"|| ---------------------------------------------------- ||"<<endl;
             }
 
         }
