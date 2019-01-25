@@ -251,6 +251,7 @@ struct MultipleParams
     double threshold_section1;
     double threshold_section2;
     double threshold_axis;
+    double debug;
 };
 
 class SuperqEstimatorApp
@@ -268,7 +269,7 @@ public:
     SuperqModel::Superquadric computeSuperq(const SuperqModel::IpoptParam &pars, PointCloud &point_cloud);
 
     /****************************************************************/
-    SuperqModel::Superquadric computeMultipleSuperq(const SuperqModel::IpoptParam &pars, SuperqModel::MultipleParams &m_pars, PointCloud &point_cloud);
+    std::vector<SuperqModel::Superquadric> computeMultipleSuperq(const SuperqModel::IpoptParam &pars, SuperqModel::MultipleParams &m_pars, PointCloud &point_cloud);
 
     /***********************************************************************/
     void iterativeModeling(const SuperqModel::IpoptParam &pars, SuperqModel::PointCloud &point_cloud);
@@ -305,6 +306,12 @@ public:
 
     /****************************************************************/
     void superqUsingPlane(const SuperqModel::IpoptParam &pars, SuperqModel::node *old_node, SuperqModel::node *newnode);
+
+    /****************************************************************/
+    std::vector<SuperqModel::Superquadric> fillSolution(SuperqModel::node *leaf);
+
+    /**********************************************************************/
+    void addSuperqs(SuperqModel::node *leaf, std::vector<SuperqModel::Superquadric> &superqs);
 };
 
 

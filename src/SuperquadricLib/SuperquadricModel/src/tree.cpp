@@ -102,6 +102,7 @@ void SuperqTree::insert(const nodeContent &node_content1, const nodeContent &nod
 
     leaf->right->superq=node_content1.superq;
     leaf->right->plane=node_content1.plane;
+
     leaf->right->point_cloud=node_content1.point_cloud;
     leaf->right->left=NULL;
     leaf->right->right=NULL;
@@ -118,7 +119,7 @@ void SuperqTree::insert(const nodeContent &node_content1, const nodeContent &nod
     leaf->left->left=NULL;
     leaf->left->right=NULL;
     leaf->left->father=leaf;
-    leaf->left->height=node_content1.height;
+    leaf->left->height=node_content2.height;
     leaf->left->plane_important=false;
 }
 
@@ -155,7 +156,7 @@ void SuperqTree::printNode(node *leaf)
             printNode(leaf->left);
 
         cout<<"|| ---------------------------------------------------- ||"<<endl;
-        cout<<"|| Right ...                                             ||"<<endl;
+        cout<<"|| Right ...                                            ||"<<endl;
         if (leaf->right!=NULL)
             printNode(leaf->right);
     }

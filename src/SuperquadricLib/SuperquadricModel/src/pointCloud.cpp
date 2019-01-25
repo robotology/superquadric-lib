@@ -84,6 +84,7 @@ int PointCloud::getNumberPoints()
 void PointCloud::deletePoints()
 {
     points.clear();
+    points_for_vis.clear();
 }
 
 

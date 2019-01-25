@@ -38,7 +38,7 @@ void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_po
 
     used_points=points_downsampled.getNumberPoints();
 
-    cout<<"[SuperquadricEstimator]: points actually used for modeling: "<<used_points<<endl;
+    cout<<"|| Downsampled points used for modeling           :  "<<used_points<<endl;
 
     x0.resize(11);
     x0.setZero();
@@ -346,6 +346,8 @@ Superquadric SuperqEstimatorApp::computeSuperq(const IpoptParam &pars, PointClou
     Ipopt::SmartPtr<SuperqEstimator> estim = new SuperqEstimator;
     estim->init();
     estim->configure(pars.object_class);
+
+    cout<<"|| ---------------------------------------------------- ||"<<endl;
     estim->setPoints(point_cloud, pars.optimizer_points, pars.random_sampling);
 
     clock_t tStart = clock();
@@ -361,9 +363,8 @@ Superquadric SuperqEstimatorApp::computeSuperq(const IpoptParam &pars, PointClou
     if (status==Ipopt::Solve_Succeeded)
     {
         superq=estim->get_result();
-        cout<<"|| ---------------------------------------------------- ||"<<endl;
         cout<<"|| Superquadric estimated                         : ";
-        cout<<superq.getSuperqParams().format(CommaInitFmt)<<endl<<endl;
+        cout<<superq.getSuperqParams().format(CommaInitFmt)<<endl;
         cout<<"|| Computed in                                    :  ";
         cout<<   computation_time<<" [s]"<<endl;
         cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
@@ -372,15 +373,13 @@ Superquadric SuperqEstimatorApp::computeSuperq(const IpoptParam &pars, PointClou
     else if(status==Ipopt::Maximum_CpuTime_Exceeded)
     {
         superq=estim->get_result();
-        cout<<"|| ---------------------------------------------------- ||"<<endl;
-        cout<<"|| Time expired                                         :"<<superq.getSuperqParams().format(CommaInitFmt)<<endl<<endl;
+        cout<<"|| Time expired                                         :"<<superq.getSuperqParams().format(CommaInitFmt)<<endl;
         cout<<"|| Superquadric estimated in                            :  "<<   computation_time<<" [s]"<<endl;
         cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
         return superq;
     }
     else
     {
-        cout<<"|| ---------------------------------------------------- ||"<<endl;
         cerr<<"|| Not solution found"<<endl;
         cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
         Vector11d x(11);
@@ -393,10 +392,16 @@ Superquadric SuperqEstimatorApp::computeSuperq(const IpoptParam &pars, PointClou
 }
 
 /****************************************************************/
-Superquadric SuperqEstimatorApp::computeMultipleSuperq(const IpoptParam &pars, MultipleParams &multiple_pars, PointCloud &point_cloud)
+vector<Superquadric> SuperqEstimatorApp::computeMultipleSuperq(const IpoptParam &pars, MultipleParams &multiple_pars, PointCloud &point_cloud)
 {
     m_pars = multiple_pars;
     clock_t tStart = clock();
+
+    superq_tree = new SuperqTree;
+    superq_tree_new = new SuperqTree;
+
+    point_cloud_split1 = new PointCloud;
+    point_cloud_split2 = new PointCloud;
 
     iterativeModeling(pars, point_cloud);
 
@@ -432,6 +437,12 @@ Superquadric SuperqEstimatorApp::computeMultipleSuperq(const IpoptParam &pars, M
     cout<<"|| Complete modeling process took                       : ";
     cout<<   computation_time1 + computation_time2<<" [s]"<<endl;
     cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
+
+
+    delete point_cloud_split1;
+    delete point_cloud_split2;
+
+    return fillSolution(superq_tree->root);
 }
 
 /***********************************************************************/
@@ -450,9 +461,8 @@ void SuperqEstimatorApp::iterativeModeling(const IpoptParam &pars, PointCloud &p
     }
 
     cout<<"|| ---------------------------------------------------- ||"<<endl;
-    cout<<"|| Number of point cloud splittings                     :  "<<endl;
-    cout<<h_tree<<endl;
-    cout<<" || With   "<<point_cloud.getNumberPoints()/m_pars.fraction_pc<<" points for each point cloud";
+    cout<<"|| Number of point cloud splittings                     : "<<h_tree<<endl;
+    cout<<"|| Number of points for each point cloud                : "<<point_cloud.getNumberPoints()/m_pars.fraction_pc<<" "<<endl;
     cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
 
     superq_tree->setPoints(point_cloud);
@@ -475,16 +485,20 @@ void SuperqEstimatorApp::computeNestedSuperq(const IpoptParam &pars, node *newno
         {
             splitPoints(newnode);
 
+            cout<<endl<<"|| ---------------------------------------------------- ||"<<endl;
+            cout<<"|| Right node with height                         :  "<<newnode->height<<endl;
             superq1=computeSuperq(pars, *point_cloud_split1);
+            cout<<endl<<"|| ---------------------------------------------------- ||"<<endl;
+            cout<<"|| Left node with height                         :  "<<newnode->height<<" ||"<<endl;
             superq2=computeSuperq(pars, *point_cloud_split2);
 
             node_c1.superq=superq1;
             node_c2.superq=superq2;
-            node_c1.point_cloud= new  PointCloud;
-            node_c2.point_cloud= new  PointCloud;
+            node_c1.point_cloud= new PointCloud;
+            node_c2.point_cloud= new PointCloud;
 
-            node_c1.point_cloud=point_cloud_split1;
-            node_c2.point_cloud=point_cloud_split2;
+            *node_c1.point_cloud=*point_cloud_split1;
+            *node_c2.point_cloud=*point_cloud_split2;
 
             node_c1.height=newnode->height + 1;
             node_c2.height=newnode->height + 1;
@@ -502,26 +516,24 @@ void SuperqEstimatorApp::splitPoints(node *leaf)
 {
     point_cloud_split1->deletePoints();
     point_cloud_split2->deletePoints();
-
     Vector3d center;
     center.setZero();
 
-
-    for (auto point : leaf->point_cloud->points)
+    for (auto point : leaf->point_cloud->points_for_vis)
     {
         center(0)+=point(0);
         center(1)+=point(1);
         center(2)+=point(2);
     }
 
-    center(0)/=leaf->point_cloud->getNumberPoints();
-    center(1)/=leaf->point_cloud->getNumberPoints();
-    center(2)/=leaf->point_cloud->getNumberPoints();
+    center(0)/=leaf->point_cloud->points_for_vis.size();
+    center(1)/=leaf->point_cloud->points_for_vis.size();
+    center(2)/=leaf->point_cloud->points_for_vis.size();
 
     Matrix3d M;
     M.setZero();
 
-    for (auto point : leaf->point_cloud->points)
+    for (auto point : leaf->point_cloud->points_for_vis)
     {
         M(0,0)= M(0,0) + (point(1)-center(1))*(point(1)-center(1)) + (point(2)-center(2))*(point(2)-center(2));
         M(0,1)= M(0,1) - (point(1)-center(1))*(point(0)-center(0));
@@ -531,12 +543,12 @@ void SuperqEstimatorApp::splitPoints(node *leaf)
         M(1,2)= M(1,2) - (point(2)-center(2))*(point(1)-center(1));
     }
 
-    M(0,0)= M(0,0)/leaf->point_cloud->getNumberPoints();
-    M(0,1)= M(0,1)/leaf->point_cloud->getNumberPoints();
-    M(0,2)= M(0,2)/leaf->point_cloud->getNumberPoints();
-    M(1,1)= M(1,1)/leaf->point_cloud->getNumberPoints();
-    M(2,2)= M(2,2)/leaf->point_cloud->getNumberPoints();
-    M(1,2)= M(1,2)/leaf->point_cloud->getNumberPoints();
+    M(0,0)= M(0,0)/leaf->point_cloud->points_for_vis.size();
+    M(0,1)= M(0,1)/leaf->point_cloud->points_for_vis.size();
+    M(0,2)= M(0,2)/leaf->point_cloud->points_for_vis.size();
+    M(1,1)= M(1,1)/leaf->point_cloud->points_for_vis.size();
+    M(2,2)= M(2,2)/leaf->point_cloud->points_for_vis.size();
+    M(1,2)= M(1,2)/leaf->point_cloud->points_for_vis.size();
 
     M(1,0)= M(0,1);
     M(2,0)= M(0,2);
@@ -545,7 +557,6 @@ void SuperqEstimatorApp::splitPoints(node *leaf)
     JacobiSVD<MatrixXd> svd(M, ComputeFullU | ComputeFullU);
     Matrix3d orientation=svd.matrixU();
     Vector4d plane;
-
     plane.head(3)=orientation.col(2);
 
     plane(3)=(plane(0)*center(0)+plane(1)*center(1)+plane(2)*center(2));
@@ -554,22 +565,24 @@ void SuperqEstimatorApp::splitPoints(node *leaf)
 
     deque<Vector3d> deque_points1, deque_points2;
 
-    for (auto point : leaf->point_cloud->points)
+    for (auto point : leaf->point_cloud->points_for_vis)
     {
-        if (plane(0)*point(0)+plane(1)*point(1)+plane(2)*point(2)- plane(3) > 0)
+        if (plane(0)*point(0)+plane(1)*point(1)+plane(2)*point(2) - plane(3) > 0)
+        {
             deque_points1.push_back(point);
+          }
         else
+        {
             deque_points2.push_back(point);
+          }
     }
 
     point_cloud_split1->setPoints(deque_points1);
     point_cloud_split2->setPoints(deque_points2);
 
     cout<<"|| ---------------------------------------------------- ||"<<endl;
-    cout<<"|| Number of points in point cloud right                :  "<<endl;
-    cout<<point_cloud_split1->getNumberPoints()<<endl;
-    cout<<"|| Number of points in point cloud left                :  "<<endl;
-    cout<<point_cloud_split2->getNumberPoints()<<endl;
+    cout<<"|| Number of points in point cloud right                :  "<<point_cloud_split1->getNumberPoints()<<endl;
+    cout<<"|| Number of points in point cloud left                 :  "<<point_cloud_split2->getNumberPoints()<<endl;
     cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
 
 }
@@ -586,7 +599,6 @@ void SuperqEstimatorApp::computeSuperqAxis(node *node)
 bool SuperqEstimatorApp::axisParallel(node *node1, node *node2, Matrix3d &relations)
 {
     double threshold=m_pars.threshold_axis;
-
     if (abs(node1->axis_x.dot(node2->axis_x)) > threshold)
     {
         relations(0,0) = 1;
@@ -729,7 +741,6 @@ bool SuperqEstimatorApp::sectionEqual(node *node1, node *node2, Matrix3d &relati
     Vector3d dim2=node2->superq.getSuperqDims();
 
     Vector3d dim2_rot=relations*dim2;
-
     Vector3d p1,p2,p3,p4;
     p1.setZero();
     p2.setZero();
@@ -737,7 +748,6 @@ bool SuperqEstimatorApp::sectionEqual(node *node1, node *node2, Matrix3d &relati
     p4.setZero();
 
     deque<bool> equals;
-
     equals.clear();
 
      for (size_t i=0; i<3; i++)
@@ -865,7 +875,6 @@ void SuperqEstimatorApp::copySuperqChildren(node *old_node, node *newnode)
     node_c1.point_cloud= new PointCloud;
     node_c2.point_cloud= new PointCloud;
 
-
     node_c1.point_cloud=old_node->left->point_cloud;
     node_c2.point_cloud=old_node->right->point_cloud;
 
@@ -886,20 +895,26 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
     superq_tree->root->plane_important=false;
     if (current_node->height < h_tree)
     {
-        cout<<"|| ---------------------------------------------------- ||"<<endl;
-        cout<<"|| Look for relevant planes in left sub-tree         "<<endl;
+        if (m_pars.debug)
+        {
+            cout<<"|| ---------------------------------------------------- ||"<<endl;
+            cout<<"|| Look for relevant planes in left sub-tree         "<<endl;
+        }
 
         if (current_node->left !=NULL)
             findImportantPlanes(current_node->left);
 
-        cout<<"|| ---------------------------------------------------- ||"<<endl;
+        if (m_pars.debug)
+        {
+            cout<<"|| ---------------------------------------------------- ||"<<endl;
 
-        cout<<"|| ---------------------------------------------------- ||"<<endl;
-        cout<<"|| Look for relevant planes in right sub-tree         "<<endl;
-        if (current_node->right !=NULL)
+            cout<<"|| ---------------------------------------------------- ||"<<endl;
+            cout<<"|| Look for relevant planes in right sub-tree         "<<endl;
+        }
             findImportantPlanes(current_node->right);
 
-        cout<<"|| ---------------------------------------------------- ||"<<endl;
+        if (m_pars.debug)
+            cout<<"|| ---------------------------------------------------- ||"<<endl;
     }
 
     if (current_node->height > 1 && current_node->plane_important==false)
@@ -907,11 +922,13 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
         computeSuperqAxis(current_node->left);
         computeSuperqAxis(current_node->right);
 
-        cout<<"|| Node height         "<<current_node->height<<endl;
+        if (m_pars.debug)
+            cout<<"|| Node height         "<<current_node->height<<endl;
 
         if (axisParallel(current_node->left, current_node->right, relations) && sectionEqual(current_node->left, current_node->right, relations))
         {
-            cout<<"|| Superquadric to be merged!         "<<endl;
+            if (m_pars.debug)
+                cout<<"|| Superquadric to be merged!         "<<endl;
 
             current_node->plane_important=false;
 
@@ -923,7 +940,8 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
         }
         else
         {
-            cout<<"|| Plane current node is important!       "<<endl;
+            if (m_pars.debug)
+                cout<<"|| Plane current node is important!       "<<endl;
             current_node->plane_important=true;
 
             node *node_uncle=((current_node==current_node->father->right)?current_node->father->left:current_node->father->right);
@@ -945,23 +963,27 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
                 if (current_node->left->uncle_close!=NULL)
                 {
                     parallel_to_uncle=(axisParallel(current_node->left, node_uncle, relations) && sectionEqual(current_node->left, node_uncle, relations));
-                    cout<<"|| Left node is parallel and with similar dimensions w.r.t its uncle      "<<endl;
+                    if (m_pars.debug)
+                        cout<<"|| Left node is parallel and with similar dimensions w.r.t its uncle      "<<endl;
 
                 }
                 else if (current_node->right->uncle_close!=NULL)
                 {
                     parallel_to_uncle=(axisParallel(current_node->right, node_uncle, relations) && sectionEqual(current_node->right, node_uncle, relations));
-                    cout<<"|| Right node is parallel and with similar dimensions w.r.t its uncle      "<<endl;
+                    if (m_pars.debug)
+                        cout<<"|| Right node is parallel and with similar dimensions w.r.t its uncle      "<<endl;
                 }
 
                 if(parallel_to_uncle==false)
                 {
-                    cout<<"|| Plane father is important      "<<endl;
+                    if (m_pars.debug)
+                        cout<<"|| Plane father is important      "<<endl;
                     current_node->father->plane_important=true;
                 }
                 else
                 {
-                    cout<<"|| Plane father is not important      "<<endl;
+                    if (m_pars.debug)
+                        cout<<"|| Plane father is not important      "<<endl;
                     current_node->father->plane_important=false;
                 }
             }
@@ -973,9 +995,9 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
         computeSuperqAxis(current_node->left);
         computeSuperqAxis(current_node->right);
 
-        if (current_node->plane_important)
+        if (current_node->plane_important && m_pars.debug)
             cout<<"|| Plane of root is important!     "<<endl;
-        else
+        else if (m_pars.debug)
             cout<<"|| Plane of root is not important!     "<<endl;
 
         if ( axisParallel(current_node->left, current_node->right, relations) && !sectionEqual(current_node->left, current_node->right, relations))
@@ -996,32 +1018,39 @@ bool SuperqEstimatorApp::generateFinalTree(const IpoptParam &pars, node *old_nod
 {
     if (old_node!=NULL && old_node->height <= h_tree)
     {
-        cout<<"|| ---------------------------------------------------- ||"<<endl;
-        cout<<"|| Node height                        :"<<old_node->height<<endl;
+        if (m_pars.debug)
+        {
+            cout<<"|| ---------------------------------------------------- ||"<<endl;
+            cout<<"|| Node height                        :"<<old_node->height<<endl;
+        }
 
         if (old_node->height > 1)
         {
             if (old_node->plane_important==true && old_node->father->plane_important==false)
             {
-                cout<<"|| Current plane important!     "<<endl;
+                if (m_pars.debug)
+                    cout<<"|| Current plane important!     "<<endl;
                 superqUsingPlane(pars, old_node, newnode);
 
                 generateFinalTree(pars, old_node->left, newnode->left);
                 generateFinalTree(pars, old_node->right, newnode->right);
 
-                cout<<"|| ---------------------------------------------------- ||"<<endl;
+                if (m_pars.debug)
+                    cout<<"|| ---------------------------------------------------- ||"<<endl;
 
             }
             else if (old_node->plane_important==true && old_node->father->plane_important==true)
             {
-                cout<<"|| Current  and father's plane important!     "<<endl;
+                if (m_pars.debug)
+                    cout<<"|| Current  and father's plane important!     "<<endl;
 
                 copySuperqChildren(old_node, newnode);
 
                 generateFinalTree(pars, old_node->left, newnode->left);
                 generateFinalTree(pars, old_node->right, newnode->right);
 
-                cout<<"|| ---------------------------------------------------- ||"<<endl;
+                if (m_pars.debug)
+                    cout<<"|| ---------------------------------------------------- ||"<<endl;
             }
             else if (old_node->left!=NULL && old_node->right!=NULL)
             {
@@ -1032,25 +1061,28 @@ bool SuperqEstimatorApp::generateFinalTree(const IpoptParam &pars, node *old_nod
                     generateFinalTree(pars, old_node->left, newnode->left);
                     generateFinalTree(pars, old_node->right, newnode->right);
 
-                    cout<<"|| ---------------------------------------------------- ||"<<endl;
+                    if (m_pars.debug)
+                        cout<<"|| ---------------------------------------------------- ||"<<endl;
                 }
                 else
                 {
                     if (superq_tree->searchPlaneImportant(old_node->left))
                     {
-                        cout<<"|| Only left sub-tree important!    "<<endl;
+                        if (m_pars.debug)
+                            cout<<"|| Only left sub-tree important!    "<<endl;
                         generateFinalTree(pars, old_node->left, newnode);
                     }
                     else if (superq_tree->searchPlaneImportant(old_node->right))
                     {
-                        cout<<"|| Only right sub-tree important!    "<<endl;
+                        if (m_pars.debug)
+                            cout<<"|| Only right sub-tree important!    "<<endl;
                         generateFinalTree(pars, old_node->right, newnode);
                     }
 
-                    cout<<"|| ---------------------------------------------------- ||"<<endl;
+                    if (m_pars.debug)
+                        cout<<"|| ---------------------------------------------------- ||"<<endl;
                 }
             }
-
         }
         else
         {
@@ -1060,7 +1092,8 @@ bool SuperqEstimatorApp::generateFinalTree(const IpoptParam &pars, node *old_nod
                 generateFinalTree(pars, old_node->left, newnode->left);
                 generateFinalTree(pars, old_node->right, newnode->right);
 
-                cout<<"|| ---------------------------------------------------- ||"<<endl;
+                if (m_pars.debug)
+                    cout<<"|| ---------------------------------------------------- ||"<<endl;
             }
             else if (superq_tree->searchPlaneImportant(old_node->left)==true && superq_tree->searchPlaneImportant(old_node->right)==true)
             {
@@ -1069,24 +1102,27 @@ bool SuperqEstimatorApp::generateFinalTree(const IpoptParam &pars, node *old_nod
                 generateFinalTree(pars, old_node->left, newnode->left);
                 generateFinalTree(pars, old_node->right, newnode->right);
 
-                cout<<"|| ---------------------------------------------------- ||"<<endl;
+                if (m_pars.debug)
+                    cout<<"|| ---------------------------------------------------- ||"<<endl;
             }
             else
             {
                 if (superq_tree->searchPlaneImportant(old_node->left)==true)
                 {
-                    cout<<"|| Only left sub-tree important!    "<<endl;
+                    if (m_pars.debug)
+                        cout<<"|| Only left sub-tree important!    "<<endl;
                     generateFinalTree(pars, old_node->left, newnode);
                 }
                 if (superq_tree->searchPlaneImportant(old_node->right)==true)
                 {
-                    cout<<"|| Only right sub-tree important!    "<<endl;
+                    if (m_pars.debug)
+                        cout<<"|| Only right sub-tree important!    "<<endl;
                     generateFinalTree(pars, old_node->right, newnode);
                 }
 
-                cout<<"|| ---------------------------------------------------- ||"<<endl;
+                if (m_pars.debug)
+                    cout<<"|| ---------------------------------------------------- ||"<<endl;
             }
-
         }
     }
 
@@ -1098,8 +1134,7 @@ bool SuperqEstimatorApp::generateFinalTree(const IpoptParam &pars, node *old_nod
 void SuperqEstimatorApp::superqUsingPlane(const IpoptParam &pars, node *old_node, node *newnode)
 {
     deque<Vector3d> deque_points1, deque_points2;
-
-    for (auto point : old_node->point_cloud->points)
+    for (auto point : old_node->point_cloud->points_for_vis)
     {
         if (old_node->plane(0)*point(0)+old_node->plane(1)*point(1)+old_node->plane(2)*point(2)- old_node->plane(3) > 0)
             deque_points1.push_back(point);
@@ -1111,24 +1146,72 @@ void SuperqEstimatorApp::superqUsingPlane(const IpoptParam &pars, node *old_node
     point_cloud_split2->setPoints(deque_points2);
 
     Superquadric superq1, superq2;
-
     superq1=computeSuperq(pars, *point_cloud_split1);
     superq2=computeSuperq(pars, *point_cloud_split2);
 
     nodeContent node_c1;
     nodeContent node_c2;
-
     node_c1.superq=superq1;
     node_c2.superq=superq2;
     node_c1.point_cloud= new PointCloud;
     node_c2.point_cloud= new PointCloud;
 
-    node_c1.point_cloud=point_cloud_split1;
-    node_c2.point_cloud=point_cloud_split2;
-
+    *node_c1.point_cloud=*point_cloud_split1;
+    *node_c2.point_cloud=*point_cloud_split2;
     node_c1.height=newnode->height + 1;
     node_c2.height=newnode->height + 1;
 
     superq_tree_new->insert(node_c1, node_c2, newnode);
 
+}
+
+/****************************************************************/
+vector<Superquadric> SuperqEstimatorApp::fillSolution(node *leaf)
+{
+    vector<Superquadric> superqs;
+    addSuperqs(leaf, superqs);
+
+    delete superq_tree;
+
+    return superqs;
+}
+
+/**********************************************************************/
+void SuperqEstimatorApp::addSuperqs(node *leaf, vector<Superquadric> &superqs)
+{
+    Superquadric sup;
+
+    if (leaf!=NULL)
+    {
+        if (leaf->superq.getSuperqDims().norm()>0.0)
+        {
+            sup=leaf->superq;
+
+            if (leaf->right!=NULL)
+            {
+                addSuperqs(leaf->right,  superqs);
+            }
+
+            if (leaf->left!=NULL)
+            {
+                addSuperqs(leaf->left, superqs);
+            }
+
+            if (leaf->right==NULL && leaf->left==NULL && leaf->height > 0)
+            {
+                superqs.push_back(sup);
+            }
+        }
+        else
+        {
+            if (leaf->right!=NULL)
+            {
+                addSuperqs(leaf->right,  superqs);
+            }
+            if (leaf->left!=NULL)
+            {
+                addSuperqs(leaf->left,  superqs);
+            }
+        }
+    }
 }
