@@ -32,7 +32,7 @@ public:
     /**
     * Constructor
     */
-    PointsVis(const std::vector<Eigen::Vector3d> &points, const int point_size);
+    PointsVis(const std::vector<Eigen::Vector3d> &points, const int &point_size);
 
     /**
     * Destructory

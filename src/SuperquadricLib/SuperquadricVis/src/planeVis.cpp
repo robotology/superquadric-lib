@@ -5,7 +5,7 @@ using namespace SuperqVis;
 
 
 /****************************************************************/
-PlaneVis::PlaneVis(double &z_height)
+PlaneVis::PlaneVis(const double &z_height)
 {
     plane_source = vtkSmartPointer<vtkPlaneSource>::New();
     plane_source->SetCenter(0.0, 0.0, z_height);
@@ -23,7 +23,7 @@ PlaneVis::PlaneVis(double &z_height)
 }
 
 /****************************************************************/
-void PlaneVis::setHeight(double &z_height)
+void PlaneVis::setHeight(const double &z_height)
 {
     plane_source->SetCenter(0.0, 0.0, z_height);
     plane_source->Update();

@@ -8,7 +8,7 @@
 /**
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
- 
+
 #ifndef GRASPCOMPUTATION_H
 #define GRASPCOMPUTATION_H
 
@@ -119,10 +119,10 @@ public:
     void init(GraspParams &g_params);
 
     /****************************************************************/
-    Eigen::Vector3d computePointsHand(Vector11d &hand, int j, int l, const std::string &str_hand, double &theta);
+    Eigen::Vector3d computePointsHand(Vector11d &hand, const int &j, const int &l, const std::string &str_hand, const double &theta);
 
     /****************************************************************/
-    double sign(double &v);
+    double sign(const double &v);
 
     /****************************************************************/
     bool get_nlp_info(Ipopt::Index &n, Ipopt::Index &m,Ipopt::Index &nnz_jac_g,
@@ -148,10 +148,10 @@ public:
    double f(const Ipopt::Number *x, Eigen::Vector3d &point);
 
    /****************************************************************/
-   double F_v(Vector6d &x);
+   double F_v(const Vector6d &x);
 
    /****************************************************************/
-    double f_v(Vector6d &x, Eigen::Vector3d &point);
+    double f_v(const Vector6d &x, const Eigen::Vector3d &point);
 
     /****************************************************************/
     bool eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x,
@@ -161,7 +161,7 @@ public:
     double coneImplicitFunction(const Eigen::Vector3d &point, const Eigen::Vector3d &d, double theta);
 
     /****************************************************************/
-    double G_v(Vector6d &x, int i, Ipopt::Index m);
+    double G_v(const Vector6d &x, const int &i, Ipopt::Index m);
 
     /****************************************************************/
     bool eval_g(Ipopt::Index n, const Ipopt::Number *x, bool new_x,
@@ -196,22 +196,22 @@ public:
     std::deque<double> get_final_constr_values() const;
 
     /****************************************************************/
-    double computeObstacleValues(const Ipopt::Number *x, int k);
+    double computeObstacleValues(const Ipopt::Number *x, const int &k);
 
     /****************************************************************/
-    double computeObstacleValues_v(Vector6d &pose_hand, int k);
+    double computeObstacleValues_v(const Vector6d &pose_hand, const int &k);
 
     /****************************************************************/
-    std::deque<double> computeFinalObstacleValues(Vector6d &pose_hand);
+    std::deque<double> computeFinalObstacleValues(const Vector6d &pose_hand);
 
     /****************************************************************/
-    bool notAlignedPose(Eigen::Matrix4d &final_H);
+    bool notAlignedPose(const Eigen::Matrix4d &final_H);
 
     /****************************************************************/
     void alignPose(Eigen::Matrix4d &final_H);
 
     /*****************************************************************/
-    double f_v2(Vector11d &obj, Eigen::Vector3d &point_tr);
+    double f_v2(const Vector11d &obj, const Eigen::Vector3d &point_tr);
 };
 
 struct GraspResults
@@ -231,7 +231,7 @@ struct GraspResults
 class GraspEstimatorApp
 {
 public:
-     GraspResults computeGraspPoses(SuperqModel::IpoptParam &pars, GraspParams &g_params);
+     GraspResults computeGraspPoses(const SuperqModel::IpoptParam &pars, GraspParams &g_params);
 };
 
 }

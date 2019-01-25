@@ -8,7 +8,7 @@
 /**
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
- 
+
 #ifndef VTKRENDERER_H
 #define VTKRENDERER_H
 
@@ -88,7 +88,7 @@ public:
     * @param name is the string that is add in the file name
     * @return true/false on success/failuer
     */
-    void saveScreenshot(std::string &name, int &number);
+    void saveScreenshot(const std::string &name, const int &number);
 
     /** Start visualizer
     * @param s is a superquadric visualizer
@@ -100,19 +100,19 @@ public:
     * @param p is a plane visualizer
     * @return true/false on success/failuer
     */
-    void addPlane(double &z);
+    void addPlane(const double &z);
 
     /** Start visualizer
     * @param p is a points visualizer
     * @return true/false on success/failuer
     */
-    void addPoints(SuperqModel::PointCloud &point_cloud, bool show_downsample);
+    void addPoints(SuperqModel::PointCloud &point_cloud, const bool &show_downsample);
 
     /** Start visualizer
     * @param p is a pose visualizer
     * @return true/false on success/failuer
     */
-    void addPoses(std::vector<SuperqGrasp::GraspPoses> &poses);
+    void addPoses(const std::vector<SuperqGrasp::GraspPoses> &poses);
 };
 }
 #endif

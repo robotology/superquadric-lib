@@ -58,7 +58,7 @@ Visualizer::~Visualizer()
 }
 
 /**********************************************/
-void Visualizer::addPoints(PointCloud &point_cloud, bool show_downsample)
+void Visualizer::addPoints(PointCloud &point_cloud, const bool &show_downsample)
 {
     vector<Vector3d> &all_points=point_cloud.points_for_vis;
     vector<vector<unsigned char>> all_colors=point_cloud.colors;
@@ -92,10 +92,9 @@ void Visualizer::addPoints(PointCloud &point_cloud, bool show_downsample)
 }
 
 /**********************************************/
-void Visualizer::addPlane(double &z)
+void Visualizer::addPlane(const double &z)
 {
-    z=-z;
-    vtk_plane=unique_ptr<PlaneVis>(new PlaneVis(z));
+    vtk_plane=unique_ptr<PlaneVis>(new PlaneVis(-z));
     vtk_renderer->AddActor(vtk_plane->get_actor());
 }
 
@@ -139,7 +138,7 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
 }
 
 /**********************************************/
-void Visualizer::addPoses(vector<SuperqGrasp::GraspPoses> &poses)
+void Visualizer::addPoses(const vector<SuperqGrasp::GraspPoses> &poses)
 {
     Vector6d pose_vect;
     double offset=0.0;
@@ -216,7 +215,7 @@ void Visualizer::visualize()
 }
 
 /**********************************************/
-void Visualizer::saveScreenshot(string &object, int &number)
+void Visualizer::saveScreenshot(const string &object, const int &number)
 {
     vtk_renderWindowInteractor->Render();
 

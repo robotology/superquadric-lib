@@ -123,7 +123,7 @@ void graspComputation::init(GraspParams &g_params)
 }
 
 /****************************************************************/
-Vector3d graspComputation::computePointsHand(Vector11d &hand, int j, int l, const string &str_hand, double &theta)
+Vector3d graspComputation::computePointsHand(Vector11d &hand, const int &j, const int &l, const string &str_hand, const double &theta)
 {
     double omega;
     double ce,se,co,so;
@@ -147,7 +147,7 @@ Vector3d graspComputation::computePointsHand(Vector11d &hand, int j, int l, cons
 }
 
 /****************************************************************/
-double graspComputation::sign(double &v)
+double graspComputation::sign(const double &v)
 {
     return ((v==0.0)?0.0:((v>0.0)?1.0:-1.0));
 }
@@ -273,7 +273,7 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
  }
 
  /****************************************************************/
- double graspComputation::F_v(Vector6d &x)
+ double graspComputation::F_v(const Vector6d &x)
  {
      // Compute cost function for finite difference gradient
      double value=0.0;
@@ -287,7 +287,7 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
  }
 
 /****************************************************************/
- double graspComputation::f_v(Vector6d &x, Vector3d &point)
+ double graspComputation::f_v(const Vector6d &x, const Vector3d &point)
  {
      Vector4d point_tmp, point_tr;
 
@@ -418,7 +418,7 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
  }
 
  /****************************************************************/
- double graspComputation::G_v(Vector6d &x, int i, Ipopt::Index m)
+ double graspComputation::G_v(const Vector6d &x, const int &i, Ipopt::Index m)
  {
      // Compute constraints for finite difference gradients (same steps as eval_g function)
      Matrix4d H_x;
@@ -681,7 +681,7 @@ deque<double> graspComputation::get_final_constr_values() const
 }
 
 /****************************************************************/
-double graspComputation::computeObstacleValues(const Ipopt::Number *x, int k)
+double graspComputation::computeObstacleValues(const Ipopt::Number *x, const int &k)
 {
     Vector6d pose_hand;
     for (int i=0; i<6; i++)
@@ -724,7 +724,7 @@ double graspComputation::computeObstacleValues(const Ipopt::Number *x, int k)
 }
 
 /****************************************************************/
-double graspComputation::computeObstacleValues_v(Vector6d &pose_hand, int k)
+double graspComputation::computeObstacleValues_v(const Vector6d &pose_hand, const int &k)
 {
     Matrix4d H_robot;
     H_robot = computeMatrix(pose_hand);
@@ -763,7 +763,7 @@ double graspComputation::computeObstacleValues_v(Vector6d &pose_hand, int k)
 }
 
 /****************************************************************/
-deque<double> graspComputation::computeFinalObstacleValues(Vector6d &pose_hand)
+deque<double> graspComputation::computeFinalObstacleValues(const Vector6d &pose_hand)
 {
     Matrix4d H_robot;
     H_robot = computeMatrix(pose_hand);
@@ -804,7 +804,7 @@ deque<double> graspComputation::computeFinalObstacleValues(Vector6d &pose_hand)
 }
 
 /****************************************************************/
-bool graspComputation::notAlignedPose(Matrix4d &final_H)
+bool graspComputation::notAlignedPose(const Matrix4d &final_H)
 {
     //if ((final_H(2,1)< 0.0 && final_H(2,1) > -0.5) ||  (final_H(2,1) < -0.8 && final_H(2,1) > -1.0))
     //{
@@ -858,7 +858,7 @@ void graspComputation::alignPose(Matrix4d &final_H)
 }
 
 /*****************************************************************/
-double graspComputation::f_v2(Vector11d &obj, Vector3d &point_tr)
+double graspComputation::f_v2(const Vector11d &obj, const Vector3d &point_tr)
 {
     double num1=H_o2w(0,0)*point_tr(0)+H_o2w(1,0)*point_tr(1)+H_o2w(2,0)*point_tr(2)-object(5)*H_o2w(0,0)-object(6)*H_o2w(1,0)-object(7)*H_o2w(2,0);
     double num2=H_o2w(0,1)*point_tr(0)+H_o2w(1,1)*point_tr(1)+H_o2w(2,1)*point_tr(2)-object(5)*H_o2w(0,1)-object(6)*H_o2w(1,1)-object(7)*H_o2w(2,1);
@@ -870,7 +870,7 @@ double graspComputation::f_v2(Vector11d &obj, Vector3d &point_tr)
  }
 
 /*****************************************************************/
-GraspResults GraspEstimatorApp::computeGraspPoses(IpoptParam &pars, GraspParams &g_params)
+GraspResults GraspEstimatorApp::computeGraspPoses(const IpoptParam &pars, GraspParams &g_params)
 {
     Ipopt::SmartPtr<Ipopt::IpoptApplication> app=new Ipopt::IpoptApplication;
     app->Options()->SetNumericValue("tol",pars.tol);

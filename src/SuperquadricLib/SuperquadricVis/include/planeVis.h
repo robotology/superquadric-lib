@@ -28,7 +28,7 @@ public:
     /**
     * Constructor
     */
-    PlaneVis(double &z_height);
+    PlaneVis(const double &z_height);
 
     /**
     * Destructory
@@ -39,7 +39,7 @@ public:
      * Set the heigh of the plane
      * @param z_height is the height of the plane
      */
-    void setHeight(double &z_height);
+    void setHeight(const double &z_height);
 
 
 };

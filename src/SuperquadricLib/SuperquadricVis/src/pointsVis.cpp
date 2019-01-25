@@ -8,7 +8,7 @@
 /**
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
- 
+
 #include "pointsVis.h"
 
 using namespace std;
@@ -16,7 +16,7 @@ using namespace Eigen;
 using namespace SuperqVis;
 
 /**********************************************/
-PointsVis::PointsVis(const vector<Vector3d> &points, const int point_size)
+PointsVis::PointsVis(const vector<Vector3d> &points, const int &point_size)
 {
     if (points[0].size() == 3 || points.size() == 6)
     {

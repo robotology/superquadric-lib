@@ -45,7 +45,7 @@ public:
      * @param p is a deque of 3d or 6d eigen vectors
      * @return true is number of points > 0 and if they are 3d or 6d
      */
-    bool setPoints(std::deque<Eigen::Vector3d> &p);
+    bool setPoints(const std::deque<Eigen::Vector3d> &p);
 
     /**
      * set colors of the point cloud
@@ -53,7 +53,7 @@ public:
      * @return true the number of colors is equal to the number of points
      */
     /*********************************************/
-    bool setColors(std::vector<std::vector<unsigned char>> &c);
+    bool setColors(const std::vector<std::vector<unsigned char>> &c);
 
     /**
      * get the number of points of the point cloud
@@ -90,7 +90,7 @@ public:
      * Subsample the point cloud
      * @param desired_points_num is the desired number of points after the downsampling
      */
-    void subSample(int desired_points_num, bool random);
+    void subSample(const int &desired_points_num, const bool &random);
 
     /**
      * Remove outliers using dbscan algorithm

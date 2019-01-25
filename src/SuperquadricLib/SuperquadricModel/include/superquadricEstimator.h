@@ -8,7 +8,7 @@
 /**
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
- 
+
 #ifndef SUPERQESTIMATOR_H
 #define SUPERQESTIMATOR_H
 
@@ -208,7 +208,7 @@ public:
   * @param optimizer_points is the maximum number of points to be used for the optimization problem
   */
   /****************************************************************/
-  void setPoints(SuperqModel::PointCloud &point_cloud, const int &optimizer_points, bool &random);
+  void setPoints(SuperqModel::PointCloud &point_cloud, const int &optimizer_points, const bool &random);
 
   /** Configure function
   * @param rf is the resource finder
@@ -216,20 +216,13 @@ public:
   * @param object_class is the object class according to its shape
   */
   /****************************************************************/
-  void configure(std::string object_class);
+  void configure(const std::string &object_class);
 
   /** Extract the solution
   * @return the superquadric as a Vector
   */
   /****************************************************************/
   SuperqModel::Superquadric get_result() const;
-
-  /** Compute superquadric solution
-  /* @param Pointcloud
-  * @return the superquadric solution
-  */
-  /****************************************************************/
-  SuperqModel::Superquadric computeSuperq(PointCloud &pc);
 
 };
 
@@ -253,7 +246,7 @@ struct IpoptParam
 class SuperqEstimatorApp
 {
 public:
-    SuperqModel::Superquadric computeSuperq(SuperqModel::IpoptParam &pars, PointCloud &point_cloud);
+    SuperqModel::Superquadric computeSuperq(const SuperqModel::IpoptParam &pars, PointCloud &point_cloud);
 };
 
 

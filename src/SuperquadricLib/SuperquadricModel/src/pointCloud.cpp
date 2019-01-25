@@ -8,7 +8,7 @@
 /**
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
- 
+
 #include "pointCloud.h"
 #include <boost/range/irange.hpp>
 
@@ -35,7 +35,7 @@ PointCloud::~PointCloud()
 }
 
 /*********************************************/
-bool PointCloud::setPoints(deque<Vector3d> &p)
+bool PointCloud::setPoints(const deque<Vector3d> &p)
 {
     if (p[0].size()==3)
     {
@@ -54,7 +54,7 @@ bool PointCloud::setPoints(deque<Vector3d> &p)
 }
 
 /*********************************************/
-bool PointCloud::setColors(vector<vector<unsigned char>> &c)
+bool PointCloud::setColors(const vector<vector<unsigned char>> &c)
 {
     if (c[0].size()==3)
     {
@@ -166,7 +166,7 @@ Matrix3d PointCloud::getAxes()
 }
 
 /*********************************************/
-void PointCloud::subSample(int desired_points, bool random)
+void PointCloud::subSample(const int &desired_points, const bool &random)
 {
     deque<VectorXd> p_aux;
 

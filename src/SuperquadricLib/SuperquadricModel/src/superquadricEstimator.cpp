@@ -28,7 +28,7 @@ void SuperqEstimator::init()
 }
 
 /****************************************************************/
-void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_points, bool &random)
+void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_points, const bool &random)
 {
     // Set points from point cloud and downsample them if too many
     if (point_cloud.getNumberPoints()>optimizer_points)
@@ -267,7 +267,7 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
  }
 
  /****************************************************************/
-void SuperqEstimator::configure(string object_class)
+void SuperqEstimator::configure(const string &object_class)
 {
     // Configure exponents according to object class
     bounds.resize(11,2);
@@ -328,7 +328,7 @@ Superquadric SuperqEstimator::get_result() const
 }
 
 /****************************************************************/
-Superquadric SuperqEstimatorApp::computeSuperq(IpoptParam &pars, PointCloud &point_cloud)
+Superquadric SuperqEstimatorApp::computeSuperq(const IpoptParam &pars, PointCloud &point_cloud)
 {
     // Process for estimate the superquadric
     Ipopt::SmartPtr<Ipopt::IpoptApplication> app=new Ipopt::IpoptApplication;
