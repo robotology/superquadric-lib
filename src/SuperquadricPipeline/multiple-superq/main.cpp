@@ -29,8 +29,6 @@ int main(int argc, char* argv[])
     // PointCloud class
     PointCloud point_cloud;
 
-    //PointCloud points_hand; // Uncomment this to visualize points on hand ellipsoid in the final pose
-
     // Object Superquadric
     vector<Superquadric> superqs;
 
@@ -130,9 +128,6 @@ int main(int argc, char* argv[])
     // Add poses for grasping
     vis.addPoses(grasp_poses);
     //vis.addSuperq(hand_superqs);
-
-    // points_hand.setPoints(grasp_res.points_on);  // Uncomment this to visualize points on the hand ellipsoid
-    // vis.addPoints(points_hand, false);
 
     // Visualize
     vis.visualize();

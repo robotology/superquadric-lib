@@ -263,6 +263,7 @@ class SuperqEstimatorApp
    MultipleParams m_pars;
 
 public:
+  
     SuperqModel::SuperqTree *superq_tree;
     SuperqModel::SuperqTree *superq_tree_new;
 

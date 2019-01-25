@@ -12,10 +12,6 @@
 #ifndef SUPERQTREE_H
 #define SUPERQTREE_H
 
-#include <string>
-#include <deque>
-#include <map>
-
 #include <Eigen/Dense>
 
 #include "superquadric.h"
@@ -56,8 +52,6 @@ class SuperqTree
     void destroy_tree(node *leaf);
 
 public:
-
-    int count;
 
     node *root;
 

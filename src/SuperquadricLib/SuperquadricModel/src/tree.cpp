@@ -9,10 +9,7 @@
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
 
-#include <cmath>
-#include <algorithm>
 #include <iostream>
-#include <set>
 
 #include "tree.h"
 
@@ -149,7 +146,7 @@ void SuperqTree::printNode(node *leaf)
         cout<<"|| ---------------------------------------------------- ||"<<endl;
         cout<<"|| Node content                                        :||"<<endl;
         cout<<"|| Superquadric                                        :||"<<endl;
-        cout<<leaf->superq.getSuperqParams()<<endl<<endl<<endl;
+        cout<<leaf->superq.getSuperqParams().format(CommaInitFmt)<<endl<<endl<<endl;
         cout<<"|| ---------------------------------------------------- ||"<<endl;
         cout<<"|| Left ...                                             ||"<<endl;
         if (leaf->left!=NULL)
