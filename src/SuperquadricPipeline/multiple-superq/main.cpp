@@ -69,6 +69,18 @@ int main(int argc, char* argv[])
     m_pars.threshold_section2=0.03;
     m_pars.debug=false;
 
+    // Params for solver in grasp estimator
+    IpoptParam iparams_grasp;
+    iparams_grasp.tol=1e-4;
+    iparams_grasp.constr_tol=1e-4;
+    iparams_grasp.acceptable_iter=0;
+    iparams_grasp.mu_strategy="adaptive";
+    iparams_grasp.max_iter=10000;
+    iparams_grasp.max_cpu_time=5.0;
+    iparams_grasp.nlp_scaling_method="none";
+    iparams_grasp.hessian_approximation="limited-memory";
+    iparams_grasp.print_level=0;
+
     /*******************************************/
     // Read point cloud
     deque<Vector3d> all_points;
@@ -117,16 +129,43 @@ int main(int argc, char* argv[])
     // Compute superq
     superqs=estim.computeMultipleSuperq(iparams_superq, m_pars, point_cloud);
 
+    // Params for grasp computation
+    GraspParams params_grasp;
+    params_grasp.left_or_right="left";
+    params_grasp.pl << 0.0, 0.0, 1.0, 0.20;
+    params_grasp.disp <<  0.0, 0.0, 0.0;
+    params_grasp.object_superq = superqs[0];
+    params_grasp.max_superq = 4;
+    params_grasp.bounds_right << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
+    params_grasp.bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3,  -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
+    params_grasp.bounds_constr_left.resize(8,2);
+    params_grasp.bounds_constr_left << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
+                                        10.0, 0.0, 1.0, 0.000001, 10.0, 0.000001, 10.0, 0.000001, 10.0;
+    params_grasp.bounds_constr_right.resize(8,2);
+    params_grasp.bounds_constr_right << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
+                                        10.0, 0.0, 1.0, 0.000001, 10.0, 0.000001, 10.0, 0.000001, 10.0;
+
+    Superquadric hand;
+    Vector11d hand_vector;
+    hand_vector << 0.03, 0.06, 0.03, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    hand.setSuperqParams(hand_vector);
+    params_grasp.hand_superq = hand;
+    params_grasp.object_superqs = superqs;
+
+    /*******************************************/
+    // Compute grasp pose for left hand
+    grasp_res=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
+
     // Outcome visualization
     // Add superquadric to visualizer
     vis.addSuperq(superqs);
 
     // Add points to visualizer
     // (true/false to show downsample points used for superq estimation)
-    vis.addPoints(point_cloud, true);
+    vis.addPoints(point_cloud, false);
 
     // Add poses for grasping
-    vis.addPoses(grasp_poses);
+    vis.addPoses(grasp_res.grasp_poses);
     //vis.addSuperq(hand_superqs);
 
     // Visualize

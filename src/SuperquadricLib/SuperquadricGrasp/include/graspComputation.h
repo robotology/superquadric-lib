@@ -41,10 +41,12 @@ struct GraspParams
     Eigen::Vector3d disp;
     /* Superquadric representing the object to be grasped */
     SuperqModel::Superquadric object_superq;
+    /* Superquadric representing the object to be grasped */
+    std::vector<SuperqModel::Superquadric> obstacle_superqs;
     /* Superquadric representing the robot hand */
     SuperqModel::Superquadric hand_superq;
     /* Superquadrics representing obstacles */
-    std::deque<SuperqModel::Superquadric> obstacles_superq;
+    std::vector<SuperqModel::Superquadric> object_superqs;
 
 };
 
@@ -217,15 +219,15 @@ public:
 struct GraspResults
 {
     /* Superquadric representing the hand ellipsoid in the final pose */
-    SuperqModel::Superquadric hand_superq;
+    std::vector<SuperqModel::Superquadric> hand_superq;
     /* Grasping pose */
-    GraspPoses grasp_pose;
+    std::vector<GraspPoses> grasp_poses;
     /*Points sampled on hand ellipsoid in the final pose */
-    std::deque<Eigen::Vector3d> points_on;
+    std::vector<std::deque<Eigen::Vector3d>> points_on;
     /* Final cost function */
-    double F_final;
+    std::vector<double> F_final;
     /* Final average distance w.r.t to the obstacles */
-    std::deque<double> F_final_obstacles;
+    std::vector<std::deque<double>> F_final_obstacles;
 
 };
 class GraspEstimatorApp

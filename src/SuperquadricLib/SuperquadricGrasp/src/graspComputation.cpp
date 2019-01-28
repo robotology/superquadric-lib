@@ -28,14 +28,16 @@ void graspComputation::init(GraspParams &g_params)
     n_hands = 36;
     l_o_r = g_params.left_or_right;
 
+    obstacles.clear();
+
     // Get hand and object/obstacles superquadrics
     hand = g_params.hand_superq.getSuperqParams();
     object = g_params.object_superq.getSuperqParams();
-    num_superq = g_params.obstacles_superq.size();
+    num_superq = g_params.obstacle_superqs.size();
 
     for (size_t i=0; i<num_superq; i++)
     {
-        Superquadric obst=g_params.obstacles_superq[i];
+        Superquadric obst=g_params.obstacle_superqs[i];
         obstacles.push_back(obst.getSuperqParams());
     }
     //if (g_params.obstacles_superq.size()!= num_superq)
@@ -48,7 +50,7 @@ void graspComputation::init(GraspParams &g_params)
         AngleAxisd(euler_obj(2), Vector3d::UnitZ());
     H_o2w.setIdentity();
     H_o2w.block(0,0,3,3) = R;
-    H_o2w.col(3).segment(0,3)=g_params.object_superq.getSuperqCenter();
+    H_o2w.col(3).segment(0,3) = g_params.object_superq.getSuperqCenter();
 
     Vector3d euler_hand = g_params.hand_superq.getSuperqEulerZYZ();
 
@@ -58,24 +60,25 @@ void graspComputation::init(GraspParams &g_params)
         AngleAxisd(euler_hand(2), Vector3d::UnitZ());
     H_h2w.setIdentity();
     H_h2w.block(0,0,3,3) = R;
-    H_h2w.col(3).segment(0,3)=g_params.hand_superq.getSuperqCenter();
+    H_h2w.col(3).segment(0,3) = g_params.hand_superq.getSuperqCenter();
 
+    points_on.clear();
     // Sampled points on the half of the hand ellipsoid closest to the robot palm
-    for (int i=0; i< (int)sqrt(n_hands); i++)
+    for (int i = 0; i < (int)sqrt(n_hands); i++)
     {
-        for (double theta=0; theta <= 2*M_PI; theta+= M_PI/((int)sqrt(n_hands)))
+        for (double theta  = 0; theta <= 2*M_PI; theta += M_PI/((int)sqrt(n_hands)))
         {
-            Vector3d point=computePointsHand(hand, i, (int)sqrt(n_hands), l_o_r, theta);
+            Vector3d point = computePointsHand(hand, i, (int)sqrt(n_hands), l_o_r, theta);
 
-            if (l_o_r=="right")
+            if (l_o_r == "right")
             {
                 if (point(0) + point(2) <= 0)
                 {
                     Vector4d point_tmp, point_tr;
-                    point_tmp.segment(0,3)=point;
-                    point_tmp(3)=1;
-                    point_tr=H_h2w*point_tmp;
-                    point=point_tr.segment(0,3);
+                    point_tmp.segment(0,3) = point;
+                    point_tmp(3) = 1;
+                    point_tr = H_h2w*point_tmp;
+                    point = point_tr.segment(0,3);
                     points_on.push_back(point);
                 }
             }
@@ -84,10 +87,10 @@ void graspComputation::init(GraspParams &g_params)
                 if (point(0) - point(2) < 0)
                 {
                     Vector4d point_tmp, point_tr;
-                    point_tmp.segment(0,3)=point;
-                    point_tmp(3)=1;
-                    point_tr=H_h2w*point_tmp;
-                    point=point_tr.segment(0,3);
+                    point_tmp.segment(0,3) = point;
+                    point_tmp(3) = 1;
+                    point_tr = H_h2w*point_tmp;
+                    point = point_tr.segment(0,3);
                     points_on.push_back(point);
                 }
             }
@@ -95,31 +98,31 @@ void graspComputation::init(GraspParams &g_params)
     }
 
     // Configure cone parameters for orientation constraints
-    if (l_o_r=="right")
+    if (l_o_r == "right")
     {
-        d_x(0)=-0.7; d_x(1)=-0.7; d_x(2)= -0.7;
-        d_y(0)= 0.0; d_y(1)= 0.7; d_y(2)= -0.7;
-        d_z(0)= 0.0; d_z(1)= -0.7; d_z(2)= -0.7;
+        d_x(0) = -0.7; d_x(1) = -0.7; d_x(2) = -0.7;
+        d_y(0) = 0.0; d_y(1) = 0.7; d_y(2) = -0.7;
+        d_z(0) = 0.0; d_z(1) = -0.7; d_z(2) = -0.7;
     }
     else
     {
-        d_x(0)=-0.7; d_x(1)=0.7; d_x(2)= -0.7;
-        d_y(0)= 0.0; d_y(1)= -0.7; d_y(2)=-0.7;
-        d_z(0)=0.0; d_z(1)=-0.7; d_z(2)= 0.7;
+        d_x(0) = -0.7; d_x(1) = 0.7; d_x(2) = -0.7;
+        d_y(0) = 0.0; d_y(1) = -0.7; d_y(2) =-0.7;
+        d_z(0) = 0.0; d_z(1) = -0.7; d_z(2) = 0.7;
     }
 
-    d_x=d_x/d_x.norm();
-    d_y=d_y/d_y.norm();
-    d_z=d_z/d_z.norm();
+    d_x = d_x/d_x.norm();
+    d_y = d_y/d_y.norm();
+    d_z = d_z/d_z.norm();
 
-    if (num_superq>0)
-       theta_x=M_PI/4.0;
+    if (num_superq > 0)
+       theta_x = M_PI/4.0;
     else
-        theta_x=M_PI/6.0;
-    theta_y=M_PI/4.0;
-    theta_z=M_PI/4.0;
+        theta_x = M_PI/6.0;
+    theta_y = M_PI/4.0;
+    theta_z = M_PI/4.0;
 
-    aux_objvalue=0.0;
+    aux_objvalue = 0.0;
 }
 
 /****************************************************************/
@@ -129,8 +132,8 @@ Vector3d graspComputation::computePointsHand(Vector11d &hand, const int &j, cons
     double ce,se,co,so;
     Vector3d point(3);
 
-    if (object.segment(0,3).maxCoeff()> hand.segment(0,3).maxCoeff())
-        hand(1)=object.segment(0,3).maxCoeff();
+    if (object.segment(0,3).maxCoeff() > hand.segment(0,3).maxCoeff())
+        hand(1) = object.segment(0,3).maxCoeff();
 
     omega=j*M_PI/(l);
 
@@ -158,17 +161,17 @@ bool graspComputation::get_nlp_info(Ipopt::Index &n, Ipopt::Index &m,Ipopt::Inde
 {
     // Get basic information for ipopt
     // Dimension of variable to optimize
-    n=6;
+    n = 6;
 
     // Number of constrinats
-    if (num_superq==0)
+    if (num_superq == 0)
         m=5;
     else
-        m=5+(num_superq);
+        m=5 + num_superq;
 
-    nnz_jac_g=n*m;
-    nnz_h_lag=0;
-    index_style=TNLP::C_STYLE;
+    nnz_jac_g = n*m;
+    nnz_h_lag = 0;
+    index_style = TNLP::C_STYLE;
 
     return true;
 }
@@ -178,16 +181,16 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
                                       Ipopt::Index m, Ipopt::Number *g_l, Ipopt::Number *g_u)
 {
     // Get bounds
-    for (Ipopt::Index i=0; i<n; i++)
+    for (Ipopt::Index i = 0; i < n; i++)
     {
-       x_l[i]=bounds(i,0);
-       x_u[i]=bounds(i,1);
+       x_l[i] = bounds(i,0);
+       x_u[i] = bounds(i,1);
     }
 
-    for (Ipopt::Index i=0; i<m; i++)
+    for (Ipopt::Index i = 0; i < m; i++)
     {
-       g_l[i]=bounds_constr(i,0);
-       g_u[i]=bounds_constr(i,1);
+       g_l[i] = bounds_constr(i,0);
+       g_u[i] = bounds_constr(i,1);
     }
 
     return true;
@@ -245,9 +248,9 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
 
      H_tmp.setIdentity();
      H_tmp.block(0,0,3,3) = R;
-     H_tmp(0,3)=current_pose(0);
-     H_tmp(1,3)=current_pose(1);
-     H_tmp(2,3)=current_pose(2);
+     H_tmp(0,3) = current_pose(0);
+     H_tmp(1,3) = current_pose(1);
+     H_tmp(2,3) = current_pose(2);
 
      return H_tmp;
  }
@@ -258,17 +261,17 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
      Vector6d x_tmp;
      Vector4d point_tmp, point_tr;
 
-     point_tmp(3)=1;
-     point_tmp.segment(0,3)=point;
+     point_tmp(3) = 1;
+     point_tmp.segment(0,3) = point;
 
-     for (int i=0; i<6; i++)
-        x_tmp(i)=x[i];
+     for (int i = 0; i < 6; i++)
+        x_tmp(i) = x[i];
 
      Matrix4d H_x;
      H_x = computeMatrix(x_tmp);
-     point_tr=H_x*point_tmp;
+     point_tr = H_x*point_tmp;
 
-     Vector3d point3=point_tr.segment(0,3);
+     Vector3d point3 = point_tr.segment(0,3);
      return f_v2(object,point3);
  }
 
@@ -276,12 +279,12 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
  double graspComputation::F_v(const Vector6d &x)
  {
      // Compute cost function for finite difference gradient
-     double value=0.0;
+     double value = 0.0;
 
      for(auto point : points_on)
-        value+= pow( pow(f_v(x,point),object(3))-1,2 );
+        value += pow( pow(f_v(x,point),object(3))-1,2 );
 
-     value*=object(0)*object(1)*object(2)/points_on.size();
+     value *= object(0)*object(1)*object(2)/points_on.size();
 
      return value;
  }
@@ -291,14 +294,14 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
  {
      Vector4d point_tmp, point_tr;
 
-     point_tmp(3)=1;
-     point_tmp.segment(0,3)=point;
+     point_tmp(3) = 1;
+     point_tmp.segment(0,3) = point;
 
      Matrix4d H_x;
      H_x = computeMatrix(x);
-     point_tr=H_x*point_tmp;
+     point_tr = H_x*point_tmp;
 
-     Vector3d point3=point_tr.segment(0,3);
+     Vector3d point3 = point_tr.segment(0,3);
      return f_v2(object,point3);
  }
 
@@ -310,18 +313,18 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
      double grad_p, grad_n;
      double eps=1e-8;
 
-     for(Ipopt::Index i=0;i<n;i++)
-        x_tmp(i)=x[i];
+     for(Ipopt::Index i = 0;i < n;i++)
+        x_tmp(i) = x[i];
 
-     for(Ipopt::Index j=0;j<n;j++)
+     for(Ipopt::Index j = 0;j < n;j++)
      {
-         x_tmp(j)+=eps;
-         grad_p=F_v(x_tmp);
+         x_tmp(j) += eps;
+         grad_p = F_v(x_tmp);
 
-         x_tmp(j)-=eps;
-         grad_n=F_v(x_tmp);
+         x_tmp(j) -= eps;
+         grad_n = F_v(x_tmp);
 
-         grad_f[j]=(grad_p-grad_n)/eps;
+         grad_f[j] = (grad_p-grad_n)/eps;
      }
 
      return true;
@@ -330,9 +333,9 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
  /****************************************************************/
  double graspComputation::coneImplicitFunction(const Vector3d &point, const Vector3d &d, double theta)
  {
-     double d_dot_d=d.dot(d);
-     double p_dot_p=point.dot(point);
-     double p_dot_d=point.dot(d);
+     double d_dot_d = d.dot(d);
+     double p_dot_p = point.dot(point);
+     double p_dot_d = point.dot(d);
 
      return  (-p_dot_d + cos(theta));
  }
@@ -343,53 +346,53 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
  {
      // Compute constraints
      Vector6d x_tmp;
-     for (int i=0; i<6; i++)
-        x_tmp(i)=x[i];
+     for (int i = 0; i < 6; i++)
+        x_tmp(i) = x[i];
 
      Matrix4d H_x;
      H_x = computeMatrix(x_tmp);
 
      Matrix4d H;
-     H=H_x*H_h2w;
+     H = H_x*H_h2w;
 
      Vector3d x_hand, y_hand, z_hand;
-     x_hand=H.col(0).segment(0,3);
-     y_hand=H.col(1).segment(0,3);
-     z_hand=H.col(2).segment(0,3);
+     x_hand = H.col(0).segment(0,3);
+     y_hand = H.col(1).segment(0,3);
+     z_hand = H.col(2).segment(0,3);
 
      // Constraints on orientation
      double F_x, F_y, F_z;
-     F_x=coneImplicitFunction(x_hand, d_x, theta_x);
-     F_y=coneImplicitFunction(y_hand, d_y, theta_y);
-     F_z=coneImplicitFunction(z_hand, d_z, theta_z);
+     F_x = coneImplicitFunction(x_hand, d_x, theta_x);
+     F_y = coneImplicitFunction(y_hand, d_y, theta_y);
+     F_z = coneImplicitFunction(z_hand, d_z, theta_z);
 
-     g[0]= F_x;
-     g[1]= F_y;
-     g[2]= F_z;
+     g[0] = F_x;
+     g[1] = F_y;
+     g[2] = F_z;
 
      Vector3d x_min;
-     double minz=10.0;
+     double minz = 10.0;
 
      for (auto point : points_on)
      {
          Vector4d pnt;
-         pnt.segment(0,3)=point;
-         pnt(3)=1;
-         Vector4d p=H_x*pnt;
+         pnt.segment(0,3) = point;
+         pnt(3) = 1;
+         Vector4d p = H_x*pnt;
 
-         if (p(2)<minz)
+         if (p(2) < minz)
          {
-             minz=p(2);
-             x_min=p.segment(0,3);
+             minz = p(2);
+             x_min = p.segment(0,3);
          }
      }
 
      // Constraints on plane avoidance
-     g[3]=plane(0,0)*x_min(0)+plane(1,0)*x_min(1)+plane(2,0)*x_min(2)+plane(3,0);
+     g[3] = plane(0,0)*x_min(0)+plane(1,0)*x_min(1)+plane(2,0)*x_min(2)+plane(3,0);
 
      Vector3d robotPose;
 
-     if (l_o_r=="right")
+     if (l_o_r == "right")
      {
         robotPose = x_tmp.segment(0,3)-hand(0)*z_hand;
         robotPose = robotPose-hand(0)*x_hand;
@@ -401,17 +404,12 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
      }
 
      // Constraints on positon of robot plam w.r.t the object surface
-     g[4]=object(0)*object(1)*object(2)*(pow(f_v2(object,robotPose), object(3)) -1);
+     g[4] = object(0)*object(1)*object(2)*(pow(f_v2(object,robotPose), object(3)) -1);
 
      // Constraints on obstacle superquadric avoidance
-     if (num_superq>0)
+     for (int j = 0; j < num_superq; j++)
      {
-         for (int j=0; j<num_superq; j++)
-         {
-             g[5+j]=0;
-
-             g[5+j]=computeObstacleValues(x,j);
-         }
+         g[5+j] = computeObstacleValues(x,j);
      }
 
      return true;
@@ -425,65 +423,59 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
      H_x = computeMatrix(x);
 
      Matrix4d H;
-     H=H_x*H_h2w;
+     H = H_x*H_h2w;
 
      Vector3d x_hand, y_hand, z_hand;
-     x_hand=H.col(0).segment(0,3);
-     y_hand=H.col(1).segment(0,3);
-     z_hand=H.col(2).segment(0,3);
+     x_hand = H.col(0).segment(0,3);
+     y_hand = H.col(1).segment(0,3);
+     z_hand = H.col(2).segment(0,3);
 
      double F_x, F_y, F_z;
-     F_x=coneImplicitFunction(x_hand, d_x, theta_x);
-     F_y=coneImplicitFunction(y_hand, d_y, theta_y);
-     F_z=coneImplicitFunction(z_hand, d_z, theta_z);
+     F_x = coneImplicitFunction(x_hand, d_x, theta_x);
+     F_y = coneImplicitFunction(y_hand, d_y, theta_y);
+     F_z = coneImplicitFunction(z_hand, d_z, theta_z);
 
-     g[0]= F_x;
-     g[1]= F_y;
-     g[2]= F_z;
+     g[0] = F_x;
+     g[1] = F_y;
+     g[2] = F_z;
 
      Vector3d x_min;
-     double minz=10.0;
+     double minz = 10.0;
 
      for (auto point : points_on)
      {
          Vector4d pnt;
-         pnt.segment(0,3)=point;
-         pnt(3)=1;
-         Vector4d p=H_x*pnt;
+         pnt.segment(0,3) = point;
+         pnt(3) = 1;
+         Vector4d p = H_x*pnt;
 
-         if (p(2)<minz)
+         if (p(2) < minz)
          {
-             minz=p(2);
-             x_min=p.segment(0,3);
+             minz = p(2);
+             x_min = p.segment(0,3);
          }
      }
 
-     g[3]=plane(0,0)*x_min(0)+plane(1,0)*x_min(1)+plane(2,0)*x_min(2)+plane(3,0);
+     g[3] = plane(0,0)*x_min(0)+plane(1,0)*x_min(1)+plane(2,0)*x_min(2)+plane(3,0);
 
      Vector3d robotPose;
 
-     if (l_o_r=="right")
+     if (l_o_r == "right")
      {
-        robotPose=x.segment(0,3)-hand(0)*z_hand;
+        robotPose = x.segment(0,3)-hand(0)*z_hand;
         robotPose = robotPose-hand(0)*x_hand;
      }
      else
      {
-         robotPose=x.segment(0,3)+hand(0)*z_hand;
+         robotPose = x.segment(0,3)+hand(0)*z_hand;
          robotPose = robotPose-hand(0)*x_hand;
      }
 
-     g[4]=object(0)*object(1)*object(2)*(pow(f_v2(object,robotPose), object(3)) -1);
+     g[4] = object(0)*object(1)*object(2)*(pow(f_v2(object,robotPose), object(3)) -1);
 
-
-     if (num_superq>0)
+     for (int j = 0; j < num_superq; j++)
      {
-         for (int j=0; j<num_superq; j++)
-         {
-             g[5+j]=0;
-
-             g[5+j]=computeObstacleValues_v(x,j);
-         }
+         g[5+j] = computeObstacleValues_v(x,j);
      }
 
      return g[i];
@@ -684,8 +676,8 @@ deque<double> graspComputation::get_final_constr_values() const
 double graspComputation::computeObstacleValues(const Ipopt::Number *x, const int &k)
 {
     Vector6d pose_hand;
-    for (int i=0; i<6; i++)
-        pose_hand(i)=x[i];
+    for (int i  =0; i < 6; i++)
+        pose_hand(i) = x[i];
 
     Matrix4d H_robot;
     H_robot = computeMatrix(pose_hand);
@@ -694,14 +686,14 @@ double graspComputation::computeObstacleValues(const Ipopt::Number *x, const int
     Vector3d thumb_finger;
     Vector3d palm_up;
     Vector3d palm_down;
-    middle_finger=pose_hand.segment(0,3) - hand(0) * H_robot.col(0).segment(3,1);
-    if (l_o_r=="right")
-        thumb_finger=pose_hand.segment(0,3) + hand(2) * H_robot.col(2).segment(3,1);
+    middle_finger = pose_hand.segment(0,3) - hand(0) * H_robot.col(0).segment(0,3);
+    if (l_o_r == "right")
+        thumb_finger = pose_hand.segment(0,3) + hand(2) * H_robot.col(2).segment(0,3);
     else
-        thumb_finger=pose_hand.segment(0,3) - hand(2) * H_robot.col(2).segment(3,1);
+        thumb_finger = pose_hand.segment(0,3) - hand(2) * H_robot.col(2).segment(0,3);
 
-    palm_up=pose_hand.segment(0,3) - hand(0) * H_robot.col(1).segment(3,1);
-    palm_down=pose_hand.segment(0,3) + hand(0) * H_robot.col(1).segment(3,1);
+    palm_up = pose_hand.segment(0,3) - hand(0) * H_robot.col(1).segment(0,3);
+    palm_down = pose_hand.segment(0,3) + hand(0) * H_robot.col(1).segment(0,3);
 
     deque<Vector3d> edges_hand;
     edges_hand.push_back(pose_hand.segment(0,3));
@@ -710,15 +702,15 @@ double graspComputation::computeObstacleValues(const Ipopt::Number *x, const int
     edges_hand.push_back(palm_up);
     edges_hand.push_back(palm_down);
 
-    double constr_value=0.0;
-    Vector11d obstacle=obstacles[k];
+    double constr_value = 0.0;
+    Vector11d obstacle = obstacles[k];
 
     for (auto edge : edges_hand)
     {
-        constr_value+=  pow(f_v2(obstacle,edge),obstacle[3])-1;
+        constr_value +=  pow(f_v2(obstacle,edge),obstacle[3])-1;
     }
 
-    constr_value*=obstacle(0) * obstacle(1) * obstacle(2) /edges_hand.size();
+    constr_value *= obstacle(0) * obstacle(1) * obstacle(2) /edges_hand.size();
 
     return constr_value;
 }
@@ -733,14 +725,14 @@ double graspComputation::computeObstacleValues_v(const Vector6d &pose_hand, cons
     Vector3d thumb_finger;
     Vector3d palm_up;
     Vector3d palm_down;
-    middle_finger=pose_hand.segment(0,3) - hand(0) * H_robot.col(0).segment(3,1);
-    if (l_o_r=="right")
-        thumb_finger=pose_hand.segment(0,3) + hand(2) * H_robot.col(2).segment(3,1);
+    middle_finger = pose_hand.segment(0,3) - hand(0) * H_robot.col(0).segment(0,3);
+    if (l_o_r == "right")
+        thumb_finger = pose_hand.segment(0,3) + hand(2) * H_robot.col(2).segment(0,3);
     else
-        thumb_finger=pose_hand.segment(0,3) - hand(2) * H_robot.col(2).segment(3,1);
+        thumb_finger = pose_hand.segment(0,3) - hand(2) * H_robot.col(2).segment(0,3);
 
-    palm_up=pose_hand.segment(0,3) - hand(0) * H_robot.col(1).segment(3,1);
-    palm_down=pose_hand.segment(0,3) + hand(0) * H_robot.col(1).segment(3,1);
+    palm_up = pose_hand.segment(0,3) - hand(0) * H_robot.col(1).segment(0,3);
+    palm_down = pose_hand.segment(0,3) + hand(0) * H_robot.col(1).segment(0,3);
 
     deque<Vector3d> edges_hand;
     edges_hand.push_back(pose_hand.segment(0,3));
@@ -749,15 +741,15 @@ double graspComputation::computeObstacleValues_v(const Vector6d &pose_hand, cons
     edges_hand.push_back(palm_up);
     edges_hand.push_back(palm_down);
 
-    double constr_value=0.0;
-    Vector11d obstacle=obstacles[k];
+    double constr_value = 0.0;
+    Vector11d obstacle = obstacles[k];
 
     for (auto edge : edges_hand)
     {
-        constr_value+=  pow(f_v2(obstacle,edge),obstacle[3])-1;
+        constr_value +=  pow(f_v2(obstacle,edge),obstacle[3])-1;
     }
 
-    constr_value*=obstacle(0) * obstacle(1) * obstacle(2) /edges_hand.size();
+    constr_value *= obstacle(0) * obstacle(1) * obstacle(2) / edges_hand.size();
 
     return constr_value;
 }
@@ -772,13 +764,13 @@ deque<double> graspComputation::computeFinalObstacleValues(const Vector6d &pose_
     Vector3d thumb_finger;
     Vector3d palm_up;
     Vector3d palm_down;
-    middle_finger=pose_hand.segment(0,3) - hand(0) * H_robot.col(0).segment(3,1);
-    if (l_o_r=="right")
-        thumb_finger=pose_hand.segment(0,3) + hand(2) * H_robot.col(2).segment(3,1);
+    middle_finger = pose_hand.segment(0,3) - hand(0) * H_robot.col(0).segment(0,3);
+    if (l_o_r == "right")
+        thumb_finger = pose_hand.segment(0,3) + hand(2) * H_robot.col(2).segment(0,3);
     else
-        thumb_finger=pose_hand.segment(0,3) - hand(2) * H_robot.col(2).segment(3,1);
-    palm_up=pose_hand.segment(0,3) - hand(0) * H_robot.col(1).segment(3,1);
-    palm_down=pose_hand.segment(0,3) + hand(0) * H_robot.col(1).segment(3,1);
+        thumb_finger = pose_hand.segment(0,3) - hand(2) * H_robot.col(2).segment(0,3);
+    palm_up = pose_hand.segment(0,3) - hand(0) * H_robot.col(1).segment(0,3);
+    palm_down = pose_hand.segment(0,3) + hand(0) * H_robot.col(1).segment(0,3);
 
     deque<Vector3d> edges_hand;
     edges_hand.push_back(pose_hand.segment(0,3));
@@ -793,9 +785,9 @@ deque<double> graspComputation::computeFinalObstacleValues(const Vector6d &pose_
         double constr_value=0.0;
 
         for (auto edge: edges_hand)
-           constr_value+=  pow(f_v2(obstacle,edge),obstacle[3])-1;
+           constr_value +=  pow(f_v2(obstacle,edge),obstacle[3])-1;
 
-        constr_value*=obstacle(0) * obstacle(1) * obstacle(2) /points_on.size();
+        constr_value *= obstacle(0) * obstacle(1) * obstacle(2) /points_on.size();
         values.push_back(constr_value);
     }
 
@@ -885,67 +877,79 @@ GraspResults GraspEstimatorApp::computeGraspPoses(const IpoptParam &pars, GraspP
     //app->Options()->SetStringValue("derivative_test","first-order");
     //app->Options()->SetStringValue("derivative_test_print_all","yes");
 
-    app->Initialize();
-
-    Ipopt::SmartPtr<graspComputation> estim = new graspComputation;
-    estim->init(g_params);
-    estim->configure(g_params);
-
-    clock_t tStart = clock();
-
-    Ipopt::ApplicationReturnStatus status=app->OptimizeTNLP(GetRawPtr(estim));
-
-    double computation_time=(double)(clock() - tStart)/CLOCKS_PER_SEC;
-
-    GraspPoses pose_hand;
     GraspResults results;
 
-    IOFormat CommaInitFmt(StreamPrecision, DontAlignCols,", ", ", ", "", "", " [ ", "]");
-
-    if (status==Ipopt::Solve_Succeeded)
+    for (size_t i = 0; i < g_params.object_superqs.size(); i++)
     {
-        pose_hand=estim->get_result();
-        cout<<"|| ---------------------------------------------------- ||"<<endl;
-        cout<<"|| Grasp poses for "<<g_params.left_or_right<< " hand estimated            : ";
-        cout<<pose_hand.getGraspParams().format(CommaInitFmt)<<endl<<endl;
-        cout<<"|| Computed in                                    :  ";
-        cout<<   computation_time<<" [s]"<<endl;
-        cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
+        app->Initialize();
 
-        results.grasp_pose=pose_hand;
-        results.hand_superq=estim->get_hand();
-        results.points_on=estim->points_on;
-        results.F_final=estim->final_F_value;
-        results.F_final_obstacles=estim->final_obstacles_value;
-        return results;
+        g_params.object_superq = g_params.object_superqs[i];
+
+        g_params.obstacle_superqs.clear();
+
+        for (size_t j = 0; j < g_params.object_superqs.size() ; j++)
+        {
+            if (j != i)
+                g_params.obstacle_superqs.push_back(g_params.object_superqs[j]);
+        }
+
+        Ipopt::SmartPtr<graspComputation> estim = new graspComputation;
+        estim->init(g_params);
+        estim->configure(g_params);
+
+        clock_t tStart = clock();
+
+        Ipopt::ApplicationReturnStatus status=app->OptimizeTNLP(GetRawPtr(estim));
+
+        double computation_time=(double)(clock() - tStart)/CLOCKS_PER_SEC;
+
+        GraspPoses pose_hand;
+
+        IOFormat CommaInitFmt(StreamPrecision, DontAlignCols,", ", ", ", "", "", " [ ", "]");
+
+        if (status==Ipopt::Solve_Succeeded)
+        {
+            pose_hand=estim->get_result();
+            cout<<"|| ---------------------------------------------------- ||"<<endl;
+            cout<<"|| Grasp poses for "<<g_params.left_or_right<< " hand estimated            : ";
+            cout<<pose_hand.getGraspParams().format(CommaInitFmt)<<endl<<endl;
+            cout<<"|| Computed in                                    :  ";
+            cout<<   computation_time<<" [s]"<<endl;
+            cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
+
+            results.grasp_poses.push_back(pose_hand);
+            results.hand_superq.push_back(estim->get_hand());
+            results.points_on.push_back(estim->points_on);
+            results.F_final.push_back(estim->final_F_value);
+            results.F_final_obstacles.push_back(estim->final_obstacles_value);
+        }
+        else if(status==Ipopt::Maximum_CpuTime_Exceeded)
+        {
+            pose_hand=estim->get_result();
+            cout<<"|| ---------------------------------------------------- ||"<<endl;
+            cout<<"|| Time expired                                   :  "<<pose_hand.getGraspParams().format(CommaInitFmt)<<endl<<endl;
+            cout<<"|| Grasp poses for "<<g_params.left_or_right<< " hand estimated in            :  "<<   computation_time<<" [s]"<<endl;
+            cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
+
+            results.grasp_poses.push_back(pose_hand);
+            results.hand_superq.push_back(estim->get_hand());
+            results.points_on.push_back(estim->points_on);
+            results.F_final.push_back(estim->final_F_value);
+            results.F_final_obstacles.push_back(estim->final_obstacles_value);
+        }
+        else
+        {
+            cout<<"|| ---------------------------------------------------- ||"<<endl;
+            cerr<<"|| Not solution found for "<<g_params.left_or_right<< " hand"<<endl;
+            cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
+            Vector6d x;
+            x.setZero();
+
+            pose_hand.setGraspParams(x);
+            results.grasp_poses.push_back(pose_hand);
+            results.hand_superq.push_back(estim->get_hand());
+        }
     }
-    else if(status==Ipopt::Maximum_CpuTime_Exceeded)
-    {
-        pose_hand=estim->get_result();
-        cout<<"|| ---------------------------------------------------- ||"<<endl;
-        cout<<"|| Time expired                                   :  "<<pose_hand.getGraspParams().format(CommaInitFmt)<<endl<<endl;
-        cout<<"|| Grasp poses for "<<g_params.left_or_right<< " hand estimated in            :  "<<   computation_time<<" [s]"<<endl;
-        cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
-        results.grasp_pose=pose_hand;
-        results.hand_superq=estim->get_hand();
-        results.points_on=estim->points_on;
-        results.F_final=estim->final_F_value;
-        results.F_final_obstacles=estim->final_obstacles_value;
-        return results;
-    }
-    else
-    {
-        cout<<"|| ---------------------------------------------------- ||"<<endl;
-        cerr<<"|| Not solution found for "<<g_params.left_or_right<< " hand"<<endl;
-        cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
-        Vector6d x;
-        x.setZero();
 
-        pose_hand.setGraspParams(x);
-        results.grasp_pose=pose_hand;
-        results.hand_superq=estim->get_hand();
-        return results;
-    }
-
-
+    return results;
 }

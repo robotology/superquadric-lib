@@ -149,8 +149,9 @@ int main(int argc, char* argv[])
     // Compute grasp pose for left hand
     grasp_res=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 
+
     // Add poses for grasping
-    grasp_poses.push_back(grasp_res.grasp_pose);
+    vis.addPoses(grasp_res.grasp_poses);
     //hand_superqs.push_back(grasp_res.hand_superq); // Uncomment this to visualize hand ellipsoid in the final pose
 
     // Compute grasp pose for left hand
@@ -158,7 +159,7 @@ int main(int argc, char* argv[])
     grasp_res=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 
     // Add poses for grasping
-    grasp_poses.push_back(grasp_res.grasp_pose);
+    vis.addPoses(grasp_res.grasp_poses);
     //hand_superqs.push_back(grasp_res.hand_superq); // Uncomment this to visualize hand ellipsoid in the final pose
 
     /*******************************************/
@@ -177,7 +178,7 @@ int main(int argc, char* argv[])
     vis.addPlane(params_grasp.pl(3));
 
     // Add poses for grasping
-    vis.addPoses(grasp_poses);
+    //vis.addPoses(grasp_poses);
     //vis.addSuperq(hand_superqs);
 
     // points_hand.setPoints(grasp_res.points_on);  // Uncomment this to visualize points on the hand ellipsoid
