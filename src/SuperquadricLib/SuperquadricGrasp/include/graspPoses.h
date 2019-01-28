@@ -41,6 +41,9 @@ public:
     Eigen::Matrix3d axes;
     /* All the pose parameters, position and orientation */
     Eigen::VectorXd params;
+    /* All the pose parameters, position and orientation of
+    the pose actually reachable by the robot under consideration */
+    Eigen::VectorXd params_hat;
 
     /* Cost associated to the grasping pose */
     double cost;
@@ -90,7 +93,15 @@ public:
     bool setGraspOrientation(Eigen::Vector3d &a);
 
     /**
-     * Get all superquadric parameters
+     * Set all parameters of the pose actually reachable by the robot
+     * @param p is a eigen vector of dimension 6 or 7
+     * containing the grasping pose parameters
+     * @return true/false if the parameters are consistent
+     */
+    bool setGraspParamsHat(const Eigen::VectorXd &p);
+
+    /**
+     * Get all grasp parameters
      * @return a 11D vector containing the parameters
      */
     Eigen::VectorXd getGraspParams();
@@ -124,6 +135,13 @@ public:
 
     /*********************************************/
     void setHandName(std::string h);
+
+    /**
+     * Get all grasp parameters of the pose actually
+     * reachable by the robot
+     * @return a 11D vector containing the parameters
+     */
+    Eigen::VectorXd getGraspParamsHat();
 
 
 };

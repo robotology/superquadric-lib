@@ -233,7 +233,10 @@ struct GraspResults
 class GraspEstimatorApp
 {
 public:
+     /*****************************************************************/
      GraspResults computeGraspPoses(const SuperqModel::IpoptParam &pars, GraspParams &g_params);
+     /*****************************************************************/
+     void refinePoseCost(std::vector<SuperqGrasp::GraspPoses> &pose_computed);
 };
 
 }

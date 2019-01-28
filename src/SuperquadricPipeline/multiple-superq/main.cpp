@@ -156,6 +156,14 @@ int main(int argc, char* argv[])
     // Compute grasp pose for left hand
     grasp_res = grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 
+    //Example: Add pose reachable by robot to update Cost
+    // Vector6d pose_robot;
+    // pose_robot << -0.4, 0.0, -0.1, 0.0, 0.0, 0.0;
+    // grasp_res.grasp_poses[0].setGraspParamsHat(pose_robot);
+    // pose_robot << -0.4, 0.0, -0.1, 0.0, 0.0, 0.0;
+    // grasp_res.grasp_poses[1].setGraspParamsHat(pose_robot);
+    // grasp_estim.refinePoseCost(grasp_res.grasp_poses);
+
     // Add poses for grasping
     vis.addPoses(grasp_res.grasp_poses);
     //vis.addSuperq(hand_superqs);
@@ -176,7 +184,7 @@ int main(int argc, char* argv[])
     // Add points to visualizer
     // (true/false to show downsample points used for superq estimation)
     vis.addPoints(point_cloud, false);
-    
+
     // Add plane for grasping
     vis.addPlane(params_grasp.pl(3));
 

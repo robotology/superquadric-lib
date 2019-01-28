@@ -64,6 +64,27 @@ VectorXd GraspPoses::getGraspParams()
 }
 
 /*********************************************/
+bool GraspPoses::setGraspParamsHat(const VectorXd &p)
+{
+    bool params_ok=true;
+
+    params_ok=params_ok && ((p.size()==6) || (p.size()==7));
+
+    if (params_ok)
+        params_hat=p;
+    else
+        return false;
+
+    return params_ok;
+}
+
+/*********************************************/
+VectorXd GraspPoses::getGraspParamsHat()
+{
+    return params_hat;
+}
+
+/*********************************************/
 bool GraspPoses::setGraspPosition(Vector3d &d)
 {
     params.head(3)=d;
