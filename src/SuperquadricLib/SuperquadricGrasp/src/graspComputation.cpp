@@ -146,9 +146,9 @@ void graspComputation::init(GraspParams &g_params)
         if (num_superq > 0)
            theta_x = M_PI/4.0;
         else
-            theta_x = M_PI/8.0;
-        theta_y = M_PI/8.0;
-        theta_z = M_PI/8.0;
+            theta_x = M_PI/6.0;
+        theta_y = M_PI/6.0;
+        theta_z = M_PI/6.0;
     }
 
     aux_objvalue = 0.0;
@@ -600,8 +600,8 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
      Matrix4d H_x;
      H_x = computeMatrix(solution_vector);
 
-     if (notAlignedPose(H_x))
-         alignPose(H_x);
+     //if (notAlignedPose(H_x))
+    //     alignPose(H_x);
 
      Matrix3d R = H_x.block(0,0,3,3);
      solution_vector.segment(3,3) = R.eulerAngles(2,1,2);
@@ -844,10 +844,10 @@ void graspComputation::alignPose(Matrix4d &final_H)
     rot_x.setIdentity();
 
     double theta;
-    if (l_o_r=="right")
-        theta=M_PI/2 - acos(-final_H(2,1));
+    if (l_o_r == "right")
+        theta = M_PI - acos(final_H(1,1));
     else
-        theta=-(M_PI/2 - acos(-final_H(2,1)));
+        theta =  - acos(final_H(1,1));
 
     rot_x(1,1)=rot_x(2,2)=cos(theta);
     rot_x(2,1)=sin(theta);
