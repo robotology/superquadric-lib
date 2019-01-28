@@ -143,9 +143,10 @@ void Visualizer::addPoses(const vector<SuperqGrasp::GraspPoses> &poses)
     Vector6d pose_vect;
     double offset=0.0;
     int i=0;
-    for (auto pose:poses)
+
+    for (auto pose : poses)
     {
-        pose_vect=pose.getGraspParams();
+        pose_vect = pose.getGraspParams();
         vtkSmartPointer<vtkAxesActor> ax_actor = vtkSmartPointer<vtkAxesActor>::New();
         vtkSmartPointer<vtkCaptionActor2D> cap_actor = vtkSmartPointer<vtkCaptionActor2D>::New();
         ax_actor->VisibilityOff();
@@ -172,7 +173,7 @@ void Visualizer::addPoses(const vector<SuperqGrasp::GraspPoses> &poses)
         cap_actor->GetTextActor()->SetTextScaleModeToNone();
 
         stringstream ss;
-        ss<<pose.getHandName();//<<"_"<<i%poses.size(); //<<" : "<<setprecision(3)<<pose.cost;
+        ss << pose.getHandName()<<" : "<<setprecision(3)<<pose.cost;
 
         offset += 0.01;
 

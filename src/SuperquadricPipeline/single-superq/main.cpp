@@ -51,29 +51,29 @@ int main(int argc, char* argv[])
 
     // Params for solver in superq estimator
     IpoptParam iparams_superq;
-    iparams_superq.tol=1e-5;
-    iparams_superq.acceptable_iter=0;
-    iparams_superq.mu_strategy="adaptive";
-    iparams_superq.max_iter=1000000;
-    iparams_superq.max_cpu_time=5.0;
-    iparams_superq.nlp_scaling_method="gradient-based";
-    iparams_superq.hessian_approximation="limited-memory";
-    iparams_superq.print_level=0;
-    iparams_superq.object_class="default";
-    iparams_superq.optimizer_points=50;
-    iparams_superq.random_sampling=true;
+    iparams_superq.tol = 1e-5;
+    iparams_superq.acceptable_iter = 0;
+    iparams_superq.mu_strategy = "adaptive";
+    iparams_superq.max_iter = 1000000;
+    iparams_superq.max_cpu_time = 5.0;
+    iparams_superq.nlp_scaling_method = "gradient-based";
+    iparams_superq.hessian_approximation = "limited-memory";
+    iparams_superq.print_level = 0;
+    iparams_superq.object_class = "default";
+    iparams_superq.optimizer_points = 50;
+    iparams_superq.random_sampling = true;
 
     // Params for solver in grasp estimator
     IpoptParam iparams_grasp;
-    iparams_grasp.tol=1e-5;
-    iparams_grasp.constr_tol=1e-4;
-    iparams_grasp.acceptable_iter=0;
-    iparams_grasp.mu_strategy="adaptive";
-    iparams_grasp.max_iter=10000;
-    iparams_grasp.max_cpu_time=5.0;
-    iparams_grasp.nlp_scaling_method="none";
-    iparams_grasp.hessian_approximation="limited-memory";
-    iparams_grasp.print_level=0;
+    iparams_grasp.tol = 1e-5;
+    iparams_grasp.constr_tol = 1e-4;
+    iparams_grasp.acceptable_iter = 0;
+    iparams_grasp.mu_strategy = "adaptive";
+    iparams_grasp.max_iter = 10000;
+    iparams_grasp.max_cpu_time = 5.0;
+    iparams_grasp.nlp_scaling_method = "none";
+    iparams_grasp.hessian_approximation = "limited-memory";
+    iparams_grasp.print_level = 0;
 
     /*******************************************/
     // Read point cloud
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
     ifstream fin(argv[1]);
     if (!fin.is_open())
     {
-        cerr<<"Unable to open file \""<<argv[1]<<"\"";
+        cerr << "Unable to open file \"" << argv[1] << "\"";
 
         return 0;
     }
@@ -96,21 +96,21 @@ int main(int argc, char* argv[])
     while (getline(fin,line))
     {
         istringstream iss(line);
-        if (!(iss>>p(0)>>p(1)>>p(2)))
+        if (!(iss >> p(0) >> p(1) >> p(2)))
             break;
         all_points.push_back(p);
 
         fill(c_.begin(),c_.end(),120);
-        iss>>c_[0]>>c_[1]>>c_[2];
-        c[0]=(unsigned char)c_[0];
-        c[1]=(unsigned char)c_[1];
-        c[2]=(unsigned char)c_[2];
+        iss >> c_[0] >> c_[1] >> c_[2];
+        c[0] = (unsigned char)c_[0];
+        c[1] = (unsigned char)c_[1];
+        c[2] = (unsigned char)c_[2];
 
-        if (c[0]==c[1] && c[1]==c[2])
+        if (c[0] == c[1] && c[1] == c[2])
          {
-             c[0]=50;
-             c[1]=100;
-             c[2]=0;
+             c[0] = 50;
+             c[1] = 100;
+             c[2] = 0;
          }
 
         all_colors.push_back(c);
@@ -121,14 +121,16 @@ int main(int argc, char* argv[])
 
     /*******************************************/
     // Compute superq
-    superq=estim.computeSuperq(iparams_superq, point_cloud);
+    superq = estim.computeSuperq(iparams_superq, point_cloud);
+
+    superqs.push_back(superq);
 
     // Params for grasp computation
     GraspParams params_grasp;
-    params_grasp.left_or_right="left";
+    params_grasp.left_or_right = "left";
     params_grasp.pl << 0.0, 0.0, 1.0, 0.20;
     params_grasp.disp <<  0.0, 0.0, 0.0;
-    params_grasp.object_superq = superq;
+    params_grasp.object_superqs = superqs;
     params_grasp.max_superq = 4;
     params_grasp.bounds_right << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
     params_grasp.bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3,  -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
@@ -147,8 +149,7 @@ int main(int argc, char* argv[])
 
     /*******************************************/
     // Compute grasp pose for left hand
-    grasp_res=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
-
+    grasp_res = grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 
     // Add poses for grasping
     vis.addPoses(grasp_res.grasp_poses);
@@ -164,9 +165,6 @@ int main(int argc, char* argv[])
 
     /*******************************************/
     // Outcome visualization
-    // VTK need to receive a vector of Superquadrics
-    superqs.push_back(superq);
-
     // Add superquadric to visualizer
     vis.addSuperq(superqs);
 
@@ -177,9 +175,8 @@ int main(int argc, char* argv[])
     // Add plane for grasping
     vis.addPlane(params_grasp.pl(3));
 
-    // Add poses for grasping
-    //vis.addPoses(grasp_poses);
-    //vis.addSuperq(hand_superqs);
+    // Add hands in final pose for grasping
+    //vis.addSuperq(hand_superqs); // Uncomment this to visualize hand ellipsoid in the final pose
 
     // points_hand.setPoints(grasp_res.points_on);  // Uncomment this to visualize points on the hand ellipsoid
     // vis.addPoints(points_hand, false);

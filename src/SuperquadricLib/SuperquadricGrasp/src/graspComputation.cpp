@@ -40,7 +40,7 @@ void graspComputation::init(GraspParams &g_params)
         Superquadric obst=g_params.obstacle_superqs[i];
         obstacles.push_back(obst.getSuperqParams());
     }
-    //if (g_params.obstacles_superq.size()!= num_superq)
+
     Vector3d euler_obj = g_params.object_superq.getSuperqEulerZYZ();
 
     // Compute Homogeneous of object w.r.t world refernece frame
@@ -135,16 +135,16 @@ Vector3d graspComputation::computePointsHand(Vector11d &hand, const int &j, cons
     if (object.segment(0,3).maxCoeff() > hand.segment(0,3).maxCoeff())
         hand(1) = object.segment(0,3).maxCoeff();
 
-    omega=j*M_PI/(l);
+    omega = j*M_PI/(l);
 
-    se=sin(theta);
-    ce=cos(theta);
-    co=cos(omega);
-    so=sin(omega);
+    se = sin(theta);
+    ce = cos(theta);
+    co = cos(omega);
+    so = sin(omega);
 
-    point(0)=hand(0) * sign(ce)*(pow(abs(ce),hand(3))) * sign(co)*(pow(abs(co),hand(4)));
-    point(1)=hand(1) * sign(se)*(pow(abs(se),hand(3)));
-    point(2)=hand(2) * sign(ce)*(pow(abs(ce),hand(3))) * sign(so)*(pow(abs(so),hand(4)));
+    point(0) = hand(0) * sign(ce)*(pow(abs(ce),hand(3))) * sign(co)*(pow(abs(co),hand(4)));
+    point(1) = hand(1) * sign(se)*(pow(abs(se),hand(3)));
+    point(2) = hand(2) * sign(ce)*(pow(abs(ce),hand(3))) * sign(so)*(pow(abs(so),hand(4)));
 
     return point;
 }
@@ -152,7 +152,7 @@ Vector3d graspComputation::computePointsHand(Vector11d &hand, const int &j, cons
 /****************************************************************/
 double graspComputation::sign(const double &v)
 {
-    return ((v==0.0)?0.0:((v>0.0)?1.0:-1.0));
+    return ((v == 0.0) ? 0.0 : ((v > 0.0) ? 1.0 : -1.0));
 }
 
 /****************************************************************/
@@ -165,9 +165,9 @@ bool graspComputation::get_nlp_info(Ipopt::Index &n, Ipopt::Index &m,Ipopt::Inde
 
     // Number of constrinats
     if (num_superq == 0)
-        m=5;
+        m = 5;
     else
-        m=5 + num_superq;
+        m = 5 + num_superq;
 
     nnz_jac_g = n*m;
     nnz_h_lag = 0;
@@ -202,9 +202,9 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
                                           Ipopt::Index m, bool init_lambda, Ipopt::Number *lambda)
  {
      // Set starting pose
-     for(Ipopt::Index i=0;i<n;i++)
+     for(Ipopt::Index i = 0;i < n; i++)
      {
-         x[i]=hand(i+5);
+         x[i] = hand(i+5);
      }
 
      return true;
@@ -216,7 +216,7 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
  {
      // Compute cost function
      F(x,points_on,new_x);
-     obj_value=aux_objvalue;
+     obj_value = aux_objvalue;
 
      return true;
  }
@@ -224,16 +224,16 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
  /****************************************************************/
  double graspComputation::F(const Ipopt::Number *x, deque<Vector3d> &points_on, bool new_x)
  {
-     double value=0.0;
+     double value = 0.0;
 
      for(auto point : points_on)
      {
-         value+= pow( pow(f(x,point),object(3))-1,2 );
+         value += pow( pow(f(x,point),object(3))-1,2 );
      }
 
-     value*=object(0)*object(1)*object(2)/points_on.size();
+     value *= object(0)*object(1)*object(2)/points_on.size();
 
-     aux_objvalue=value;
+     aux_objvalue = value;
  }
 
  /****************************************************************/
@@ -311,12 +311,12 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
  {
      Vector6d x_tmp;
      double grad_p, grad_n;
-     double eps=1e-8;
+     double eps = 1e-8;
 
-     for(Ipopt::Index i = 0;i < n;i++)
+     for(Ipopt::Index i = 0;i < n; i++)
         x_tmp(i) = x[i];
 
-     for(Ipopt::Index j = 0;j < n;j++)
+     for(Ipopt::Index j = 0;j < n; j++)
      {
          x_tmp(j) += eps;
          grad_p = F_v(x_tmp);
@@ -487,58 +487,43 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
                  Ipopt::Index *jCol, Ipopt::Number *values)
  {
      double grad_p, grad_n;
-     double eps=1e-6;
+     double eps = 1e-6;
      Vector6d x_tmp;
 
-     if(values!=NULL)
+     if(values != NULL)
      {
-         for(Ipopt::Index i=0;i<n;i++)
-            x_tmp(i)=x[i];
+         for(Ipopt::Index i = 0;i < n; i++)
+            x_tmp(i) = x[i];
 
-         int count=0;
-         for(Ipopt::Index i=0;i<m; i++)
+         int count = 0;
+         for(Ipopt::Index i = 0;i < m; i++)
          {
-             for(Ipopt::Index j=0;j<n;j++)
+             for(Ipopt::Index j = 0;j < n; j++)
              {
-                 x_tmp(j)=x_tmp(j)+eps;
-                 grad_p=G_v(x_tmp,i,m);
+                 x_tmp(j) = x_tmp(j) + eps;
+                 grad_p = G_v(x_tmp,i,m);
 
-                 x_tmp(j)=x_tmp(j)-eps;
-                 grad_n=G_v(x_tmp,i,m);
+                 x_tmp(j) = x_tmp(j)-eps;
+                 grad_n = G_v(x_tmp,i,m);
 
-                 values[count]=(grad_p-grad_n)/(eps);
+                 values[count] = (grad_p-grad_n)/(eps);
                  count++;
              }
          }
      }
      else
     {
-        if (num_superq==0)
+        for (int j = 0; j < m; j++)
         {
-            for (int j=0; j<m; j++)
+            for (int i = 0; i < n; i++)
             {
-                for (int i=0; i<n; i++)
-                {
-                    jCol[j*(n) + i]= i;
-                    iRow[j*(n)+ i] = j;
-                }
-            }
-        }
-        else
-        {
-            for (int j=0; j<m; j++)
-            {
-                for (int i=0; i<n; i++)
-                {
-                    jCol[j*(n) + i]= i;
-                    iRow[j*(n)+ i] = j;
-                }
+                jCol[j*(n) + i] = i;
+                iRow[j*(n)+ i] = j;
             }
         }
      }
 
      return true;
-
  }
 
  /****************************************************************/
@@ -548,9 +533,9 @@ void graspComputation::configure(GraspParams &g_params)
     l_o_r = g_params.left_or_right;
 
     // Set the bounds
-    if (l_o_r=="right")
+    if (l_o_r == "right")
         bounds = g_params.bounds_right;
-    else if (l_o_r=="left")
+    else if (l_o_r == "left")
         bounds = g_params.bounds_left;
 
     // Set max number of obstacle superquadrics allowed
@@ -559,17 +544,17 @@ void graspComputation::configure(GraspParams &g_params)
     // Set bounds for constraints
     bounds_constr.resize(5 + max_superq -1, 2);
 
-    if (l_o_r=="right")
+    if (l_o_r == "right")
         bounds_constr = g_params.bounds_constr_right;
-    else if (l_o_r=="left")
+    else if (l_o_r == "left")
         bounds_constr = g_params.bounds_constr_left;
 
     // Set displacemnet
-    displacement=g_params.disp;
+    displacement = g_params.disp;
     // Set plane
-    plane=g_params.pl;
+    plane = g_params.pl;
 
-    g.resize(5+max_superq - 1);
+    g.resize(5 + max_superq - 1);
 }
 
 /****************************************************************/
@@ -580,8 +565,8 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
                       Ipopt::Number obj_value, const Ipopt::IpoptData *ip_data,
                       Ipopt::IpoptCalculatedQuantities *ip_cq)
 {
-     for (int i=0; i<6; i++)
-         solution_vector(i)=x[i];
+     for (int i = 0; i < 6; i++)
+         solution_vector(i) = x[i];
 
      Matrix4d H_x;
      H_x = computeMatrix(solution_vector);
@@ -590,29 +575,14 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
     //     alignPose(H_x);
 
      Matrix3d R = H_x.block(0,0,3,3);
-     solution_vector.segment(3,3)= R.eulerAngles(2,1,2);
+     solution_vector.segment(3,3) = R.eulerAngles(2,1,2);
 
-     // Update points on hand on the final pose
-     deque<Vector3d> aux;
-     for (auto point : points_on)
-     {
-          Vector4d p;
-          p(3)=1.0;
-          p.segment(0,3)=point;
-          p=H_x * p;
-          Vector3d p3=p.head(3);
-          aux.push_back(p3);
-     }
-
-     points_on.clear();
-     points_on=aux;
-
-     for (Ipopt::Index i=0; i<3; i++)
-         solution_vector(i)=H_x(i,3);
+     for (Ipopt::Index i = 0; i < 3; i++)
+         solution_vector(i) = H_x(i,3);
 
       // Compute proper pose for robot hand on the surface of hand ellipsoid
       robot_pose = solution_vector;
-      if (l_o_r=="right")
+      if (l_o_r == "right")
       {
           robot_pose.segment(0,3) = solution_vector.segment(0,3)-(hand(0)+displacement(2))*(H_x.col(2).segment(0,3));
           robot_pose.segment(0,3) = robot_pose.segment(0,3)-(hand(0) + displacement(0))*(H_x.col(0).segment(0,3));
@@ -626,20 +596,49 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
       }
 
       // Compute final distance between object
-      final_F_value=0.0;
+      final_F_value = 0.0;
 
       for(auto point : points_on)
       {
           final_F_value += pow( pow(f_v(solution_vector,point),object(3))-1,2 );
       }
+      
+      final_F_value /= points_on.size();
 
-      final_F_value/=points_on.size();
 
       // Compute final distance between obstacles
-      final_obstacles_value=computeFinalObstacleValues(robot_pose);
+      final_obstacles_value = computeFinalObstacleValues(robot_pose);
+
+      double w1 = 1.0;
+      double w2 = 1e-5;
+      double final_obstacles_value_average = 0.0;
+
+      for (auto value : final_obstacles_value)
+      {
+          final_obstacles_value_average += value;
+      }
+
+      final_obstacles_value_average /= final_obstacles_value.size();
+
+      solution.cost = w1*final_F_value + w2 / final_obstacles_value_average;
 
       solution.setGraspParams(robot_pose);
       solution.setHandName(l_o_r);
+
+      // Update points on hand on the final pose
+      deque<Vector3d> aux;
+      for (auto point : points_on)
+      {
+           Vector4d p;
+           p(3) = 1.0;
+           p.segment(0,3) = point;
+           p = H_x * p;
+           Vector3d p3 = p.head(3);
+           aux.push_back(p3);
+      }
+
+      points_on.clear();
+      points_on = aux;
 }
 
 /****************************************************************/
@@ -676,7 +675,7 @@ deque<double> graspComputation::get_final_constr_values() const
 double graspComputation::computeObstacleValues(const Ipopt::Number *x, const int &k)
 {
     Vector6d pose_hand;
-    for (int i  =0; i < 6; i++)
+    for (int i  = 0; i < 6; i++)
         pose_hand(i) = x[i];
 
     Matrix4d H_robot;
@@ -852,11 +851,11 @@ void graspComputation::alignPose(Matrix4d &final_H)
 /*****************************************************************/
 double graspComputation::f_v2(const Vector11d &obj, const Vector3d &point_tr)
 {
-    double num1=H_o2w(0,0)*point_tr(0)+H_o2w(1,0)*point_tr(1)+H_o2w(2,0)*point_tr(2)-object(5)*H_o2w(0,0)-object(6)*H_o2w(1,0)-object(7)*H_o2w(2,0);
-    double num2=H_o2w(0,1)*point_tr(0)+H_o2w(1,1)*point_tr(1)+H_o2w(2,1)*point_tr(2)-object(5)*H_o2w(0,1)-object(6)*H_o2w(1,1)-object(7)*H_o2w(2,1);
-    double num3=H_o2w(0,2)*point_tr(0)+H_o2w(1,2)*point_tr(1)+H_o2w(2,2)*point_tr(2)-object(5)*H_o2w(0,2)-object(6)*H_o2w(1,2)-object(7)*H_o2w(2,2);
+    double num1 = H_o2w(0,0)*point_tr(0) + H_o2w(1,0)*point_tr(1) + H_o2w(2,0)*point_tr(2) - object(5)*H_o2w(0,0) - object(6)*H_o2w(1,0) - object(7)*H_o2w(2,0);
+    double num2 = H_o2w(0,1)*point_tr(0) + H_o2w(1,1)*point_tr(1) + H_o2w(2,1)*point_tr(2) - object(5)*H_o2w(0,1) - object(6)*H_o2w(1,1) - object(7)*H_o2w(2,1);
+    double num3 = H_o2w(0,2)*point_tr(0) + H_o2w(1,2)*point_tr(1) + H_o2w(2,2)*point_tr(2) - object(5)*H_o2w(0,2) - object(6)*H_o2w(1,2) - object(7)*H_o2w(2,2);
 
-    double tmp=pow(abs(num1/object(0)),2.0/object(4)) + pow(abs(num2/object(1)),2.0/object(4));
+    double tmp = pow(abs(num1/object(0)),2.0/object(4)) + pow(abs(num2/object(1)),2.0/object(4));
 
     return pow( abs(tmp),object(4)/object(3)) + pow( abs(num3/object(2)),(2.0/object(3)));
  }
@@ -864,7 +863,7 @@ double graspComputation::f_v2(const Vector11d &obj, const Vector3d &point_tr)
 /*****************************************************************/
 GraspResults GraspEstimatorApp::computeGraspPoses(const IpoptParam &pars, GraspParams &g_params)
 {
-    Ipopt::SmartPtr<Ipopt::IpoptApplication> app=new Ipopt::IpoptApplication;
+    Ipopt::SmartPtr<Ipopt::IpoptApplication> app = new Ipopt::IpoptApplication;
     app->Options()->SetNumericValue("tol",pars.tol);
     app->Options()->SetNumericValue("constr_viol_tol",pars.constr_tol);
     app->Options()->SetIntegerValue("acceptable_iter",pars.acceptable_iter);
@@ -899,23 +898,23 @@ GraspResults GraspEstimatorApp::computeGraspPoses(const IpoptParam &pars, GraspP
 
         clock_t tStart = clock();
 
-        Ipopt::ApplicationReturnStatus status=app->OptimizeTNLP(GetRawPtr(estim));
+        Ipopt::ApplicationReturnStatus status = app->OptimizeTNLP(GetRawPtr(estim));
 
-        double computation_time=(double)(clock() - tStart)/CLOCKS_PER_SEC;
+        double computation_time = (double)(clock() - tStart)/CLOCKS_PER_SEC;
 
         GraspPoses pose_hand;
 
         IOFormat CommaInitFmt(StreamPrecision, DontAlignCols,", ", ", ", "", "", " [ ", "]");
 
-        if (status==Ipopt::Solve_Succeeded)
+        if (status == Ipopt::Solve_Succeeded)
         {
-            pose_hand=estim->get_result();
-            cout<<"|| ---------------------------------------------------- ||"<<endl;
-            cout<<"|| Grasp poses for "<<g_params.left_or_right<< " hand estimated            : ";
-            cout<<pose_hand.getGraspParams().format(CommaInitFmt)<<endl<<endl;
-            cout<<"|| Computed in                                    :  ";
-            cout<<   computation_time<<" [s]"<<endl;
-            cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
+            pose_hand = estim->get_result();
+            cout << "|| ---------------------------------------------------- ||" << endl;
+            cout << "|| Grasp poses for " << g_params.left_or_right << " hand estimated            : ";
+            cout << pose_hand.getGraspParams().format(CommaInitFmt) << endl << endl;
+            cout << "|| Computed in                                    :  ";
+            cout <<   computation_time << " [s]" << endl;
+            cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
 
             results.grasp_poses.push_back(pose_hand);
             results.hand_superq.push_back(estim->get_hand());
@@ -923,13 +922,13 @@ GraspResults GraspEstimatorApp::computeGraspPoses(const IpoptParam &pars, GraspP
             results.F_final.push_back(estim->final_F_value);
             results.F_final_obstacles.push_back(estim->final_obstacles_value);
         }
-        else if(status==Ipopt::Maximum_CpuTime_Exceeded)
+        else if(status == Ipopt::Maximum_CpuTime_Exceeded)
         {
-            pose_hand=estim->get_result();
-            cout<<"|| ---------------------------------------------------- ||"<<endl;
-            cout<<"|| Time expired                                   :  "<<pose_hand.getGraspParams().format(CommaInitFmt)<<endl<<endl;
-            cout<<"|| Grasp poses for "<<g_params.left_or_right<< " hand estimated in            :  "<<   computation_time<<" [s]"<<endl;
-            cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
+            pose_hand = estim->get_result();
+            cout << "|| ---------------------------------------------------- ||" << endl;
+            cout << "|| Time expired                                   :  " << pose_hand.getGraspParams().format(CommaInitFmt) << endl << endl;
+            cout << "|| Grasp poses for " << g_params.left_or_right << " hand estimated in            :  "  <<   computation_time << " [s]" << endl;
+            cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
 
             results.grasp_poses.push_back(pose_hand);
             results.hand_superq.push_back(estim->get_hand());
@@ -939,9 +938,9 @@ GraspResults GraspEstimatorApp::computeGraspPoses(const IpoptParam &pars, GraspP
         }
         else
         {
-            cout<<"|| ---------------------------------------------------- ||"<<endl;
-            cerr<<"|| Not solution found for "<<g_params.left_or_right<< " hand"<<endl;
-            cout<<"|| ---------------------------------------------------- ||"<<endl<<endl<<endl;
+            cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
+            cerr << "|| Not solution found for " << g_params.left_or_right << " hand" << endl;
+            cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
             Vector6d x;
             x.setZero();
 
@@ -953,3 +952,10 @@ GraspResults GraspEstimatorApp::computeGraspPoses(const IpoptParam &pars, GraspP
 
     return results;
 }
+
+
+/*****************************************************************/
+// GraspResults GraspEstimatorApp::refinePoseCost(Vector6d &pose_hat)
+// {
+//
+// }

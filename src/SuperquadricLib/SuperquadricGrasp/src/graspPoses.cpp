@@ -19,8 +19,8 @@ using namespace SuperqGrasp;
 /*********************************************/
 GraspPoses::GraspPoses()
 {
-    cost=1e8;
-    hand="right";
+    cost = 1e8;
+    hand = "right";
 }
 
 /*********************************************/
@@ -135,5 +135,5 @@ string GraspPoses::getHandName()
 /*********************************************/
 void GraspPoses::setHandName(string h)
 {
-    hand=h;
+    hand = h;
 }
