@@ -600,8 +600,8 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
      Matrix4d H_x;
      H_x = computeMatrix(solution_vector);
 
-     //if (notAlignedPose(H_x))
-    //     alignPose(H_x);
+     if (notAlignedPose(H_x))
+         alignPose(H_x);
 
      Matrix3d R = H_x.block(0,0,3,3);
      solution_vector.segment(3,3) = R.eulerAngles(2,1,2);
@@ -829,17 +829,12 @@ deque<double> graspComputation::computeFinalObstacleValues(const Vector6d &pose_
 /****************************************************************/
 bool graspComputation::notAlignedPose(const Matrix4d &final_H)
 {
-    //if ((final_H(2,1)< 0.0 && final_H(2,1) > -0.5) ||  (final_H(2,1) < -0.8 && final_H(2,1) > -1.0))
-    //{
-        if ((final_H(2,1)< 0.0 && final_H(2,1) > -0.5))
-            top_grasp=true;
-        else
-            top_grasp=false;
-
+    if ((final_H(1,1) > 0.8 -0.6 && final_H(2,1) < 1.0) || (final_H(1,1) < -0.8  && final_H(2,1) > -1.0))
+    {
         return true;
-    //}
-    //else
-    //     return false;
+    }
+    else
+         return false;
 }
 
 /****************************************************************/
@@ -848,36 +843,17 @@ void graspComputation::alignPose(Matrix4d &final_H)
     Matrix3d rot_x;
     rot_x.setIdentity();
 
-    if (top_grasp)
-    {
-        double theta;
-        if (l_o_r=="right")
-            theta=M_PI/2 - acos(-final_H(2,1));
-        else
-            theta=-(M_PI/2 - acos(-final_H(2,1)));
-
-        rot_x(1,1)=rot_x(2,2)=cos(theta);
-        rot_x(2,1)=sin(theta);
-        rot_x(1,2) = -rot_x(2,1);
-
-    }
+    double theta;
+    if (l_o_r=="right")
+        theta=M_PI/2 - acos(-final_H(2,1));
     else
-    {
-        Vector4d axis;
-        Vector3d z_axis;
-        z_axis(2)=-1;
+        theta=-(M_PI/2 - acos(-final_H(2,1)));
 
-        Vector3d colum_1=final_H.col(1).segment(0,3);
-        Vector3d cross_prod=colum_1.cross(z_axis);
-
-        axis.segment(0,3)=cross_prod/cross_prod.norm();
-        axis(3)=acos(colum_1.dot(z_axis)/(colum_1.norm()));
-
-        rot_x=AngleAxisd(axis(3), axis.segment(0,3));
-    }
+    rot_x(1,1)=rot_x(2,2)=cos(theta);
+    rot_x(2,1)=sin(theta);
+    rot_x(1,2) = -rot_x(2,1);
 
     final_H.block(0,0,3,3)= rot_x * final_H.block(0,0,3,3);
-
 }
 
 /*****************************************************************/
