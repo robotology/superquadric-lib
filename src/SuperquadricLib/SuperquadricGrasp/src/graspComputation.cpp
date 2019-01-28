@@ -100,27 +100,56 @@ void graspComputation::init(GraspParams &g_params)
     // Configure cone parameters for orientation constraints
     if (l_o_r == "right")
     {
-        d_x(0) = -0.7; d_x(1) = -0.7; d_x(2) = -0.7;
+        d_x(0) = -0.8; d_x(1) = -0.7; d_x(2) = -0.5;
         d_y(0) = 0.0; d_y(1) = 0.7; d_y(2) = -0.7;
-        d_z(0) = 0.0; d_z(1) = -0.7; d_z(2) = -0.7;
+        //d_z(0) = 0.0; d_z(1) = -0.7; d_z(2) = -0.7;
     }
     else
     {
-        d_x(0) = -0.7; d_x(1) = 0.7; d_x(2) = -0.7;
+        d_x(0) = -0.8; d_x(1) = 0.7; d_x(2) = -0.5;
         d_y(0) = 0.0; d_y(1) = -0.7; d_y(2) =-0.7;
-        d_z(0) = 0.0; d_z(1) = -0.7; d_z(2) = 0.7;
+        //d_z(0) = 0.0; d_z(1) = -0.7; d_z(2) = 0.7;
     }
 
     d_x = d_x/d_x.norm();
     d_y = d_y/d_y.norm();
+
+    d_z = d_x.cross(d_y);
     d_z = d_z/d_z.norm();
 
     if (num_superq > 0)
        theta_x = M_PI/4.0;
     else
         theta_x = M_PI/6.0;
-    theta_y = M_PI/4.0;
+    theta_y = M_PI/3.0;
     theta_z = M_PI/4.0;
+
+    if (hand(1) > object.segment(0,3).maxCoeff() )
+    {
+        if (l_o_r == "right")
+        {
+            d_x(0) = -0.7; d_x(1) = 0.0; d_x(2) = -0.7;
+            d_y(0) = 0.0; d_y(1) = 1.0; d_y(2) = 0.0;
+        }
+        else
+        {
+            d_x(0) = -0.7; d_x(1) = 0.0; d_x(2) = -0.7;
+            d_y(0) = 0.0; d_y(1) = -1.0; d_y(2) = 0.0;
+        }
+
+        d_x = d_x/d_x.norm();
+        d_y = d_y/d_y.norm();
+
+        d_z = d_x.cross(d_y);
+        d_z = d_z/d_z.norm();
+
+        if (num_superq > 0)
+           theta_x = M_PI/4.0;
+        else
+            theta_x = M_PI/8.0;
+        theta_y = M_PI/8.0;
+        theta_z = M_PI/8.0;
+    }
 
     aux_objvalue = 0.0;
 }
@@ -135,7 +164,7 @@ Vector3d graspComputation::computePointsHand(Vector11d &hand, const int &j, cons
     if (object.segment(0,3).maxCoeff() > hand.segment(0,3).maxCoeff())
         hand(1) = object.segment(0,3).maxCoeff();
 
-    omega = j*M_PI/(l);
+    omega = (j)*M_PI/(l);
 
     se = sin(theta);
     ce = cos(theta);
@@ -388,7 +417,7 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
      }
 
      // Constraints on plane avoidance
-     g[3] = plane(0,0)*x_min(0)+plane(1,0)*x_min(1)+plane(2,0)*x_min(2)+plane(3,0);
+     g[3] = (plane(0,0)*x_min(0)+plane(1,0)*x_min(1)+plane(2,0)*x_min(2)+plane(3,0))/(plane.head(3).norm());
 
      Vector3d robotPose;
 
@@ -456,7 +485,7 @@ bool graspComputation::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt
          }
      }
 
-     g[3] = plane(0,0)*x_min(0)+plane(1,0)*x_min(1)+plane(2,0)*x_min(2)+plane(3,0);
+     g[3] = (plane(0,0)*x_min(0)+plane(1,0)*x_min(1)+plane(2,0)*x_min(2)+plane(3,0))/(plane.head(3).norm());
 
      Vector3d robotPose;
 
@@ -612,14 +641,18 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
       double w2 = 1e-5;
       double final_obstacles_value_average = 0.0;
 
-      for (auto value : final_obstacles_value)
+      if (num_superq > 0.0)
       {
-          final_obstacles_value_average += value;
+          for (auto value : final_obstacles_value)
+          {
+              final_obstacles_value_average += value;
+          }
+
+          final_obstacles_value_average /= final_obstacles_value.size();
+
       }
 
-      final_obstacles_value_average /= final_obstacles_value.size();
-
-      solution.cost = w1*final_F_value + w2 / final_obstacles_value_average;
+      solution.cost = w1*final_F_value + ((num_superq > 0) ? w2 / final_obstacles_value_average : 0.0);
 
       solution.setGraspParams(robot_pose);
       solution.setHandName(l_o_r);

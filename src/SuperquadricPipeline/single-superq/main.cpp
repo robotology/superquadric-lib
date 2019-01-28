@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     // PointCloud class
     PointCloud point_cloud;
 
-    //PointCloud points_hand; // Uncomment this to visualize points on hand ellipsoid in the final pose
+    PointCloud points_hand; // Uncomment this to visualize points on hand ellipsoid in the final pose
 
     // Object Superquadric
     Superquadric superq;
@@ -47,7 +47,6 @@ int main(int argc, char* argv[])
     // Grasp pose
     GraspResults grasp_res;
     vector<GraspPoses> grasp_poses;
-    vector<Superquadric> hand_superqs;
 
     // Params for solver in superq estimator
     IpoptParam iparams_superq;
@@ -135,10 +134,10 @@ int main(int argc, char* argv[])
     params_grasp.bounds_right << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
     params_grasp.bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3,  -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
     params_grasp.bounds_constr_left.resize(8,2);
-    params_grasp.bounds_constr_left << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
+    params_grasp.bounds_constr_left << -10000, -0.001, -10000, -0.001, -10000, -0.001, 0.01,
                                         10.0, 0.0, 1.0, 0.001, 10.0, 0.001, 10.0, 0.001, 10.0;
     params_grasp.bounds_constr_right.resize(8,2);
-    params_grasp.bounds_constr_right << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
+    params_grasp.bounds_constr_right << -10000, -0.001, -10000, -0.001, -10000, -0.001, 0.01,
                                         10.0, 0.0, 1.0, 0.001, 10.0, 0.001, 10.0, 0.001, 10.0;
 
     Superquadric hand;
@@ -153,7 +152,6 @@ int main(int argc, char* argv[])
 
     // Add poses for grasping
     vis.addPoses(grasp_res.grasp_poses);
-    //hand_superqs.push_back(grasp_res.hand_superq); // Uncomment this to visualize hand ellipsoid in the final pose
 
     // Compute grasp pose for left hand
     params_grasp.left_or_right="right";
@@ -161,7 +159,6 @@ int main(int argc, char* argv[])
 
     // Add poses for grasping
     vis.addPoses(grasp_res.grasp_poses);
-    //hand_superqs.push_back(grasp_res.hand_superq); // Uncomment this to visualize hand ellipsoid in the final pose
 
     /*******************************************/
     // Outcome visualization
@@ -176,10 +173,10 @@ int main(int argc, char* argv[])
     vis.addPlane(params_grasp.pl(3));
 
     // Add hands in final pose for grasping
-    //vis.addSuperq(hand_superqs); // Uncomment this to visualize hand ellipsoid in the final pose
+    vis.addSuperq(grasp_res.hand_superq); // Uncomment this to visualize hand ellipsoid in the final pose
 
-    // points_hand.setPoints(grasp_res.points_on);  // Uncomment this to visualize points on the hand ellipsoid
-    // vis.addPoints(points_hand, false);
+    points_hand.setPoints(grasp_res.points_on[0]);  // Uncomment this to visualize points on the hand ellipsoid
+    vis.addPoints(points_hand, false);
 
     // Visualize
     vis.visualize();
