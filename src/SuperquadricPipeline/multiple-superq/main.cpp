@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 
     // Params for solver in grasp estimator
     IpoptParam iparams_grasp;
-    iparams_grasp.tol = 1e-4;
+    iparams_grasp.tol = 1e-5;
     iparams_grasp.constr_tol = 1e-4;
     iparams_grasp.acceptable_iter = 0;
     iparams_grasp.mu_strategy = "adaptive";
@@ -131,8 +131,8 @@ int main(int argc, char* argv[])
 
     // Params for grasp computation
     GraspParams params_grasp;
-    params_grasp.left_or_right = "left";
-    params_grasp.pl << 0.0, 0.0, 1.0, 0.16;
+    params_grasp.left_or_right = "right";
+    params_grasp.pl << 0.0, 0.0, 1.0, 0.22;
     params_grasp.disp <<  0.0, 0.0, 0.0;
     params_grasp.object_superq = superqs[0];
     params_grasp.max_superq = 4;
@@ -170,8 +170,8 @@ int main(int argc, char* argv[])
 
     /*******************************************/
     // Compute grasp pose for right hand
-    params_grasp.left_or_right = "right";
-    grasp_res = grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
+    //params_grasp.left_or_right = "right";
+    //grasp_res = grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 
     // Add poses for grasping
     vis.addPoses(grasp_res.grasp_poses);
