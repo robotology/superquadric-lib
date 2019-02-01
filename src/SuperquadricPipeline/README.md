@@ -52,9 +52,9 @@ Here is a brief description of the main steps required to play with `superquadri
 and save them in `all_points`.
 4. Estimate the superquadric:
 ```
-   point_cloud.setPoints(all_points);                                          // Fill the point cloud    
-   superqs = estim.computeSuperq(iparams_superq, point_cloud);                 // Compute single 
-   superqs = estim.computeMultipleSuperq(iparams_superq, m_pars, point_cloud); // or multiple superqs
+   point_cloud.setPoints(all_points);                                         // Fill the point cloud    
+   superqs = estim.computeSuperq(iparams_superq, point_cloud);                // Compute single 
+   superqs = estim.computeMultipleSuperq(iparams_superq, m_pars, point_cloud);// or multiple superqs
 ```
 5. Add the estimated superquadric(s) to the `params_grasp` used for computing the grasping candidates:
 ```
