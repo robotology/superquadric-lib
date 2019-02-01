@@ -5,9 +5,9 @@ This is a new design of the code included in the repositories:
 - [superquadric-model](https://github.com/robotology/superquadric-model);
 - [superquadric-grasp](https://github.com/robotology/superquadric-grasp);
 - [superquadric-grasp-demo](https://github.com/robotology/superquadric-grasp-demo).
-## Release 0.1
+## Release 0.2
 This release provides methods to:
-- reconstruct the object model with a **single superquadric**;
+- reconstruct the object model with **single or multiple superquadric**;
 - compute  **grasping candidates** for any robot;
 - **visualize** superquadrics, planes, point clouds and grasping poses.
 
@@ -38,7 +38,7 @@ This release provides methods to:
  1. `SuperquadricLibModel`, that includes all the tools to play with superquadrics;
  2. `SuperquadricLibGrasp`, to compute the grasping poses for an object represented with a superquadric (it requires 1.);
  3. `SuperquadricLibVis`, to visualize everything (it requires 1. and 2.);
- 4. `Superquadric-Pipeline`, an executable that computes the object superquadric and the grasping pose starting from an object point cloud and show the results using the visualizer. It requires 1 - 3.
+ 4. `Superquadric-Pipeline-Single` and `Superquadric-Pipeline-Multiple`, executables providing an example on how to compute single/multiple superquadric object models and the grasping pose starting from the object point cloud and show the results using the visualizer. They require 1 - 3.
  
  ## How to link
  Once the library is installed, you can link it using `CMake` by writing the following line of code in your project `CMakeLists.txt`:
