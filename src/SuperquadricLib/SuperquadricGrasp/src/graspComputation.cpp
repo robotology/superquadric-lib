@@ -124,7 +124,7 @@ void graspComputation::init(GraspParams &g_params)
     theta_y = M_PI/3.0;
     theta_z = M_PI/4.0;
 
-    if (hand(1) > object.segment(0,3).maxCoeff() )
+    if (hand(1) > object.segment(0,2).maxCoeff() )
     {
         if (l_o_r == "right")
         {
@@ -147,7 +147,7 @@ void graspComputation::init(GraspParams &g_params)
            theta_x = M_PI/4.0;
         else
             theta_x = M_PI/6.0;
-        theta_y = M_PI/6.0;
+        theta_y = M_PI/4.0;
         theta_z = M_PI/6.0;
     }
 
@@ -600,8 +600,8 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
      Matrix4d H_x;
      H_x = computeMatrix(solution_vector);
 
-     //if (notAlignedPose(H_x))
-    //     alignPose(H_x);
+     if (notAlignedPose(H_x))
+         alignPose(H_x);
 
      Matrix3d R = H_x.block(0,0,3,3);
      solution_vector.segment(3,3) = R.eulerAngles(2,1,2);
@@ -829,7 +829,8 @@ deque<double> graspComputation::computeFinalObstacleValues(const Vector6d &pose_
 /****************************************************************/
 bool graspComputation::notAlignedPose(const Matrix4d &final_H)
 {
-    if ((final_H(1,1) > 0.8 -0.6 && final_H(2,1) < 1.0) || (final_H(1,1) < -0.8  && final_H(2,1) > -1.0))
+    cout<<"final H "<<final_H(1,1)<<endl;
+    if ((final_H(1,1) > 0.85  && final_H(1,1) < 1.0) || (final_H(1,1) < -0.85  && final_H(1,1) > -1.0))
     {
         return true;
     }
@@ -843,17 +844,21 @@ void graspComputation::alignPose(Matrix4d &final_H)
     Matrix3d rot_x;
     rot_x.setIdentity();
 
-    double theta;
+    Vector3d new_z;
+    Vector3d tmp = final_H.col(0).head(3);
     if (l_o_r == "right")
-        theta = M_PI - acos(final_H(1,1));
+        new_z = tmp.cross(rot_x.col(1));
     else
-        theta =  - acos(final_H(1,1));
+    {
+        rot_x.col(1) = - rot_x.col(1);
+        new_z = tmp.cross(rot_x.col(1));
+    }
 
-    rot_x(1,1)=rot_x(2,2)=cos(theta);
-    rot_x(2,1)=sin(theta);
-    rot_x(1,2) = -rot_x(2,1);
+    rot_x.col(0) = tmp;
 
-    final_H.block(0,0,3,3)= rot_x * final_H.block(0,0,3,3);
+    rot_x.col(2) = new_z/new_z.norm();
+
+    final_H.block(0,0,3,3) = rot_x;
 }
 
 /*****************************************************************/

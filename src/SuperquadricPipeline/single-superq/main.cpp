@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
     iparams_superq.nlp_scaling_method = "gradient-based";
     iparams_superq.hessian_approximation = "limited-memory";
     iparams_superq.print_level = 0;
-    iparams_superq.object_class = "box";
+    iparams_superq.object_class = "default";
     iparams_superq.optimizer_points = 50;
     iparams_superq.random_sampling = true;
 
