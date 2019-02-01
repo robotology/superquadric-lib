@@ -283,10 +283,10 @@ void SuperqEstimator::configure(const string &object_class)
     }
     else if (obj_class =="box")
     {
-      bounds(3,0) = 0.01;
-      bounds(3,1) = 0.3;
-      bounds(4,0) = 0.01;
-      bounds(4,1) = 0.3;
+      bounds(3,0) = 0.05;
+      bounds(3,1) = 0.6;
+      bounds(4,0) = 0.05;
+      bounds(4,1) = 0.6;
     }
     else if (obj_class == "cylinder")
     {
