@@ -13,7 +13,7 @@ $  Superquadric-Pipeline-Multiple path/to/point_cloud_file
 An example of `point_cloud_file` for single superquadric modeling is provided [here](https://github.com/robotology/superquadric-lib/blob/master/misc/example-bottle).
 An example of `point_cloud_file` for multiple superquadric modeling is provided [here](https://github.com/robotology/superquadric-lib/blob/master/misc/example-drill).
 
-:warning: **Note**: `superquadric-lib` do not provide any pre-processing for point clouds, such as filtering or outlier removals. It just downsample the point cloud to estimate the superquadric. Therefore, please **provide already filtered point cloud to the library**. 
+:warning: **Note**: `superquadric-lib` does not provide any pre-processing for point clouds, such as filtering or outlier removals. It just downsamples the point cloud to estimate the superquadric. Therefore, please **provide already filtered point cloud to the library**. 
 
 
 
