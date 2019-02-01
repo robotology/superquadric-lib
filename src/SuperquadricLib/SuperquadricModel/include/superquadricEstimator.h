@@ -267,7 +267,7 @@ public:
     SuperqModel::SuperqTree *superq_tree;
     SuperqModel::SuperqTree *superq_tree_new;
 
-    SuperqModel::Superquadric computeSuperq(const SuperqModel::IpoptParam &pars, PointCloud &point_cloud);
+    std::vector<SuperqModel::Superquadric> computeSuperq(const SuperqModel::IpoptParam &pars, PointCloud &point_cloud);
 
     /****************************************************************/
     std::vector<SuperqModel::Superquadric> computeMultipleSuperq(const SuperqModel::IpoptParam &pars, SuperqModel::MultipleParams &m_pars, PointCloud &point_cloud);

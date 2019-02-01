@@ -328,7 +328,7 @@ Superquadric SuperqEstimator::get_result() const
 }
 
 /****************************************************************/
-Superquadric SuperqEstimatorApp::computeSuperq(const IpoptParam &pars, PointCloud &point_cloud)
+vector<Superquadric> SuperqEstimatorApp::computeSuperq(const IpoptParam &pars, PointCloud &point_cloud)
 {
     // Process for estimate the superquadric
     Ipopt::SmartPtr<Ipopt::IpoptApplication> app = new Ipopt::IpoptApplication;
@@ -357,6 +357,7 @@ Superquadric SuperqEstimatorApp::computeSuperq(const IpoptParam &pars, PointClou
     double computation_time = (double)(clock() - tStart)/CLOCKS_PER_SEC;
 
     Superquadric superq;
+    vector<Superquadric> superqs;
 
     IOFormat CommaInitFmt(StreamPrecision, DontAlignCols,", ", ", ", "", "", " [ ", "]");
 
@@ -368,7 +369,8 @@ Superquadric SuperqEstimatorApp::computeSuperq(const IpoptParam &pars, PointClou
         cout << "|| Computed in                                    :  ";
         cout <<  computation_time << " [s]" << endl;
         cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
-        return superq;
+        superqs.push_back(superq);
+        return superqs;
     }
     else if(status == Ipopt::Maximum_CpuTime_Exceeded)
     {
@@ -376,7 +378,8 @@ Superquadric SuperqEstimatorApp::computeSuperq(const IpoptParam &pars, PointClou
         cout << "|| Time expired                                         :" << superq.getSuperqParams().format(CommaInitFmt) << endl;
         cout << "|| Superquadric estimated in                            :  " <<   computation_time << " [s]" << endl;
         cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
-        return superq;
+        superqs.push_back(superq);
+        return superqs;
     }
     else
     {
@@ -386,7 +389,8 @@ Superquadric SuperqEstimatorApp::computeSuperq(const IpoptParam &pars, PointClou
         x.setZero();
 
         superq.setSuperqParams(x);
-        return superq;
+        superqs.push_back(superq);
+        return superqs;
     }
 
 }
@@ -474,8 +478,8 @@ void SuperqEstimatorApp::computeNestedSuperq(const IpoptParam &pars, node *newno
 {
     if ((newnode != NULL))
     {
-        Superquadric superq1;
-        Superquadric superq2;
+        vector<Superquadric> superqs1;
+        vector<Superquadric> superqs2;
 
         nodeContent node_c1;
         nodeContent node_c2;
@@ -486,13 +490,13 @@ void SuperqEstimatorApp::computeNestedSuperq(const IpoptParam &pars, node *newno
 
             cout << endl << "|| ---------------------------------------------------- ||" << endl;
             cout << "|| Right node with height                         :  " << newnode->height << endl;
-            superq1 = computeSuperq(pars, *point_cloud_split1);
+            superqs1 = computeSuperq(pars, *point_cloud_split1);
             cout << endl << "|| ---------------------------------------------------- ||" << endl;
             cout << "|| Left node with height                         :  " << newnode->height << " ||" << endl;
-            superq2=computeSuperq(pars, *point_cloud_split2);
+            superqs2 = computeSuperq(pars, *point_cloud_split2);;
 
-            node_c1.superq = superq1;
-            node_c2.superq = superq2;
+            node_c1.superq = superqs1[0];
+            node_c2.superq = superqs2[0];
             node_c1.point_cloud = new PointCloud;
             node_c2.point_cloud = new PointCloud;
 
@@ -1143,14 +1147,14 @@ void SuperqEstimatorApp::superqUsingPlane(const IpoptParam &pars, node *old_node
     point_cloud_split1->setPoints(deque_points1);
     point_cloud_split2->setPoints(deque_points2);
 
-    Superquadric superq1, superq2;
-    superq1 = computeSuperq(pars, *point_cloud_split1);
-    superq2 = computeSuperq(pars, *point_cloud_split2);
+    vector<Superquadric> superqs1, superqs2;
+    superqs1 = computeSuperq(pars, *point_cloud_split1);
+    superqs2 = computeSuperq(pars, *point_cloud_split2);
 
     nodeContent node_c1;
     nodeContent node_c2;
-    node_c1.superq = superq1;
-    node_c2.superq = superq2;
+    node_c1.superq = superqs1[0];
+    node_c2.superq = superqs2[0];
     node_c1.point_cloud = new PointCloud;
     node_c2.point_cloud = new PointCloud;
 

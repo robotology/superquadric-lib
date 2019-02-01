@@ -32,7 +32,6 @@ int main(int argc, char* argv[])
     PointCloud points_hand; // Uncomment this to visualize points on hand ellipsoid in the final pose
 
     // Object Superquadric
-    Superquadric superq;
     vector<Superquadric> superqs;
 
     // VTK visualizer
@@ -120,9 +119,7 @@ int main(int argc, char* argv[])
 
     /*******************************************/
     // Compute superq
-    superq = estim.computeSuperq(iparams_superq, point_cloud);
-
-    superqs.push_back(superq);
+    superqs = estim.computeSuperq(iparams_superq, point_cloud);
 
     // Params for grasp computation
     GraspParams params_grasp;
