@@ -155,7 +155,7 @@ int main(int argc, char* argv[])
 
     // Compute grasp pose for left hand
     params_grasp.left_or_right="right";
-    grasp_res=grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
+    grasp_res = grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 
     // Add poses for grasping
     vis.addPoses(grasp_res.grasp_poses);

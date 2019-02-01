@@ -20,16 +20,16 @@ using namespace Eigen;
 /**********************************************/
 Visualizer::Visualizer()
 {
-    height=-0.2;
-    size_points=4;
-    backgroundColor={1.0,1.0,1.0};
+    height = -0.2;
+    size_points = 4;
+    backgroundColor = {1.0,1.0,1.0};
 
-    closing=false;
+    closing = false;
 
-    vtk_renderer=vtkSmartPointer<vtkRenderer>::New();
-    vtk_renderWindow=vtkSmartPointer<vtkRenderWindow>::New();
+    vtk_renderer = vtkSmartPointer<vtkRenderer>::New();
+    vtk_renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
 
-    vtk_renderWindowInteractor=vtkSmartPointer<vtkRenderWindowInteractor>::New();
+    vtk_renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
     vtk_renderWindowInteractor->SetRenderWindow(vtk_renderWindow);
 
     vtk_renderWindow->SetSize(600,600);
@@ -37,8 +37,8 @@ Visualizer::Visualizer()
 
     vtk_renderer->SetBackground(backgroundColor.data());
 
-    vtk_axes=vtkSmartPointer<vtkAxesActor>::New();
-    vtk_widget=vtkSmartPointer<vtkOrientationMarkerWidget>::New();
+    vtk_axes = vtkSmartPointer<vtkAxesActor>::New();
+    vtk_widget = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
     vtk_widget->SetOutlineColor(0.9300,0.5700,0.1300);
     vtk_widget->SetOrientationMarker(vtk_axes);
     vtk_widget->SetInteractor(vtk_renderWindowInteractor);
@@ -46,7 +46,7 @@ Visualizer::Visualizer()
     vtk_widget->SetEnabled(1);
     vtk_widget->InteractiveOn();
 
-    vtk_style=vtkSmartPointer<vtkInteractorStyleSwitch>::New();
+    vtk_style = vtkSmartPointer<vtkInteractorStyleSwitch>::New();
     vtk_style->SetCurrentStyleToTrackballCamera();
     vtk_renderWindowInteractor->SetInteractorStyle(vtk_style);
 }
@@ -60,20 +60,20 @@ Visualizer::~Visualizer()
 /**********************************************/
 void Visualizer::addPoints(PointCloud &point_cloud, const bool &show_downsample)
 {
-    vector<Vector3d> &all_points=point_cloud.points_for_vis;
-    vector<vector<unsigned char>> all_colors=point_cloud.colors;
+    vector<Vector3d> &all_points = point_cloud.points_for_vis;
+    vector<vector<unsigned char>> all_colors = point_cloud.colors;
 
-    size_points=4;
-    vtk_all_points=unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
+    size_points = 4;
+    vtk_all_points = unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
     vtk_all_points->set_colors(all_colors);
 
     vtk_renderer->AddActor(vtk_all_points->get_actor());
 
     if (show_downsample)
     {
-        size_points=8;
-        vector<Vector3d> &dwn_points=point_cloud.points;
-        vtk_dwn_points=unique_ptr<PointsVis>(new PointsVis(dwn_points,size_points));
+        size_points = 8;
+        vector<Vector3d> &dwn_points = point_cloud.points;
+        vtk_dwn_points = unique_ptr<PointsVis>(new PointsVis(dwn_points,size_points));
         vtk_dwn_points->get_actor()->GetProperty()->SetColor(1.0,0.0,0.0);
         vtk_renderer->AddActor(vtk_dwn_points->get_actor());
     }
@@ -81,11 +81,11 @@ void Visualizer::addPoints(PointCloud &point_cloud, const bool &show_downsample)
     vector<double> bounds(6),centroid(3);
     vtk_all_points->get_polydata()->GetBounds(bounds.data());
 
-    for (size_t i=0; i<centroid.size(); i++)
-        centroid[i]=0.5*(bounds[i<<1]+bounds[(i<<1)+1]);
+    for (size_t i = 0; i < centroid.size(); i++)
+        centroid[i] = 0.5*(bounds[i << 1] + bounds[(i << 1) + 1]);
 
-    vtk_camera=vtkSmartPointer<vtkCamera>::New();
-    vtk_camera->SetPosition(centroid[0]+0.5,centroid[1],centroid[2]+0.4);
+    vtk_camera = vtkSmartPointer<vtkCamera>::New();
+    vtk_camera->SetPosition(centroid[0] + 0.5,centroid[1],centroid[2] + 0.4);
     vtk_camera->SetFocalPoint(centroid.data());
     vtk_camera->SetViewUp(0.0,0.0,1.0);
     vtk_renderer->SetActiveCamera(vtk_camera);
@@ -94,7 +94,7 @@ void Visualizer::addPoints(PointCloud &point_cloud, const bool &show_downsample)
 /**********************************************/
 void Visualizer::addPlane(const double &z)
 {
-    vtk_plane=unique_ptr<PlaneVis>(new PlaneVis(-z));
+    vtk_plane = unique_ptr<PlaneVis>(new PlaneVis(-z));
     vtk_renderer->AddActor(vtk_plane->get_actor());
 }
 
@@ -105,30 +105,30 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
 
     for (auto sup:s)
     {   r.resize(12);
-        r.segment(0,3)=sup.getSuperqCenter();
-        r.segment(3,4)=sup.getSuperqAxisAngle();
-        r.segment(7,3)=sup.getSuperqDims();
-        r.segment(10, 2)=sup.getSuperqExps();
+        r.segment(0,3) = sup.getSuperqCenter();
+        r.segment(3,4) = sup.getSuperqAxisAngle();
+        r.segment(7,3) = sup.getSuperqDims();
+        r.segment(10, 2) = sup.getSuperqExps();
 
-        vtk_superquadric=unique_ptr<SuperquadricVis>(new SuperquadricVis(r));
+        vtk_superquadric = unique_ptr<SuperquadricVis>(new SuperquadricVis(r));
 
         vtk_renderer->AddActor(vtk_superquadric->get_actor());
     }
 
-    vtk_camera=vtkSmartPointer<vtkCamera>::New();
+    vtk_camera = vtkSmartPointer<vtkCamera>::New();
 
     Vector3d center(3);
-    if (s.size()==1)
-      center=s[0].getSuperqCenter();
+    if (s.size() == 1)
+      center = s[0].getSuperqCenter();
     else
     {
         center.setZero();
         for (auto sup:s)
         {
-          center+=sup.getSuperqCenter();
+          center += sup.getSuperqCenter();
         }
 
-        center/=s.size();
+        center /=s .size();
     }
 
     vtk_camera->SetPosition(center(0)+0.5,center(1),center(2)+0.4);
@@ -207,7 +207,7 @@ void Visualizer::visualize()
     vtk_renderWindowInteractor->Initialize();
     vtk_renderWindowInteractor->CreateRepeatingTimer(10);
 
-    vtk_updateCallback=vtkSmartPointer<UpdateCommand>::New();
+    vtk_updateCallback = vtkSmartPointer<UpdateCommand>::New();
 
     vtk_updateCallback->set_closing(closing);
     vtk_renderWindowInteractor->AddObserver(vtkCommand::TimerEvent,vtk_updateCallback);
@@ -232,9 +232,9 @@ void Visualizer::saveScreenshot(const string &object, const int &number)
 
     stringstream ss;
     ss << number;
-    string number_str=ss.str();
+    string number_str = ss.str();
 
-    writer->SetFileName((object+"_screenshot_no_"+number_str+".png").c_str());
+    writer->SetFileName((object + "_screenshot_no_" + number_str + ".png").c_str());
     writer->SetInputConnection(windowToImageFilter->GetOutputPort());
     writer->Write();
 

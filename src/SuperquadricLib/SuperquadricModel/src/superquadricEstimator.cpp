@@ -930,7 +930,7 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
 
             current_node->plane_important = false;
 
-            if (!superq_tree->searchPlaneImportant(current_node->left) && !superq_tree->searchPlaneImportant(current_node->right))
+            if (superq_tree->searchPlaneImportant(current_node->left) == false && superq_tree->searchPlaneImportant(current_node->right) == false)
             {
                 current_node->left = NULL;
                 current_node->right = NULL;
@@ -998,7 +998,7 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
         else if (m_pars.debug)
             cout << "|| Plane of root is not important!     " << endl;
 
-        if ( axisParallel(current_node->left, current_node->right, relations) && !sectionEqual(current_node->left, current_node->right, relations))
+        if ( axisParallel(current_node->left, current_node->right, relations) && sectionEqual(current_node->left, current_node->right, relations) == false)
         {
             current_node->plane_important = true;
         }
@@ -1028,7 +1028,7 @@ bool SuperqEstimatorApp::generateFinalTree(const IpoptParam &pars, node *old_nod
             {
                 if (m_pars.debug)
                     cout << "|| Current plane important!     " << endl;
-                superqUsingPlane(pars, old_node, newnode);
+                superqUsingPlane(pars, old_node, old_node->father->point_cloud, newnode);
 
                 generateFinalTree(pars, old_node->left, newnode->left);
                 generateFinalTree(pars, old_node->right, newnode->right);
@@ -1129,10 +1129,10 @@ bool SuperqEstimatorApp::generateFinalTree(const IpoptParam &pars, node *old_nod
 }
 
 /****************************************************************/
-void SuperqEstimatorApp::superqUsingPlane(const IpoptParam &pars, node *old_node, node *newnode)
+void SuperqEstimatorApp::superqUsingPlane(const IpoptParam &pars, node *old_node, PointCloud *points, node *newnode)
 {
     deque<Vector3d> deque_points1, deque_points2;
-    for (auto point : old_node->point_cloud->points_for_vis)
+    for (auto point : points->points_for_vis)
     {
         if (old_node->plane(0)*point(0) + old_node->plane(1)*point(1) + old_node->plane(2)*point(2) - old_node->plane(3) > 0)
             deque_points1.push_back(point);

@@ -263,7 +263,7 @@ class SuperqEstimatorApp
    MultipleParams m_pars;
 
 public:
-  
+
     SuperqModel::SuperqTree *superq_tree;
     SuperqModel::SuperqTree *superq_tree_new;
 
@@ -306,7 +306,7 @@ public:
     bool generateFinalTree(const SuperqModel::IpoptParam &pars, SuperqModel::node *old_node, SuperqModel::node *newnode);
 
     /****************************************************************/
-    void superqUsingPlane(const SuperqModel::IpoptParam &pars, SuperqModel::node *old_node, SuperqModel::node *newnode);
+    void superqUsingPlane(const SuperqModel::IpoptParam &pars, SuperqModel::node *old_node, SuperqModel::PointCloud *pc, SuperqModel::node *newnode);
 
     /****************************************************************/
     std::vector<SuperqModel::Superquadric> fillSolution(SuperqModel::node *leaf);

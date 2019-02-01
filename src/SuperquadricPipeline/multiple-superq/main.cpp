@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
     params_grasp.bounds_right << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
     params_grasp.bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3,  -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
     params_grasp.bounds_constr_left.resize(8,2);
-    params_grasp.bounds_constr_left << -10000, -0.001, -10000, -0.001, -10000, -0.001, 0.01,
+    params_grasp.bounds_constr_left << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
                                         10.0, 0.0, 1.0, 0.00001, 10.0, 0.00001, 10.0, 0.00001, 10.0;
     params_grasp.bounds_constr_right.resize(8,2);
     params_grasp.bounds_constr_right << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.001,
@@ -156,30 +156,30 @@ int main(int argc, char* argv[])
     // Compute grasp pose for left hand
     grasp_res = grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 
-    //Example: Add pose reachable by robot to update Cost
-    // Vector6d pose_robot;
-    // pose_robot << -0.4, 0.0, -0.1, 0.0, 0.0, 0.0;
-    // grasp_res.grasp_poses[0].setGraspParamsHat(pose_robot);
-    // pose_robot << -0.4, 0.0, -0.1, 0.0, 0.0, 0.0;
-    // grasp_res.grasp_poses[1].setGraspParamsHat(pose_robot);
-    // grasp_estim.refinePoseCost(grasp_res.grasp_poses);
+    //Example: Add pose reachable by robot to update Cost         // Uncomment this to include in grasp poses cost reachability of the pose by the robot
+    //Vector6d pose_robot;
+    //pose_robot << -0.4, 0.0, -0.1, 0.0, 0.0, 0.0;
+    //grasp_res.grasp_poses[0].setGraspParamsHat(pose_robot);
+    //pose_robot << -0.4, 0.0, -0.1, 0.0, 0.0, 0.0;
+    //grasp_res.grasp_poses[1].setGraspParamsHat(pose_robot);
+    //grasp_estim.refinePoseCost(grasp_res.grasp_poses);
 
     // Add poses for grasping
     //vis.addPoses(grasp_res.grasp_poses);
     //vis.addSuperq(hand_superqs);
 
     /*******************************************/
-    // Compute grasp pose for right hand
-    //params_grasp.left_or_right = "right";
+    // Compute grasp pose for the other hand
+    //params_grasp.left_or_right = "left";
     //grasp_res = grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 
     // Add poses for grasping
     vis.addPoses(grasp_res.grasp_poses);
-    vis.addSuperq(grasp_res.hand_superq);
+    //vis.addSuperq(grasp_res.hand_superq);           // Uncomment this to visualize the hand ellipsoid
 
-    PointCloud points_hand;
-    points_hand.setPoints(grasp_res.points_on[0]);  // Uncomment this to visualize points on the hand ellipsoid
-    vis.addPoints(points_hand, false);
+    //PointCloud points_hand;
+    //points_hand.setPoints(grasp_res.points_on[0]);  // Uncomment this to visualize points on the hand ellipsoid
+    //vis.addPoints(points_hand, false);
 
     // Outcome visualization
     // Add superquadric to visualizer

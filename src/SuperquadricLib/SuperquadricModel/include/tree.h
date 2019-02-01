@@ -71,7 +71,7 @@ public:
     void printNode(node *leaf);
 
     /***********************************************************************/
-    void printTree(node *leaf);
+    void printTree();
 
     /***********************************************************************/
     void insert(const nodeContent &node_content1, const nodeContent &node_content2, node *leaf);
