@@ -31,13 +31,13 @@ Here is a brief description of the main steps required to play with `superquadri
 
 1. Instantiate the following quantities:
 ```
-    PointCloud point_cloud;                 // Object point cloud
-    vector<Superquadric> supersq;           // Object Superquadric
-    Visualizer vis;                         // VTK visualizer
-    SuperqEstimatorApp estim;               // Superquadric Estimator
-    GraspEstimatorApp grasp_estim;          // Grasping pose Estimator
-    GraspResults grasp_res;                 // The results of the grasping computation
-    deque<Vector3d> all_points;             // To read the object point cloud
+   PointCloud point_cloud;                 // Object point cloud
+   vector<Superquadric> supersq;           // Object Superquadric
+   Visualizer vis;                         // VTK visualizer
+   SuperqEstimatorApp estim;               // Superquadric Estimator
+   GraspEstimatorApp grasp_estim;          // Grasping pose Estimator
+   GraspResults grasp_res;                 // The results of the grasping computation
+   deque<Vector3d> all_points;             // To read the object point cloud
 ```
 2. Define all the parameters:
 
@@ -58,19 +58,19 @@ and save them in `all_points`.
 ```
 5. Add the estimated superquadric(s) to the `params_grasp` used for computing the grasping candidates:
 ```
-   params_grasp.object_superqs = superqs;
+  params_grasp.object_superqs = superqs;
 ```
 6. Compute the grasping candidate:
 ```
-   grasp_res = grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
+  grasp_res = grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
 ```
 7. Visualize everything
 ```
-    vis.addSuperq(superqs);                                   // Add superquadric to visualizer
-    vis.addPoints(point_cloud, true);                         // Add points to visualizer
+   vis.addSuperq(superqs);                                   // Add superquadric to visualizer
+   vis.addPoints(point_cloud, true);                         // Add points to visualizer
                                                               // (true/false to show downsampled points
                                                               //    used for superq estimation)
-    vis.addPlane(params_grasp.pl(3));                         // Add plane for grasping
-    vis.addPoses(grasp_res.grasp_poses);                      // Add poses for grasping
-    vis.visualize();                                          // Visualize
+   vis.addPlane(params_grasp.pl(3));                         // Add plane for grasping
+   vis.addPoses(grasp_res.grasp_poses);                      // Add poses for grasping
+   vis.visualize();                                          // Visualize
 ```
