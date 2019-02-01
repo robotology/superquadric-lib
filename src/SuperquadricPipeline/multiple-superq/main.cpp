@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 
     // Params for solver in grasp estimator
     IpoptParam iparams_grasp;
-    iparams_grasp.tol = 1e-5;
+    iparams_grasp.tol = 1e-4;
     iparams_grasp.constr_tol = 1e-4;
     iparams_grasp.acceptable_iter = 0;
     iparams_grasp.mu_strategy = "adaptive";
@@ -132,14 +132,14 @@ int main(int argc, char* argv[])
     // Params for grasp computation
     GraspParams params_grasp;
     params_grasp.left_or_right = "right";
-    params_grasp.pl << 0.0, 0.0, 1.0, 0.22;
+    params_grasp.pl << 0.0, 0.0, 1.0, 0.16;
     params_grasp.disp <<  0.0, 0.0, 0.0;
     params_grasp.object_superq = superqs[0];
     params_grasp.max_superq = 4;
     params_grasp.bounds_right << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
     params_grasp.bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3,  -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
     params_grasp.bounds_constr_left.resize(8,2);
-    params_grasp.bounds_constr_left << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
+    params_grasp.bounds_constr_left << -10000, -0.001, -10000, -0.001, -10000, -0.001, 0.01,
                                         10.0, 0.0, 1.0, 0.000001, 10.0, 0.000001, 10.0, 0.000001, 10.0;
     params_grasp.bounds_constr_right.resize(8,2);
     params_grasp.bounds_constr_right << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
@@ -165,7 +165,7 @@ int main(int argc, char* argv[])
     // grasp_estim.refinePoseCost(grasp_res.grasp_poses);
 
     // Add poses for grasping
-    vis.addPoses(grasp_res.grasp_poses);
+    //vis.addPoses(grasp_res.grasp_poses);
     //vis.addSuperq(hand_superqs);
 
     /*******************************************/
@@ -175,7 +175,11 @@ int main(int argc, char* argv[])
 
     // Add poses for grasping
     vis.addPoses(grasp_res.grasp_poses);
-    //vis.addSuperq(hand_superqs);
+    vis.addSuperq(grasp_res.hand_superq);
+
+    PointCloud points_hand;
+    points_hand.setPoints(grasp_res.points_on[0]);  // Uncomment this to visualize points on the hand ellipsoid
+    vis.addPoints(points_hand, false);
 
     // Outcome visualization
     // Add superquadric to visualizer

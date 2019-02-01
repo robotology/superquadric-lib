@@ -102,13 +102,11 @@ void graspComputation::init(GraspParams &g_params)
     {
         d_x(0) = -0.8; d_x(1) = -0.7; d_x(2) = -0.5;
         d_y(0) = 0.0; d_y(1) = 0.7; d_y(2) = -0.7;
-        //d_z(0) = 0.0; d_z(1) = -0.7; d_z(2) = -0.7;
     }
     else
     {
         d_x(0) = -0.8; d_x(1) = 0.7; d_x(2) = -0.5;
         d_y(0) = 0.0; d_y(1) = -0.7; d_y(2) =-0.7;
-        //d_z(0) = 0.0; d_z(1) = -0.7; d_z(2) = 0.7;
     }
 
     d_x = d_x/d_x.norm();
@@ -124,7 +122,7 @@ void graspComputation::init(GraspParams &g_params)
     theta_y = M_PI/3.0;
     theta_z = M_PI/4.0;
 
-    if (hand(1) > object.segment(0,2).maxCoeff() )
+    if (hand(1) > object.segment(0,3).maxCoeff() && num_superq == 0)
     {
         if (l_o_r == "right")
         {
@@ -600,7 +598,7 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
      Matrix4d H_x;
      H_x = computeMatrix(solution_vector);
 
-     if (notAlignedPose(H_x))
+     if (notAlignedPose(H_x) == true && num_superq == 0)
          alignPose(H_x);
 
      Matrix3d R = H_x.block(0,0,3,3);
@@ -717,7 +715,7 @@ double graspComputation::computeObstacleValues(const Ipopt::Number *x, const int
     Vector3d thumb_finger;
     Vector3d palm_up;
     Vector3d palm_down;
-    middle_finger = pose_hand.segment(0,3) - hand(0) * H_robot.col(0).segment(0,3);
+    middle_finger = pose_hand.segment(0,3) + hand(0) * H_robot.col(0).segment(0,3);
     if (l_o_r == "right")
         thumb_finger = pose_hand.segment(0,3) + hand(2) * H_robot.col(2).segment(0,3);
     else
@@ -756,7 +754,7 @@ double graspComputation::computeObstacleValues_v(const Vector6d &pose_hand, cons
     Vector3d thumb_finger;
     Vector3d palm_up;
     Vector3d palm_down;
-    middle_finger = pose_hand.segment(0,3) - hand(0) * H_robot.col(0).segment(0,3);
+    middle_finger = pose_hand.segment(0,3) + hand(0) * H_robot.col(0).segment(0,3);
     if (l_o_r == "right")
         thumb_finger = pose_hand.segment(0,3) + hand(2) * H_robot.col(2).segment(0,3);
     else
@@ -777,7 +775,7 @@ double graspComputation::computeObstacleValues_v(const Vector6d &pose_hand, cons
 
     for (auto edge : edges_hand)
     {
-        constr_value +=  pow(f_v2(obstacle,edge),obstacle[3])-1;
+        constr_value +=  pow(f_v2(obstacle,edge),obstacle(3))-1;
     }
 
     constr_value *= obstacle(0) * obstacle(1) * obstacle(2) / edges_hand.size();
@@ -795,7 +793,7 @@ deque<double> graspComputation::computeFinalObstacleValues(const Vector6d &pose_
     Vector3d thumb_finger;
     Vector3d palm_up;
     Vector3d palm_down;
-    middle_finger = pose_hand.segment(0,3) - hand(0) * H_robot.col(0).segment(0,3);
+    middle_finger = pose_hand.segment(0,3) + hand(0) * H_robot.col(0).segment(0,3);
     if (l_o_r == "right")
         thumb_finger = pose_hand.segment(0,3) + hand(2) * H_robot.col(2).segment(0,3);
     else
@@ -829,7 +827,6 @@ deque<double> graspComputation::computeFinalObstacleValues(const Vector6d &pose_
 /****************************************************************/
 bool graspComputation::notAlignedPose(const Matrix4d &final_H)
 {
-    cout<<"final H "<<final_H(1,1)<<endl;
     if ((final_H(1,1) > 0.85  && final_H(1,1) < 1.0) || (final_H(1,1) < -0.85  && final_H(1,1) > -1.0))
     {
         return true;
@@ -864,13 +861,13 @@ void graspComputation::alignPose(Matrix4d &final_H)
 /*****************************************************************/
 double graspComputation::f_v2(const Vector11d &obj, const Vector3d &point_tr)
 {
-    double num1 = H_o2w(0,0)*point_tr(0) + H_o2w(1,0)*point_tr(1) + H_o2w(2,0)*point_tr(2) - object(5)*H_o2w(0,0) - object(6)*H_o2w(1,0) - object(7)*H_o2w(2,0);
-    double num2 = H_o2w(0,1)*point_tr(0) + H_o2w(1,1)*point_tr(1) + H_o2w(2,1)*point_tr(2) - object(5)*H_o2w(0,1) - object(6)*H_o2w(1,1) - object(7)*H_o2w(2,1);
-    double num3 = H_o2w(0,2)*point_tr(0) + H_o2w(1,2)*point_tr(1) + H_o2w(2,2)*point_tr(2) - object(5)*H_o2w(0,2) - object(6)*H_o2w(1,2) - object(7)*H_o2w(2,2);
+    double num1 = H_o2w(0,0)*point_tr(0) + H_o2w(1,0)*point_tr(1) + H_o2w(2,0)*point_tr(2) - obj(5)*H_o2w(0,0) - obj(6)*H_o2w(1,0) - obj(7)*H_o2w(2,0);
+    double num2 = H_o2w(0,1)*point_tr(0) + H_o2w(1,1)*point_tr(1) + H_o2w(2,1)*point_tr(2) - obj(5)*H_o2w(0,1) - obj(6)*H_o2w(1,1) - obj(7)*H_o2w(2,1);
+    double num3 = H_o2w(0,2)*point_tr(0) + H_o2w(1,2)*point_tr(1) + H_o2w(2,2)*point_tr(2) - obj(5)*H_o2w(0,2) - obj(6)*H_o2w(1,2) - obj(7)*H_o2w(2,2);
 
-    double tmp = pow(abs(num1/object(0)),2.0/object(4)) + pow(abs(num2/object(1)),2.0/object(4));
+    double tmp = pow(abs(num1/obj(0)),2.0/obj(4)) + pow(abs(num2/obj(1)),2.0/obj(4));
 
-    return pow( abs(tmp),object(4)/object(3)) + pow( abs(num3/object(2)),(2.0/object(3)));
+    return pow( abs(tmp),obj(4)/obj(3)) + pow( abs(num3/obj(2)),(2.0/obj(3)));
  }
 
 /*****************************************************************/
