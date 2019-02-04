@@ -19,6 +19,7 @@
 #include "superquadric.h"
 #include "pointCloud.h"
 #include "tree.h"
+#include "options.h"
 
 typedef Eigen::Matrix<double, 11, 2>  Matrix112d;
 typedef Eigen::Matrix<double, 3, 2>  Matrix32d;
@@ -227,41 +228,11 @@ public:
 
 };
 
-struct IpoptParam
-{
-    double tol;
-    double constr_tol;
-    int acceptable_iter;
-    std::string mu_strategy;
-    int max_iter;
-    double max_cpu_time;
-    std::string nlp_scaling_method;
-    std::string hessian_approximation;
-    int print_level;
-    std::string object_class;
-    int optimizer_points;
-    bool random_sampling;
-};
-
-struct MultipleParams
-{
-    bool merge_model;
-    int minimum_points;
-    int fraction_pc;
-    double threshold_section1;
-    double threshold_section2;
-    double threshold_axis;
-    double debug;
-};
-
-class SuperqEstimatorApp
+class SuperqEstimatorApp : public Options
 {
    int h_tree;
    PointCloud *point_cloud_split1;
    PointCloud *point_cloud_split2;
-
-   IpoptParam pars;
-   MultipleParams m_pars;
 
 protected:
   /***********************************************************************/

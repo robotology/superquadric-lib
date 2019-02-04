@@ -15,40 +15,7 @@
 #include "superquadricEstimator.h"
 #include "graspPoses.h"
 
-typedef Eigen::Matrix<double, 6, 2> Matrix62d;
-
 namespace SuperqGrasp {
-
-struct GraspParams
-{
-    /* For which hand compute the grasping pose */
-    std::string left_or_right;
-    /* Bounds for the grasping pose of the right hand */
-    Matrix62d bounds_right;
-    /* Bounds for the grasping pose of the left hand */
-    Matrix62d bounds_left;
-    /* Bounds for constraints of the optimization problem
-     of the right hand */
-    Eigen::MatrixXd bounds_constr_right;
-    /* Bounds for constraints of the optimization problem
-     of the left hand */
-    Eigen::MatrixXd bounds_constr_left;
-    /* Maximum number of obstacles superquadric to be consider */
-    int max_superq;
-    /* Plane parameters */
-    Eigen::Vector4d pl;
-    /* Displacement between the hand reference frame and the hand ellipsoid */
-    Eigen::Vector3d disp;
-    /* Superquadric representing the object to be grasped */
-    SuperqModel::Superquadric object_superq;
-    /* Superquadric representing the object to be grasped */
-    std::vector<SuperqModel::Superquadric> obstacle_superqs;
-    /* Superquadric representing the robot hand */
-    SuperqModel::Superquadric hand_superq;
-    /* Superquadrics representing obstacles */
-    std::vector<SuperqModel::Superquadric> object_superqs;
-
-};
 
 class graspComputation : public Ipopt::TNLP
 {
@@ -230,10 +197,8 @@ struct GraspResults
     std::vector<std::deque<double>> F_final_obstacles;
 
 };
-class GraspEstimatorApp
+class GraspEstimatorApp : public Options
 {
-    SuperqModel::IpoptParam pars;
-    SuperqGrasp::GraspParams g_params;
 public:
      GraspEstimatorApp();
      /*****************************************************************/
@@ -242,6 +207,11 @@ public:
      void refinePoseCost(std::vector<SuperqGrasp::GraspPoses> &pose_computed);
      /*****************************************************************/
      double getPlaneHeight();
+     /*****************************************************************/
+     bool setVector(const std::string &tag, const Eigen::VectorXd &value);
+     /*****************************************************************/
+     bool setMatrix(const std::string &tag, const Eigen::MatrixXd &value);
+
 };
 
 }

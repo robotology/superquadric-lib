@@ -38,7 +38,7 @@ void SuperqEstimator::setPoints(PointCloud &point_cloud, const int &optimizer_po
 
     used_points = points_downsampled.getNumberPoints();
 
-    cout << "|| Downsampled points used for modeling           :  " << used_points << endl;
+    cout << "|| Downsampled points used for modeling                 :  " << used_points << endl;
 
     x0.resize(11);
     x0.setZero();
@@ -333,6 +333,7 @@ SuperqEstimatorApp::SuperqEstimatorApp()
     pars.acceptable_iter = 0;
     pars.max_iter = 1000000;
     pars.max_cpu_time = 5.0;
+    pars.mu_strategy = "adaptive";
     pars.nlp_scaling_method = "gradient-based";
     pars.hessian_approximation = "limited-memory";
     pars.print_level = 0;
@@ -386,9 +387,9 @@ vector<Superquadric> SuperqEstimatorApp::computeSuperq(PointCloud &point_cloud)
     if (status == Ipopt::Solve_Succeeded)
     {
         superq = estim->get_result();
-        cout << "|| Superquadric estimated                         : ";
+        cout << "|| Superquadric estimated                               : ";
         cout << superq.getSuperqParams().format(CommaInitFmt) << endl;
-        cout << "|| Computed in                                    :  ";
+        cout << "|| Computed in                                          :  ";
         cout <<  computation_time << " [s]" << endl;
         cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
         superqs.push_back(superq);
@@ -509,10 +510,10 @@ void SuperqEstimatorApp::computeNestedSuperq(node *newnode)
             splitPoints(newnode);
 
             cout << endl << "|| ---------------------------------------------------- ||" << endl;
-            cout << "|| Right node with height                         :  " << newnode->height << endl;
+            cout << "|| Right node with height                               :  " << newnode->height << endl;
             superqs1 = computeSuperq(*point_cloud_split1);
             cout << endl << "|| ---------------------------------------------------- ||" << endl;
-            cout << "|| Left node with height                         :  " << newnode->height << " ||" << endl;
+            cout << "|| Left node with height                                :  " << newnode->height << endl;
             superqs2 = computeSuperq(*point_cloud_split2);;
 
             node_c1.superq = superqs1[0];

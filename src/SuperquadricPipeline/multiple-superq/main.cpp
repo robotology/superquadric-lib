@@ -93,8 +93,8 @@ int main(int argc, char* argv[])
     /*******************************************/
     // Compute superq
     superqs = estim.computeMultipleSuperq(point_cloud);
-
     /*******************************************/
+
     // Compute grasp pose for left hand
     grasp_res = grasp_estim.computeGraspPoses(superqs);
 

@@ -28,19 +28,19 @@ PoseVis::PoseVis()
 /**********************************************/
 void PoseVis::setvtkTransform(const VectorXd &pose_vect)
 {
-    if (pose_vect.size()==6 and pose_vect.norm()>0.0)
+    if (pose_vect.size() == 6 and pose_vect.norm() > 0.0)
     {
         pose.block<3,3>(0,0) = (AngleAxisd(pose_vect(3), Vector3d::UnitZ())*
                                 AngleAxisd(pose_vect(4), Vector3d::UnitY())*
                                 AngleAxisd(pose_vect(5), Vector3d::UnitZ())).toRotationMatrix();
 
-        pose.block<3,1>(0,3)=pose_vect.head(3);
+        pose.block<3,1>(0,3) = pose_vect.head(3);
 
         vtkSmartPointer<vtkMatrix4x4> m_vtk = vtkSmartPointer<vtkMatrix4x4>::New();
         m_vtk->Zero();
-        for (auto i=0; i< pose.rows(); i++)
+        for (auto i = 0; i < pose.rows(); i++)
         {
-            for(auto j=0; j< pose.cols(); j++)
+            for(auto j = 0; j < pose.cols(); j++)
             {
                 m_vtk->SetElement(i, j, pose(i, j));
             }

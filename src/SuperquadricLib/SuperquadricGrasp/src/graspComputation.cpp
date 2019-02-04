@@ -952,9 +952,9 @@ GraspResults GraspEstimatorApp::computeGraspPoses(vector<Superquadric> &object_s
         {
             pose_hand = estim->get_result();
             cout << "|| ---------------------------------------------------- ||" << endl;
-            cout << "|| Grasp poses for " << g_params.left_or_right << " hand estimated            : ";
+            cout << "|| Grasp poses for " << g_params.left_or_right << " hand estimated                 : ";
             cout << pose_hand.getGraspParams().format(CommaInitFmt) << endl << endl;
-            cout << "|| Computed in                                    :  ";
+            cout << "|| Computed in                                          :  ";
             cout <<   computation_time << " [s]" << endl;
             cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
 
@@ -968,8 +968,8 @@ GraspResults GraspEstimatorApp::computeGraspPoses(vector<Superquadric> &object_s
         {
             pose_hand = estim->get_result();
             cout << "|| ---------------------------------------------------- ||" << endl;
-            cout << "|| Time expired                                   :  " << pose_hand.getGraspParams().format(CommaInitFmt) << endl << endl;
-            cout << "|| Grasp poses for " << g_params.left_or_right << " hand estimated in            :  "  <<   computation_time << " [s]" << endl;
+            cout << "|| Time expired                                         :  " << pose_hand.getGraspParams().format(CommaInitFmt) << endl << endl;
+            cout << "|| Grasp poses for " << g_params.left_or_right << " hand estimated in                 :  "  <<   computation_time << " [s]" << endl;
             cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
 
             results.grasp_poses.push_back(pose_hand);
@@ -1065,4 +1065,75 @@ void GraspEstimatorApp::refinePoseCost(vector<GraspPoses> &poses_computed)
 double GraspEstimatorApp::getPlaneHeight()
 {
     return g_params.pl(3);
+}
+
+/*****************************************************************/
+bool GraspEstimatorApp::setVector(const string &tag, const VectorXd &value)
+{
+    IOFormat CommaInitFmt(StreamPrecision, DontAlignCols,", ", ", ", "", "", " [ ", "]");
+
+    if (tag == "hand" && value.rows() == 11 && value.cols() == 1)
+    {
+        Superquadric hand;
+        hand.setSuperqParams(value);
+        g_params.hand_superq = hand;
+
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Hand set                                             : " << g_params.hand_superq.getSuperqParams().format(CommaInitFmt) <<endl;
+        cout << "|| ---------------------------------------------------- ||" << endl << endl;
+
+    }
+    else if (tag == "plane" && value.rows() == 4 && value.cols() == 1)
+    {
+        g_params.pl = value;
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Plane set                                            : " << g_params.pl.format(CommaInitFmt) <<endl;
+        cout << "|| ---------------------------------------------------- ||" << endl << endl;
+    }
+    else if (tag == "displacement" && value.rows() == 3 && value.cols() == 1)
+    {
+        g_params.disp = value;
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Displacement set                                     : " << g_params.disp.format(CommaInitFmt) <<endl;
+        cout << "|| ---------------------------------------------------- ||" << endl << endl;
+    }
+}
+
+/*****************************************************************/
+bool GraspEstimatorApp::setMatrix(const string &tag, const MatrixXd &value)
+{
+    IOFormat CommaInitFmt(StreamPrecision, DontAlignCols,", ", ", ", "", "", " [ ", "]");
+
+    if (tag == "bounds_right" && value.rows() == 6 && value.cols() == 2)
+    {
+        g_params.bounds_right = value;
+
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Bounds right set                                     : " << g_params.bounds_right.format(CommaInitFmt) <<endl;
+        cout << "|| ---------------------------------------------------- ||" << endl << endl;
+    }
+    else if (tag == "bounds_left" && value.rows() == 6 && value.cols() == 2)
+    {
+        g_params.bounds_left = value;
+
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Bounds left set                                      : " << g_params.bounds_left.format(CommaInitFmt) <<endl;
+        cout << "|| ---------------------------------------------------- ||" << endl << endl;
+    }
+    else if (tag == "bounds_constr_right" && value.rows() == 8 && value.cols() == 2)
+    {
+        g_params.bounds_constr_right = value;
+
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Bounds constraint right set                          : " << g_params.bounds_constr_right.format(CommaInitFmt) <<endl;
+        cout << "|| ---------------------------------------------------- ||" << endl << endl;
+    }
+    else if (tag == "bounds_constr_left" && value.rows() == 8 && value.cols() == 2)
+    {
+        g_params.bounds_constr_left = value;
+
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Bounds constraint left set                           : " << g_params.bounds_constr_left.format(CommaInitFmt) <<endl;
+        cout << "|| ---------------------------------------------------- ||" << endl << endl;
+    }
 }
