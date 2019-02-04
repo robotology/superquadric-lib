@@ -920,76 +920,87 @@ GraspResults GraspEstimatorApp::computeGraspPoses(vector<Superquadric> &object_s
 
     GraspResults results;
 
-    for (size_t i = 0; i < object_superqs.size(); i++)
+    if (object_superqs.size() <= g_params.max_superq + 1)
     {
-        app->Initialize();
-
-        g_params.object_superq = object_superqs[i];
-
-        g_params.obstacle_superqs.clear();
-
-        for (size_t j = 0; j < object_superqs.size() ; j++)
+        for (size_t i = 0; i < object_superqs.size(); i++)
         {
-            if (j != i)
-                g_params.obstacle_superqs.push_back(object_superqs[j]);
+            app->Initialize();
+
+            g_params.object_superq = object_superqs[i];
+
+            g_params.obstacle_superqs.clear();
+
+            for (size_t j = 0; j < object_superqs.size() ; j++)
+            {
+                if (j != i)
+                    g_params.obstacle_superqs.push_back(object_superqs[j]);
+            }
+
+            Ipopt::SmartPtr<graspComputation> estim = new graspComputation;
+            estim->init(g_params);
+            estim->configure(g_params);
+
+            clock_t tStart = clock();
+
+            Ipopt::ApplicationReturnStatus status = app->OptimizeTNLP(GetRawPtr(estim));
+
+            double computation_time = (double)(clock() - tStart)/CLOCKS_PER_SEC;
+
+            GraspPoses pose_hand;
+
+            IOFormat CommaInitFmt(StreamPrecision, DontAlignCols,", ", ", ", "", "", " [ ", "]");
+
+            if (status == Ipopt::Solve_Succeeded)
+            {
+                pose_hand = estim->get_result();
+                cout << "|| ---------------------------------------------------- ||" << endl;
+                cout << "|| Grasp poses for " << g_params.left_or_right << " hand estimated                 : ";
+                cout << pose_hand.getGraspParams().format(CommaInitFmt) << endl << endl;
+                cout << "|| Computed in                                          :  ";
+                cout <<   computation_time << " [s]" << endl;
+                cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
+
+                results.grasp_poses.push_back(pose_hand);
+                results.hand_superq.push_back(estim->get_hand());
+                results.points_on.push_back(estim->points_on);
+                results.F_final.push_back(estim->final_F_value);
+                results.F_final_obstacles.push_back(estim->final_obstacles_value);
+            }
+            else if(status == Ipopt::Maximum_CpuTime_Exceeded)
+            {
+                pose_hand = estim->get_result();
+                cout << "|| ---------------------------------------------------- ||" << endl;
+                cout << "|| Time expired                                         :  " << pose_hand.getGraspParams().format(CommaInitFmt) << endl << endl;
+                cout << "|| Grasp poses for " << g_params.left_or_right << " hand estimated in                 :  "  <<   computation_time << " [s]" << endl;
+                cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
+
+                results.grasp_poses.push_back(pose_hand);
+                results.hand_superq.push_back(estim->get_hand());
+                results.points_on.push_back(estim->points_on);
+                results.F_final.push_back(estim->final_F_value);
+                results.F_final_obstacles.push_back(estim->final_obstacles_value);
+            }
+            else
+            {
+                cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
+                cerr << "|| Not solution found for " << g_params.left_or_right << " hand" << endl;
+                cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
+                Vector6d x;
+                x.setZero();
+
+                pose_hand.setGraspParams(x);
+                results.grasp_poses.push_back(pose_hand);
+                results.hand_superq.push_back(estim->get_hand());
+            }
         }
-
-        Ipopt::SmartPtr<graspComputation> estim = new graspComputation;
-        estim->init(g_params);
-        estim->configure(g_params);
-
-        clock_t tStart = clock();
-
-        Ipopt::ApplicationReturnStatus status = app->OptimizeTNLP(GetRawPtr(estim));
-
-        double computation_time = (double)(clock() - tStart)/CLOCKS_PER_SEC;
-
-        GraspPoses pose_hand;
-
-        IOFormat CommaInitFmt(StreamPrecision, DontAlignCols,", ", ", ", "", "", " [ ", "]");
-
-        if (status == Ipopt::Solve_Succeeded)
-        {
-            pose_hand = estim->get_result();
-            cout << "|| ---------------------------------------------------- ||" << endl;
-            cout << "|| Grasp poses for " << g_params.left_or_right << " hand estimated                 : ";
-            cout << pose_hand.getGraspParams().format(CommaInitFmt) << endl << endl;
-            cout << "|| Computed in                                          :  ";
-            cout <<   computation_time << " [s]" << endl;
-            cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
-
-            results.grasp_poses.push_back(pose_hand);
-            results.hand_superq.push_back(estim->get_hand());
-            results.points_on.push_back(estim->points_on);
-            results.F_final.push_back(estim->final_F_value);
-            results.F_final_obstacles.push_back(estim->final_obstacles_value);
-        }
-        else if(status == Ipopt::Maximum_CpuTime_Exceeded)
-        {
-            pose_hand = estim->get_result();
-            cout << "|| ---------------------------------------------------- ||" << endl;
-            cout << "|| Time expired                                         :  " << pose_hand.getGraspParams().format(CommaInitFmt) << endl << endl;
-            cout << "|| Grasp poses for " << g_params.left_or_right << " hand estimated in                 :  "  <<   computation_time << " [s]" << endl;
-            cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
-
-            results.grasp_poses.push_back(pose_hand);
-            results.hand_superq.push_back(estim->get_hand());
-            results.points_on.push_back(estim->points_on);
-            results.F_final.push_back(estim->final_F_value);
-            results.F_final_obstacles.push_back(estim->final_obstacles_value);
-        }
-        else
-        {
-            cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
-            cerr << "|| Not solution found for " << g_params.left_or_right << " hand" << endl;
-            cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
-            Vector6d x;
-            x.setZero();
-
-            pose_hand.setGraspParams(x);
-            results.grasp_poses.push_back(pose_hand);
-            results.hand_superq.push_back(estim->get_hand());
-        }
+    }
+    else
+    {
+        Vector6d pose_fake;
+        pose_fake << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+        GraspPoses result_wrong;
+        result_wrong.setGraspParams(pose_fake);
+        results.grasp_poses.push_back(result_wrong);
     }
 
     return results;

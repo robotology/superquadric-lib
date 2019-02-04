@@ -91,11 +91,17 @@ int main(int argc, char* argv[])
     point_cloud.setColors(all_colors);
 
     /*******************************************/
-    // Compute superq
-    superqs = estim.computeMultipleSuperq(point_cloud);
-    /*******************************************/
 
+    // Compute superq
+    estim.SetNumericValue("threshold_section2",0.005 );
+    superqs = estim.computeMultipleSuperq(point_cloud);
+
+
+    /*******************************************/
     // Compute grasp pose for left hand
+    //Vector4d plane;
+    //plane << 0.0, 0.0, 1.0, 0.14;
+    //grasp_estim.setVector("plane", plane);
     grasp_res = grasp_estim.computeGraspPoses(superqs);
 
     //Example: Add pose reachable by robot to update Cost         // Uncomment this to include in grasp poses cost reachability of the pose by the robot
