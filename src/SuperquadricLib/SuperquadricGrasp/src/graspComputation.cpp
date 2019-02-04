@@ -870,8 +870,40 @@ double graspComputation::f_v2(const Vector11d &obj, const Vector3d &point_tr)
     return pow( abs(tmp),obj(4)/obj(3)) + pow( abs(num3/obj(2)),(2.0/obj(3)));
  }
 
+GraspEstimatorApp::GraspEstimatorApp()
+{
+    pars.tol = 1e-5;
+    pars.constr_tol = 1e-4;
+    pars.acceptable_iter = 0;
+    pars.mu_strategy = "adaptive";
+    pars.max_iter = 10000;
+    pars.max_cpu_time = 5.0;
+    pars.nlp_scaling_method = "none";
+    pars.hessian_approximation = "limited-memory";
+    pars.print_level = 0;
+
+    g_params.left_or_right = "right";
+    g_params.pl << 0.0, 0.0, 1.0, 0.18;
+    g_params.disp <<  0.0, 0.0, 0.0;
+    g_params.max_superq = 4;
+    g_params.bounds_right << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
+    g_params.bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3,  -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
+    g_params.bounds_constr_left.resize(8,2);
+    g_params.bounds_constr_left << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
+                                        10.0, 0.0, 1.0, 0.00001, 10.0, 0.00001, 10.0, 0.00001, 10.0;
+    g_params.bounds_constr_right.resize(8,2);
+    g_params.bounds_constr_right << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.001,
+                                        10.0, 0.0, 1.0, 0.00001, 10.0, 0.00001, 10.0, 0.00001, 10.0;
+
+    Superquadric hand;
+    Vector11d hand_vector;
+    hand_vector << 0.03, 0.06, 0.03, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    hand.setSuperqParams(hand_vector);
+    g_params.hand_superq = hand;
+
+}
 /*****************************************************************/
-GraspResults GraspEstimatorApp::computeGraspPoses(const IpoptParam &pars, GraspParams &g_params)
+GraspResults GraspEstimatorApp::computeGraspPoses(vector<Superquadric> &object_superqs)
 {
     Ipopt::SmartPtr<Ipopt::IpoptApplication> app = new Ipopt::IpoptApplication;
     app->Options()->SetNumericValue("tol",pars.tol);
@@ -888,18 +920,18 @@ GraspResults GraspEstimatorApp::computeGraspPoses(const IpoptParam &pars, GraspP
 
     GraspResults results;
 
-    for (size_t i = 0; i < g_params.object_superqs.size(); i++)
+    for (size_t i = 0; i < object_superqs.size(); i++)
     {
         app->Initialize();
 
-        g_params.object_superq = g_params.object_superqs[i];
+        g_params.object_superq = object_superqs[i];
 
         g_params.obstacle_superqs.clear();
 
-        for (size_t j = 0; j < g_params.object_superqs.size() ; j++)
+        for (size_t j = 0; j < object_superqs.size() ; j++)
         {
             if (j != i)
-                g_params.obstacle_superqs.push_back(g_params.object_superqs[j]);
+                g_params.obstacle_superqs.push_back(object_superqs[j]);
         }
 
         Ipopt::SmartPtr<graspComputation> estim = new graspComputation;
@@ -1027,4 +1059,10 @@ void GraspEstimatorApp::refinePoseCost(vector<GraspPoses> &poses_computed)
           poses_computed[i].cost += w1 * error_position + w2 * error_orientation;
       }
     }
+}
+
+/*****************************************************************/
+double GraspEstimatorApp::getPlaneHeight()
+{
+    return g_params.pl(3);
 }
