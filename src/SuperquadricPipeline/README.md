@@ -35,45 +35,41 @@ Here is a brief description of the main steps required to play with `superquadri
 1. Instantiate the following quantities:
 ```
    PointCloud point_cloud;                 // Object point cloud
-   vector<Superquadric> supersq;           // Object Superquadric
+   vector<Superquadric> superqs;           // Object Superquadric
    Visualizer vis;                         // VTK visualizer
    SuperqEstimatorApp estim;               // Superquadric Estimator
    GraspEstimatorApp grasp_estim;          // Grasping pose Estimator
    GraspResults grasp_res;                 // The results of the grasping computation
    deque<Vector3d> all_points;             // To read the object point cloud
 ```
-2. Define all the parameters:
+2. (Optional) Change algorithm parameters. Otherwise, the following default values are used:
 
-    | Set of params | Description | Link to the code (single superq) | Link to the code (multiple superq) |
-    | ------------- | ------------- |------------- |------------- |
-    | `iparams_superq` | Superquadric estimation | [single-superq/main.cpp](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/single-superq/main.cpp#L51) | [multiple-superq/main.cpp](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/multiple-superq/main.cpp#L49) |
-     | `m_pars` | Multiple superquadric estimation |  | [multiple-superq/main.cpp](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/multiple-superq/main.cpp#L63) |
-    |`iparams_grasp` | Grasping pose computation | [single-superq/main.cpp](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/single-superq/main.cpp#L65)  |  [multiple-superq/main.cpp](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/multiple-superq/main.cpp#L72)|
-    | `params_grasp` | Grasping pose computation | [single-superq/main.cpp](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/single-superq/main.cpp#L127)|[multiple-superq/main.cpp](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/multiple-superq/main.cpp#L132)|
+    | Set of params | Description | Default values  | 
+    | ------------- | ------------- |------------- |
+    | `iparams_superq` | Superquadric estimation | [Link to the code](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricLib/SuperquadricModel/src/superquadricEstimator.cpp#L332) | 
+     | `m_pars` | Multiple superquadric estimation |  [Link to the code](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricLib/SuperquadricModel/src/superquadricEstimator.cpp#L344) |
+    |`iparams_grasp` | Grasping pose computation | [Link to the code](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricLib/SuperquadricGrasp/src/graspComputation.cpp#L875)  |  
+    | `g_params` | Grasping pose computation | [Link to the code](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricLib/SuperquadricGrasp/src/graspComputation.cpp#L885)|
 
 3. [Read the object point cloud](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/single-superq/main.cpp#L78)
 and save them in `all_points`.
 4. Estimate the superquadric:
 ```
-  point_cloud.setPoints(all_points);                                         // Fill the point cloud    
-  superqs = estim.computeSuperq(iparams_superq, point_cloud);                // Compute single 
-  superqs = estim.computeMultipleSuperq(iparams_superq, m_pars, point_cloud);// or multiple superqs
+  point_cloud.setPoints(all_points);                           // Fill the point cloud    
+  superqs = estim.computeSuperq(point_cloud);                  // Estimate single superquadric model
+  superqs = estim.computeMultipleSuperq(point_cloud);          // or multi-superquadric model
 ```
-5. Add the estimated superquadric(s) to the `params_grasp` used for computing the grasping candidates:
+5. Compute the grasping candidate:
 ```
-  params_grasp.object_superqs = superqs;
+  grasp_res = grasp_estim.computeGraspPoses(superqs);
 ```
-6. Compute the grasping candidate:
-```
-  grasp_res = grasp_estim.computeGraspPoses(iparams_grasp, params_grasp);
-```
-7. Visualize everything
+6. Visualize everything
 ```
    vis.addSuperq(superqs);                                   // Add superquadric to visualizer
    vis.addPoints(point_cloud, true);                         // Add points to visualizer
                                                               // (true/false to show downsampled points
                                                               //    used for superq estimation)
-   vis.addPlane(params_grasp.pl(3));                         // Add plane for grasping
+   vis.addPlane(grasp_estim.getPlaneHeight();                         // Add plane for grasping
    vis.addPoses(grasp_res.grasp_poses);                      // Add poses for grasping
    vis.visualize();                                          // Visualize
 ```
