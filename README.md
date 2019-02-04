@@ -5,7 +5,7 @@ This is a new design of the code included in the repositories:
 - [superquadric-model](https://github.com/robotology/superquadric-model);
 - [superquadric-grasp](https://github.com/robotology/superquadric-grasp);
 - [superquadric-grasp-demo](https://github.com/robotology/superquadric-grasp-demo).
-## Release 0.2
+## Release 0.3
 This release provides methods to:
 - reconstruct the object model with **single or multiple superquadric**;
 - compute  **grasping candidates** for any robot;
