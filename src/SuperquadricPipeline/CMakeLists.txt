@@ -1,2 +1,6 @@
-add_subdirectory(multiple-superq)
-add_subdirectory(single-superq)
+if (NOT YARP_EXE)
+	add_subdirectory(multiple-superq)
+	add_subdirectory(single-superq)
+else()
+	add_subdirectory(yarp-demo)
+endif()

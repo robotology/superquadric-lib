@@ -100,6 +100,7 @@ elseif()
 	option(EXECUTABLE "Build also the executable" OFF)
 endif()
 
+option(YARP_EXE "Build the yarp executable" OFF)
 
 # We use
 # - InstallBasicPackageFiles (http://robotology.github.io/ycm/gh-pages/v0.8/module/InstallBasicPackageFiles.html)
