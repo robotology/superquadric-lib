@@ -79,9 +79,13 @@ public:
 
     /**
     * Start visualizer
-    * @return true/false on success/failuer
     */
     void visualize();
+
+    /**
+    * Remove actors
+    */
+    void clean();
 
     /**
     * Save a screenshot without visualization

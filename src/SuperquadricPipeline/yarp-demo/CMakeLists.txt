@@ -3,9 +3,10 @@ set(EXE_TARGET_NAME Superquadric-Pipeline-Yarp)
 find_package(YARP REQUIRED)
 find_package(ICUB REQUIRED)
 find_package(ICUBcontrib REQUIRED)
-list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
+include(YarpIDL)
+include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
@@ -13,10 +14,16 @@ icubcontrib_set_default_prefix()
 
 set(${EXE_TARGET_NAME}_SRC
 		src/main.cpp
-        #src/idl.thrift
 )
 
-add_executable(${EXE_TARGET_NAME} ${${EXE_TARGET_NAME}_SRC})
+yarp_add_idl(IDL_GEN_FILES src/idl.thrift)
+source_group("IDL Files" FILES src/idl.thrift)
+
+message(STATUS "debug")
+message (${CMAKE_CURRENT_BINARY_DIR}/include)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
+
+add_executable(${EXE_TARGET_NAME} ${${EXE_TARGET_NAME}_SRC} src/idl.thrift ${IDL_GEN_FILES})
 
 target_link_libraries(${EXE_TARGET_NAME} ${YARP_LIBRARIES} SuperquadricLibModel SuperquadricLibVis SuperquadricLibGrasp)
 

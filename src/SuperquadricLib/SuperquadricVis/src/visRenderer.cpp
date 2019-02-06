@@ -204,6 +204,7 @@ void Visualizer::addPoses(const vector<SuperqGrasp::GraspPoses> &poses)
     }
 
 }
+
 /**********************************************/
 void Visualizer::visualize()
 {
@@ -219,6 +220,12 @@ void Visualizer::visualize()
 }
 
 /**********************************************/
+void Visualizer::clean()
+{
+    vtk_renderer->RemoveAllViewProps();
+}
+/*********
+*************************************/
 void Visualizer::saveScreenshot(const string &object, const int &number)
 {
     vtk_renderWindowInteractor->Render();

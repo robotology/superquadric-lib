@@ -27,6 +27,7 @@
  #include <superquadricEstimator.h>
  #include <visRenderer.h>
  #include <graspComputation.h>
+ #include "src/SuperquadricPipelineDemo_IDL.h"
 
  using namespace std;
  using namespace SuperqModel;
@@ -44,7 +45,8 @@
 enum class WhichHand
 {
     HAND_RIGHT,
-    HAND_LEFT
+    HAND_LEFT,
+    BOTH
 };
 
 /****************************************************************/
@@ -57,7 +59,7 @@ string prettyError(const char* func_name, const string &message)
 };
 
  /****************************************************************/
-class SuperquadricPipelineDemo : public RFModule
+class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 {
     string moduleName;
 
@@ -72,6 +74,7 @@ class SuperquadricPipelineDemo : public RFModule
 
     string robot;
     WhichHand grasping_hand;
+    WhichHand grasping_hand_best;
 
     PolyDriver left_arm_client, right_arm_client;
     ICartesianControl *icart;
@@ -334,7 +337,7 @@ class SuperquadricPipelineDemo : public RFModule
           point_cloud_rpc.interrupt();
           action_render_rpc.interrupt();
           reach_calib_rpc.interrupt();
-          user_rpc.interrupt();
+          //user_rpc.interrupt();
           table_calib_rpc.interrupt();
           closing = true;
 
@@ -347,7 +350,7 @@ class SuperquadricPipelineDemo : public RFModule
           point_cloud_rpc.close();
           action_render_rpc.close();
           reach_calib_rpc.close();
-          user_rpc.close();
+          //user_rpc.close();
           table_calib_rpc.close();
 
           if (left_arm_client.isValid())
@@ -360,8 +363,97 @@ class SuperquadricPipelineDemo : public RFModule
           }
 
           return true;
-    }
+      }
 
+      /****************************************************************/
+      bool from_off_file(const string &object_file, const string &hand)
+      {
+          if (hand == "right")
+          {
+              grasping_hand = WhichHand::HAND_RIGHT;
+          }
+          else if (hand == "left")
+          {
+              grasping_hand = WhichHand::HAND_LEFT;
+          }
+          else if (hand == "both")
+          {
+              grasping_hand = WhichHand::BOTH;
+          }
+          else
+          {
+              return false;
+          }
+
+          /*******************************************/
+          // Read point cloud
+          deque<Eigen::Vector3d> all_points;
+          vector<vector<unsigned char>> all_colors;
+
+          ifstream fin(object_file);
+          if (!fin.is_open())
+          {
+              yError() << "Unable to open file \"" << object_file;
+
+              return 0;
+          }
+
+          Eigen::Vector3d p(3);
+          vector<unsigned int> c_(3);
+          vector<unsigned char> c(3);
+
+          string line;
+          while (getline(fin,line))
+          {
+              istringstream iss(line);
+              if (!(iss >> p(0) >> p(1) >> p(2)))
+                  break;
+              all_points.push_back(p);
+
+              fill(c_.begin(),c_.end(),120);
+              iss >> c_[0] >> c_[1] >> c_[2];
+              c[0] = (unsigned char)c_[0];
+              c[1] = (unsigned char)c_[1];
+              c[2] = (unsigned char)c_[2];
+
+              if (c[0] == c[1] && c[1] == c[2])
+               {
+                   c[0] = 50;
+                   c[1] = 100;
+                   c[2] = 0;
+               }
+
+              all_colors.push_back(c);
+          }
+
+          point_cloud.setPoints(all_points);
+          point_cloud.setColors(all_colors);
+
+          if (point_cloud.getNumberPoints() > 0)
+          {
+              // Compute superq
+              superqs = estim.computeSuperq(point_cloud);
+
+              grasp_res = grasp_estim.computeGraspPoses(superqs);
+
+              vis.clean();
+              vis.addPoses(grasp_res.grasp_poses);
+              vis.addSuperq(superqs);
+              vis.addPoints(point_cloud, true);
+              vis.addPlane(grasp_estim.getPlaneHeight());
+
+              return true;
+          }
+
+          return false;
+      }
+
+
+      /************************************************************************/
+      bool attach(RpcServer &source)
+      {
+        return this->yarp().attachAsServer(source);
+      }
 };
 
 int main(int argc, char *argv[])
