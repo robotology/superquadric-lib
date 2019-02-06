@@ -39,6 +39,3 @@ vtkSmartPointer<vtkActor> &Object::get_actor()
 {
     return vtk_actor;
 }
-
-
-

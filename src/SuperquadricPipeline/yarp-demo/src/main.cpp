@@ -96,7 +96,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     // Superquadric-lib objects
     SuperqModel::PointCloud point_cloud;
     vector<Superquadric> superqs;
-    GraspResults grasp_res;
+    GraspResults grasp_res_hand1, grasp_res_hand2;
     SuperqEstimatorApp estim;
     GraspEstimatorApp grasp_estim;
     Visualizer vis;
@@ -371,14 +371,20 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           if (hand == "right")
           {
               grasping_hand = WhichHand::HAND_RIGHT;
+
+              grasp_estim.SetStringValue("left_or_right", hand);
           }
           else if (hand == "left")
           {
               grasping_hand = WhichHand::HAND_LEFT;
+
+              grasp_estim.SetStringValue("left_or_right", hand);
           }
           else if (hand == "both")
           {
               grasping_hand = WhichHand::BOTH;
+
+              grasp_estim.SetStringValue("left_or_right", "right");
           }
           else
           {
@@ -431,16 +437,25 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
           if (point_cloud.getNumberPoints() > 0)
           {
+              vis.clean();
+              vis.addPoints(point_cloud, false);
               // Compute superq
               superqs = estim.computeSuperq(point_cloud);
 
-              grasp_res = grasp_estim.computeGraspPoses(superqs);
-
-              vis.clean();
-              vis.addPoses(grasp_res.grasp_poses);
-              vis.addSuperq(superqs);
               vis.addPoints(point_cloud, true);
+              vis.addSuperq(superqs);
+
+              grasp_res_hand1 = grasp_estim.computeGraspPoses(superqs);
+              vis.addPoses(grasp_res_hand1.grasp_poses);
               vis.addPlane(grasp_estim.getPlaneHeight());
+
+              if (grasping_hand == WhichHand::BOTH)
+              {
+                  grasp_estim.SetStringValue("left_or_right", "left");
+                  grasp_res_hand2 = grasp_estim.computeGraspPoses(superqs);
+              }
+
+              vis.addPoses(grasp_res_hand2.grasp_poses);
 
               return true;
           }

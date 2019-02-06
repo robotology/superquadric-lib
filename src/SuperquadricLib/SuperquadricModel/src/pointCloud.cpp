@@ -57,6 +57,7 @@ bool PointCloud::setPoints(const deque<Vector3d> &p)
 /*********************************************/
 bool PointCloud::setColors(const vector<vector<unsigned char>> &c)
 {
+    colors.clear();
     if (c[0].size() == 3)
     {
         for (auto& color:c)
