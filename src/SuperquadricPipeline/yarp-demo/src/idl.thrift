@@ -32,4 +32,6 @@
      */
      bool from_off_file(1: string object_file, 2: string hand);
 
+	bool compute_superq_and_grasp(1: string object_name, 2: string hand);
+
  }

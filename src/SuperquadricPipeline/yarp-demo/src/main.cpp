@@ -92,6 +92,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
     //  visualization parameters
     int x, y, h, w;
+    bool fixate_object;
 
     // Superquadric-lib objects
     SuperqModel::PointCloud point_cloud;
@@ -312,6 +313,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         //  attach callback
         attach(user_rpc);
 
+        fixate_object = false;
 
         vis.visualize();
 
@@ -437,32 +439,138 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
           if (point_cloud.getNumberPoints() > 0)
           {
-              vis.clean();
-              vis.addPoints(point_cloud, false);
-              // Compute superq
-              superqs = estim.computeSuperq(point_cloud);
-
-              vis.addPoints(point_cloud, true);
-              vis.addSuperq(superqs);
-
-              grasp_res_hand1 = grasp_estim.computeGraspPoses(superqs);
-              vis.addPoses(grasp_res_hand1.grasp_poses);
-              vis.addPlane(grasp_estim.getPlaneHeight());
-
-              if (grasping_hand == WhichHand::BOTH)
-              {
-                  grasp_estim.SetStringValue("left_or_right", "left");
-                  grasp_res_hand2 = grasp_estim.computeGraspPoses(superqs);
-              }
-
-              vis.addPoses(grasp_res_hand2.grasp_poses);
-
+              computeSuperqAndGrasp();
               return true;
           }
 
           return false;
       }
 
+      /****************************************************************/
+      bool compute_superq_and_grasp(const string &object_name, const string &hand)
+      {
+          if (hand == "right")
+          {
+              grasping_hand = WhichHand::HAND_RIGHT;
+
+              grasp_estim.SetStringValue("left_or_right", hand);
+          }
+          else if (hand == "left")
+          {
+              grasping_hand = WhichHand::HAND_LEFT;
+
+              grasp_estim.SetStringValue("left_or_right", hand);
+          }
+          else if (hand == "both")
+          {
+              grasping_hand = WhichHand::BOTH;
+
+              grasp_estim.SetStringValue("left_or_right", "right");
+          }
+          else
+          {
+              return false;
+          }
+
+          bool ok = requestPointCloud(object_name);
+
+          if (ok == true && point_cloud.getNumberPoints() > 0)
+          {
+              computeSuperqAndGrasp();
+          }
+
+          return ok;
+      }
+
+      /************************************************************************/
+      bool requestPointCloud(const string &object)
+      {
+         Bottle cmd_request;
+         Bottle cmd_reply;
+
+         //  if fixate_object is given, look at the object before acquiring the point cloud
+         if (fixate_object)
+         {
+             if(action_render_rpc.getOutputCount() < 1)
+             {
+                 yError() << prettyError( __FUNCTION__,  "requestRefreshPointCloud: no connection to action rendering module");
+                 return false;
+             }
+
+             cmd_request.addVocab(Vocab::encode("look"));
+             cmd_request.addString(object);
+             cmd_request.addString("wait");
+
+             action_render_rpc.write(cmd_request, cmd_reply);
+             if (cmd_reply.get(0).asVocab() != Vocab::encode("ack"))
+             {
+                 yError() << prettyError( __FUNCTION__,  "Didn't manage to look at the object");
+                 return false;
+             }
+         }
+
+         point_cloud.deletePoints();
+         cmd_request.clear();
+         cmd_reply.clear();
+
+         yarp::sig::PointCloud<DataXYZRGBA> pc;
+
+         cmd_request.addString("get_point_cloud");
+         cmd_request.addString(object);
+
+         if(point_cloud_rpc.getOutputCount() < 1)
+         {
+             yError() << prettyError( __FUNCTION__,  "requestRefreshPointCloud: no connection to point cloud module");
+             return false;
+         }
+
+         point_cloud_rpc.write(cmd_request, cmd_reply);
+
+         //  cheap workaround to get the point cloud
+         Bottle* pcBt = cmd_reply.get(0).asList();
+         bool success = pc.fromBottle(*pcBt);
+
+         deque<Eigen::Vector3d> acquired_points;
+
+         for (size_t i = 0; i < pc.size(); i++)
+         {
+            Eigen::Vector3d point;
+            point(0)=pc(0,i).x; point(1)=pc(01,i).y; point(2)=pc(2,i).z;
+            acquired_points.push_back(point);
+         }
+
+         if (success && (pc.size() > 0))
+         {
+            point_cloud.setPoints(acquired_points);
+            return true;
+         }
+         else
+            return false;
+      }
+
+      /************************************************************************/
+      void computeSuperqAndGrasp()
+      {
+          vis.clean();
+          vis.addPoints(point_cloud, false);
+          // Compute superq
+          superqs = estim.computeSuperq(point_cloud);
+
+          vis.addPoints(point_cloud, true);
+          vis.addSuperq(superqs);
+
+          grasp_res_hand1 = grasp_estim.computeGraspPoses(superqs);
+          vis.addPoses(grasp_res_hand1.grasp_poses);
+          vis.addPlane(grasp_estim.getPlaneHeight());
+
+          if (grasping_hand == WhichHand::BOTH)
+          {
+              grasp_estim.SetStringValue("left_or_right", "left");
+              grasp_res_hand2 = grasp_estim.computeGraspPoses(superqs);
+          }
+
+          vis.addPoses(grasp_res_hand2.grasp_poses);
+      }
 
       /************************************************************************/
       bool attach(RpcServer &source)
