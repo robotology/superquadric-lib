@@ -94,6 +94,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     int x, y, h, w;
     bool fixate_object;
 
+    string best_hand;
+    int best_pose_1, best_pose_2;
+
     // Superquadric-lib objects
     SuperqModel::PointCloud point_cloud;
     vector<Superquadric> superqs;
@@ -439,7 +442,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
           if (point_cloud.getNumberPoints() > 0)
           {
-              computeSuperqAndGrasp();
+              computeSuperqAndGrasp(false);
               return true;
           }
 
@@ -476,7 +479,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
           if (ok == true && point_cloud.getNumberPoints() > 0)
           {
-              computeSuperqAndGrasp();
+              computeSuperqAndGrasp(true);
           }
 
           return ok;
@@ -549,7 +552,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
       }
 
       /************************************************************************/
-      void computeSuperqAndGrasp()
+      void computeSuperqAndGrasp(bool choose_hand)
       {
           vis.clean();
           vis.addPoints(point_cloud, false);
@@ -570,7 +573,129 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           }
 
           vis.addPoses(grasp_res_hand2.grasp_poses);
+
+          if (choose_hand)
+          {
+              for (size_t i = 0; i < grasp_res_hand1.grasp_poses.size(); i++)
+              {
+                  // TODO Solve kinematics with grasp_res_hand1.grasp_poses[i].getParams()
+                  // save it in pose robot
+                  grasp_res_hand1.grasp_poses[i].setGraspParamsHat(pose_robot);
+
+                  if (grasping_hand == WhichHand::BOTH)
+                  {
+                    // TODO Solve kinematics with grasp_res_hand2.grasp_poses[i].getParams()
+                    // save it in pose robot
+                    grasp_res_hand2.grasp_poses[i].setGraspParamsHat(pose_robot);
+                  }
+              }
+
+              grasp_estim.refinePoseCost(grasp_res_hand1.grasp_poses);
+
+              if (grasping_hand == WhichHand::BOTH)
+                grasp_estim.refinePoseCost(grasp_res_hand2.grasp_poses);
+
+              best_pose_1 = 0;
+              best_pose_2 = 0;
+
+              double min_cost = grasp_res_hand1.grasp_poses[0];
+
+              for (size_t i = 1; i < grasp_res_hand1.grasp_poses.size(); i ++)
+              {
+                  if (min_cost < grasp_res_hand1.grasp_poses[i].cost)
+                  {
+                      min_cost = g rasp_res_hand1.grasp_poses[i].cost;
+                      best_pose_1 = i;
+                  }
+              }
+
+              best_hand = grasp_res_hand1.getHandName();
+
+              if (grasping_hand == WhichHand::BOTH)
+              {
+                  min_cost = grasp_res_hand2.grasp_poses[0];
+
+                  for (size_t i = 1; i < grasp_res_hand2.grasp_poses.size(); i ++)
+                  {
+                      if (min_cost < grasp_res_hand2.grasp_poses[i].cost)
+                      {
+                          min_cost = grasp_res_hand2.grasp_poses[i].cost;
+                          best_pose_2 = i;
+                      }
+                  }
+
+                  if (grasp_res_hand2.grasp_poses[best_pose_2].cost < grasp_res_hand2.grasp_poses[best_pose_1].cost)
+                      best_hand = grasp_res_hand2.getHandName();
+                  else
+                      best_hand = grasp_res_hand1.getHandName();
+              }
+          }
       }
+
+    /****************************************************************/
+    bool executeGrasp(Vector &pose)
+    {
+        if(robot == "icubSim")
+        {
+            //  simulation context, suppose there is no actionsRenderingEngine running
+            int context_backup;
+            icart->storeContext(&context_backup);
+            setGraspContext();
+            Vector previous_x(3), previous_o(4);
+            icart->getPose(previous_x, previous_o);
+            icart->goToPoseSync(pose.subVector(0,2), pose.subVector(3,6));
+            icart->waitMotionDone();
+            icart->goToPoseSync(previous_x, previous_o);
+            icart->waitMotionDone();
+            icart->restoreContext(context_backup);
+            icart->deleteContext(context_backup);
+            return true;
+        }
+        else
+        {
+            //  communication with actionRenderingEngine/cmd:io
+            //  grasp("cartesian" x y z gx gy gz theta) ("approach" (-0.05 0 +-0.05 0.0)) "left"/"right"
+            Bottle command, reply;
+
+            command.addString("grasp");
+            Bottle &ptr = command.addList();
+            ptr.addString("cartesian");
+            ptr.addDouble(pose(0));
+            ptr.addDouble(pose(1));
+            ptr.addDouble(pose(2));
+            ptr.addDouble(pose(3));
+            ptr.addDouble(pose(4));
+            ptr.addDouble(pose(5));
+            ptr.addDouble(pose(6));
+
+
+            Bottle &ptr1 = command.addList();
+            ptr1.addString("approach");
+            Bottle &ptr2 = ptr1.addList();
+            if (grasping_hand == WhichHand::HAND_LEFT)
+            {
+                for(int i=0 ; i<4 ; i++) ptr2.addDouble(grasper_approach_parameters_left[i]);
+                command.addString("left");
+            }
+            else
+            {
+                for(int i=0 ; i<4 ; i++) ptr2.addDouble(grasper_approach_parameters_right[i]);
+                command.addString("right");
+            }
+
+            yInfo() << command.toString();
+            action_render_rpc.write(command, reply);
+            if (reply.toString() == "[ack]")
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+}
 
       /************************************************************************/
       bool attach(RpcServer &source)
