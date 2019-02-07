@@ -9,7 +9,11 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
 
+#include <mutex>
+
 namespace SuperqVis {
+
+static std::mutex mtx;
 
 class UpdateCommand : public vtkCommand
 {

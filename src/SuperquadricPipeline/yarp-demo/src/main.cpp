@@ -552,7 +552,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
       /************************************************************************/
       void computeSuperqAndGrasp(bool choose_hand)
       {
-          vis.clean();
+          //vis.clean();
           vis.addPoints(point_cloud, false);
 
           // Compute superq
@@ -562,14 +562,14 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           vis.addSuperq(superqs);
 
           grasp_res_hand1 = grasp_estim.computeGraspPoses(superqs);
-          vis.addPoses(grasp_res_hand1.grasp_poses);
-          vis.addPlane(grasp_estim.getPlaneHeight());
+          //vis.addPoses(grasp_res_hand1.grasp_poses);
+          //vis.addPlane(grasp_estim.getPlaneHeight());
 
           if (grasping_hand == WhichHand::BOTH)
           {
               grasp_estim.SetStringValue("left_or_right", "left");
               grasp_res_hand2 = grasp_estim.computeGraspPoses(superqs);
-              vis.addPoses(grasp_res_hand2.grasp_poses);
+              //vis.addPoses(grasp_res_hand2.grasp_poses);
           }
       }
 

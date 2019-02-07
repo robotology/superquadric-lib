@@ -38,7 +38,7 @@
 
 namespace SuperqVis {
 
-class Visualizer
+class Visualizer : public UpdateCommand
 {
 protected:
 
@@ -49,7 +49,7 @@ protected:
 
     std::unique_ptr<SuperqVis::PointsVis> vtk_all_points;
     std::unique_ptr<SuperqVis::PointsVis> vtk_dwn_points;
-    std::unique_ptr<SuperqVis::SuperquadricVis> vtk_superquadric;
+    std::vector<std::unique_ptr<SuperqVis::SuperquadricVis>> vtk_superquadrics;
     std::unique_ptr<SuperqVis::PlaneVis> vtk_plane;
     std::vector<std::vector<unsigned char>> all_colors;
 

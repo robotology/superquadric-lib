@@ -46,7 +46,7 @@ public:
      * Set superquadric parameters
      * @param s is a Eigen vector of 11 parameters
      */
-    void set_parameters(const Vector11d &s);
+    void set_parameters(const Vector12d &s);
 
 };
 

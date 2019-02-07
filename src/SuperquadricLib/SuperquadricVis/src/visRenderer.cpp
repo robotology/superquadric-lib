@@ -23,6 +23,7 @@ Visualizer::Visualizer()
     height = -0.2;
     size_points = 4;
     backgroundColor = {1.0,1.0,1.0};
+    int max_superq_vis = 20;
 
     closing = false;
 
@@ -49,6 +50,23 @@ Visualizer::Visualizer()
     vtk_style = vtkSmartPointer<vtkInteractorStyleSwitch>::New();
     vtk_style->SetCurrentStyleToTrackballCamera();
     vtk_renderWindowInteractor->SetInteractorStyle(vtk_style);
+
+    vector<Vector3d> all_points;
+    vector<Vector3d> dwn_points;
+
+    vtk_all_points = unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
+    vtk_dwn_points = unique_ptr<PointsVis>(new PointsVis(dwn_points,size_points));
+
+    vtk_renderer->AddActor(vtk_all_points->get_actor());
+    vtk_renderer->AddActor(vtk_dwn_points->get_actor());
+
+    for (int i = 0; i < max_superq_vis; i++)
+    {
+        Vector12d r;
+        r.setZero();
+        vtk_superquadrics.push_back(unique_ptr<SuperquadricVis>(new SuperquadricVis(r)));
+        vtk_renderer->AddActor(vtk_superquadrics[i]->get_actor());
+    }
 }
 
 /**********************************************/
@@ -64,18 +82,21 @@ void Visualizer::addPoints(PointCloud &point_cloud, const bool &show_downsample)
     vector<vector<unsigned char>> all_colors = point_cloud.colors;
 
     size_points = 4;
-    vtk_all_points = unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
+    //vtk_all_points = unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
+    mtx.lock();
+    vtk_all_points->set_points(all_points);
     vtk_all_points->set_colors(all_colors);
 
-    vtk_renderer->AddActor(vtk_all_points->get_actor());
+    //vtk_renderer->AddActor(vtk_all_points->get_actor());
 
     if (show_downsample)
     {
         size_points = 8;
         vector<Vector3d> &dwn_points = point_cloud.points;
-        vtk_dwn_points = unique_ptr<PointsVis>(new PointsVis(dwn_points,size_points));
+        //vtk_dwn_points = unique_ptr<PointsVis>(new PointsVis(dwn_points,size_points));
+        vtk_dwn_points->set_points(dwn_points);
         vtk_dwn_points->get_actor()->GetProperty()->SetColor(1.0,0.0,0.0);
-        vtk_renderer->AddActor(vtk_dwn_points->get_actor());
+        //vtk_renderer->AddActor(vtk_dwn_points->get_actor());
     }
 
     vector<double> bounds(6),centroid(3);
@@ -89,6 +110,7 @@ void Visualizer::addPoints(PointCloud &point_cloud, const bool &show_downsample)
     vtk_camera->SetFocalPoint(centroid.data());
     vtk_camera->SetViewUp(0.0,0.0,1.0);
     vtk_renderer->SetActiveCamera(vtk_camera);
+    mtx.unlock();
 }
 
 /**********************************************/
@@ -103,16 +125,20 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
 {
     Vector12d r;
 
-    for (auto sup:s)
-    {   r.resize(12);
-        r.segment(0,3) = sup.getSuperqCenter();
-        r.segment(3,4) = sup.getSuperqAxisAngle();
-        r.segment(7,3) = sup.getSuperqDims();
-        r.segment(10, 2) = sup.getSuperqExps();
+    mtx.lock();
 
-        vtk_superquadric = unique_ptr<SuperquadricVis>(new SuperquadricVis(r));
+    for (size_t i = 0; i < s.size(); i++)
+    {
+        r.segment(0,3) = s[i].getSuperqCenter();
+        r.segment(3,4) = s[i].getSuperqAxisAngle();
+        r.segment(7,3) = s[i].getSuperqDims();
+        r.segment(10, 2) = s[i].getSuperqExps();
 
-        vtk_renderer->AddActor(vtk_superquadric->get_actor());
+        vtk_superquadrics[i]->set_parameters(r);
+
+        //vtk_superquadric = unique_ptr<SuperquadricVis>(new SuperquadricVis(r));
+
+        //vtk_renderer->AddActor(vtk_superquadric->get_actor());
     }
 
     vtk_camera = vtkSmartPointer<vtkCamera>::New();
@@ -135,6 +161,8 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
     vtk_camera->SetFocalPoint(center.data());
     vtk_camera->SetViewUp(0.0,0.0,1.0);
     vtk_renderer->SetActiveCamera(vtk_camera);
+
+    mtx.unlock();
 }
 
 /**********************************************/

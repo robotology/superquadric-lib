@@ -61,7 +61,7 @@ SuperquadricVis::SuperquadricVis(const Vector12d &r)
 }
 
 /**********************************************/
-void SuperquadricVis::set_parameters(const Vector11d &r)
+void SuperquadricVis::set_parameters(const Vector12d &r)
 {
     double bx = 2.0*r(7);
     double by = 2.0*r(8);
