@@ -342,7 +342,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           point_cloud_rpc.interrupt();
           action_render_rpc.interrupt();
           reach_calib_rpc.interrupt();
-          //user_rpc.interrupt();
+          user_rpc.interrupt();
           table_calib_rpc.interrupt();
           closing = true;
 
@@ -355,7 +355,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           point_cloud_rpc.close();
           action_render_rpc.close();
           reach_calib_rpc.close();
-          //user_rpc.close();
+          user_rpc.close();
           table_calib_rpc.close();
 
           if (left_arm_client.isValid())
@@ -396,8 +396,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               return false;
           }
 
-          /*******************************************/
-          // Read point cloud
           deque<Eigen::Vector3d> all_points;
           vector<vector<unsigned char>> all_colors;
 
@@ -538,7 +536,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
          for (size_t i = 0; i < pc.size(); i++)
          {
             Eigen::Vector3d point;
-            point(0)=pc(0,i).x; point(1)=pc(01,i).y; point(2)=pc(2,i).z;
+            point(0)=pc(0,i).x; point(1)=pc(1,i).y; point(2)=pc(2,i).z;
             acquired_points.push_back(point);
          }
 
@@ -556,6 +554,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
       {
           vis.clean();
           vis.addPoints(point_cloud, false);
+
           // Compute superq
           superqs = estim.computeSuperq(point_cloud);
 
@@ -570,9 +569,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           {
               grasp_estim.SetStringValue("left_or_right", "left");
               grasp_res_hand2 = grasp_estim.computeGraspPoses(superqs);
+              vis.addPoses(grasp_res_hand2.grasp_poses);
           }
-
-          vis.addPoses(grasp_res_hand2.grasp_poses);
       }
 
       /************************************************************************/

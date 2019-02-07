@@ -5,19 +5,12 @@ find_package(YARP CONFIG REQUIRED
 			OS
 			math
 			sig
-			gsl
-			idl_tools)
+			gsl)
 
 find_package(ICUB REQUIRED)
 find_package(ICUBcontrib REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
-
-include(YarpIDL)
-include(YarpInstallationHelpers)
-include(ICUBcontribHelpers)
-include(ICUBcontribOptions)
-icubcontrib_set_default_prefix()
 
 
 set(${EXE_TARGET_NAME}_SRC
@@ -44,7 +37,6 @@ target_link_libraries(${EXE_TARGET_NAME}
                       YARP::YARP_math
                       YARP::YARP_sig
 					  YARP::YARP_gsl
-					  YARP::YARP_idl_thrift
 					  )
 
 

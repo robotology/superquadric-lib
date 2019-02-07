@@ -18,7 +18,7 @@ using namespace SuperqVis;
 /**********************************************/
 PointsVis::PointsVis(const vector<Vector3d> &points, const int &point_size)
 {
-    if (points[0].size() == 3 || points.size() == 6)
+    if (points[0].size() == 3 || points[0].size() == 6)
     {
         vtk_points = vtkSmartPointer<vtkPoints>::New();
         for (auto point:points)

@@ -30,7 +30,7 @@ void UpdateCommand::Execute(vtkObject *caller, unsigned long vtkNotUsed(eventId)
         }
     }
 
-    iren->GetRenderWindow()->SetWindowName("Superquadric visualizer");
+    //iren->GetRenderWindow()->SetWindowName("Superquadric visualizer");
     iren->Render();
 }
 

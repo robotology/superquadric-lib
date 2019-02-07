@@ -19,7 +19,7 @@ using namespace SuperqVis;
 
 
 /**********************************************/
-SuperquadricVis::SuperquadricVis(const Vector11d &r)
+SuperquadricVis::SuperquadricVis(const Vector12d &r)
 {
     double bx = 2.0*r(7);
     double by = 2.0*r(8);
@@ -74,6 +74,6 @@ void SuperquadricVis::set_parameters(const Vector11d &r)
     vtk_sample->SetModelBounds(-bx,bx,-by,by,-bz,bz);
 
     vtk_transform->Identity();
-    vtk_transform->Translate(r.segment(0,2).data());
+    vtk_transform->Translate(r.segment(0,3).data());
     vtk_transform->RotateWXYZ((180.0/M_PI)*r(6),r.segment(3,3).data());
 }

@@ -29,7 +29,7 @@ set(${LIBRARY_TARGET_NAME}_HDR
 		include/superqVis.h
 )
 
-find_package(VTK REQUIRED)
+find_package(VTK 8.1 REQUIRED)
 message(STATUS "vtk use file ${VTK_USE_FILE}")
 include(${VTK_USE_FILE})
 

@@ -12,6 +12,7 @@
 #include <Eigen/Dense>
 
 typedef Eigen::Matrix<double, 11, 1> Vector11d;
+typedef Eigen::Matrix<double, 12, 1> Vector12d;
 
 namespace SuperqVis {
 
@@ -34,7 +35,7 @@ public:
     /**
     * Constructor
     */
-    SuperquadricVis(const Vector11d &s);
+    SuperquadricVis(const Vector12d &s);
 
     /**
     * Destructory

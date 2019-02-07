@@ -101,7 +101,7 @@ void Visualizer::addPlane(const double &z)
 /**********************************************/
 void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
 {
-    Vector11d r;
+    Vector12d r;
 
     for (auto sup:s)
     {   r.resize(12);
