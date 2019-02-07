@@ -1,9 +1,17 @@
 set(EXE_TARGET_NAME Superquadric-Pipeline-Yarp)
 
-find_package(YARP REQUIRED)
+find_package(YARP CONFIG REQUIRED
+			COMPONENTS
+			OS
+			math
+			sig
+			gsl
+			idl_tools)
+
 find_package(ICUB REQUIRED)
 find_package(ICUBcontrib REQUIRED)
-list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
+
+list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 
 include(YarpIDL)
 include(YarpInstallationHelpers)
@@ -19,13 +27,25 @@ set(${EXE_TARGET_NAME}_SRC
 yarp_add_idl(IDL_GEN_FILES src/idl.thrift)
 source_group("IDL Files" FILES src/idl.thrift)
 
-message(STATUS "debug")
-message (${CMAKE_CURRENT_BINARY_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
 add_executable(${EXE_TARGET_NAME} ${${EXE_TARGET_NAME}_SRC} src/idl.thrift ${IDL_GEN_FILES})
 
-target_link_libraries(${EXE_TARGET_NAME} ${YARP_LIBRARIES} SuperquadricLibModel SuperquadricLibVis SuperquadricLibGrasp)
+target_link_libraries(${EXE_TARGET_NAME}
+					  ${YARP_LIBRARIES} 
+					  SuperquadricLibModel 
+					  SuperquadricLibVis
+					  SuperquadricLibGrasp
+					  ctrlLib
+                      ${ICUB_LIBRARIES}
+                      iKin
+                      YARP::YARP_OS
+                      YARP::YARP_init
+                      YARP::YARP_math
+                      YARP::YARP_sig
+					  YARP::YARP_gsl
+					  YARP::YARP_idl_thrift
+					  )
 
 
 install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)
