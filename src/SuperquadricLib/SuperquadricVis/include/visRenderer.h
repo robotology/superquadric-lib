@@ -44,6 +44,7 @@ protected:
 
     int size_points;
     int height;
+    int num_poses;
     bool closing;
     std::vector<double> backgroundColor;
 
@@ -125,8 +126,11 @@ public:
     void addPosesAux(const size_t start, std::vector<SuperqGrasp::GraspPoses> &poses);
 
     /**********************************************/
+    void highlightBestPose(const std::string &hand, const std::string &both_or_not, const int &best);
+
+    /**********************************************/
     void resetSuperq();
-    
+
     /**********************************************/
     void resetPoses();
 

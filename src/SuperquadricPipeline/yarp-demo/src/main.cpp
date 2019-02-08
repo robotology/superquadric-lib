@@ -438,7 +438,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
           if (point_cloud.getNumberPoints() > 0)
           {
-              computeSuperqAndGrasp(false);
+              computeSuperqAndGrasp(true);
               return true;
           }
 
@@ -578,6 +578,55 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               grasp_estim.SetStringValue("left_or_right", "left");
               grasp_res_hand2 = grasp_estim.computeGraspPoses(superqs);
               vis.addPoses(grasp_res_hand1.grasp_poses, grasp_res_hand2.grasp_poses);
+          }
+
+          if (choose_hand)
+          {
+              Vector6d robot_pose;
+              robot_pose<< -0.4, 0.1, -0.15, 0.0, 0.0, 0.0;
+
+              for (size_t i = 0; i < grasp_res_hand1.grasp_poses.size(); i++)
+              {
+                  grasp_res_hand1.grasp_poses[i].setGraspParamsHat(robot_pose);
+              }
+              if (grasping_hand == WhichHand::BOTH)
+              {
+                  for (size_t i = 0; i < grasp_res_hand2.grasp_poses.size(); i++)
+                  {
+                      grasp_res_hand2.grasp_poses[i].setGraspParamsHat(robot_pose);
+                  }
+              }
+
+              grasp_estim.refinePoseCost(grasp_res_hand1);
+
+              if (grasping_hand == WhichHand::BOTH)
+              {
+                  grasp_estim.refinePoseCost(grasp_res_hand2);
+                  vis.addPoses(grasp_res_hand1.grasp_poses, grasp_res_hand2.grasp_poses);
+              }
+              else
+                  vis.addPoses(grasp_res_hand1.grasp_poses);
+
+              if (grasping_hand == WhichHand::BOTH)
+              {
+                  int best_right = grasp_res_hand1.best_pose;
+                  int best_left = grasp_res_hand2.best_pose;
+
+                  if (grasp_res_hand1.grasp_poses[best_right].cost < grasp_res_hand2.grasp_poses[best_left].cost)
+                      vis.highlightBestPose("right", "both", best_right);
+                  else
+                      vis.highlightBestPose("left", "both", best_left);
+              }
+              else if (grasping_hand == WhichHand::HAND_RIGHT)
+              {
+                  int best_right = grasp_res_hand1.best_pose;
+                  vis.highlightBestPose("right", "both", best_right);
+              }
+              else if (grasping_hand == WhichHand::HAND_LEFT)
+              {
+                  int best_left = grasp_res_hand1.best_pose;
+                  vis.highlightBestPose("left", "both", best_left);
+              }
           }
       }
 

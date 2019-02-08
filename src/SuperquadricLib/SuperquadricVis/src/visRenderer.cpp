@@ -22,6 +22,7 @@ Visualizer::Visualizer()
 {
     height = -0.2;
     size_points = 4;
+    num_poses = 0;
     backgroundColor = {1.0,1.0,1.0};
     int max_superq_vis = 20;
 
@@ -193,7 +194,7 @@ void Visualizer::resetSuperq()
 
         vtk_superquadrics[i]->set_parameters(r);
     }
-    
+
     mtx.unlock();
 }
 
@@ -202,6 +203,7 @@ void Visualizer::addPoses(vector<GraspPoses> &poses1)
 {
     mtx.lock();
 
+    num_poses = poses1.size();
     addPosesAux(0, poses1);
 
     mtx.unlock();
@@ -212,6 +214,7 @@ void Visualizer::addPoses(vector<GraspPoses> &poses1, vector<GraspPoses> &poses2
 {
     mtx.lock();
 
+    num_poses = poses1.size() + poses2.size();
     addPosesAux(0, poses1);
     addPosesAux(poses1.size(), poses2);
 
@@ -264,16 +267,30 @@ void Visualizer::addPosesAux(const size_t start, vector<GraspPoses> &poses)
             cap_actors[idx + start]->GetCaptionTextProperty()->ItalicOff();
             cap_actors[idx + start]->GetCaptionTextProperty()->SetColor(0.1, 0.1, 0.1);
 
-            // This should be done only for best pose (TO UPDATE)
-            cap_actors[idx + start]->GetCaptionTextProperty()->BoldOn();
-            cap_actors[idx + start]->GetCaptionTextProperty()->SetColor(0., 0.35, 0.0);
-            cap_actors[idx + start]->GetCaptionTextProperty()->SetFontSize(20);
-
             cap_actors[idx + start]->SetAttachmentPoint(pose_candidates[idx + start]->pose_vtk_caption_actor->GetAttachmentPoint());
 
             i++;
         }
     }
+}
+
+/**********************************************/
+void Visualizer::highlightBestPose(const string &hand, const string &both_or_not, const int &best)
+{
+    int idx;
+    if (both_or_not == "both")
+    {
+        if (hand == "right")
+          idx = best;
+        else
+          idx = best + num_poses / 2.0;
+    }
+    else
+      idx = best;
+
+    cap_actors[idx]->GetCaptionTextProperty()->BoldOn();
+    cap_actors[idx]->GetCaptionTextProperty()->SetColor(0., 0.35, 0.0);
+    cap_actors[idx]->GetCaptionTextProperty()->SetFontSize(20);
 }
 
 /**********************************************/
@@ -286,6 +303,8 @@ void Visualizer::resetPoses()
         pose_actors[i]->VisibilityOff();
         cap_actors[i]->VisibilityOff();
     }
+
+    num_poses = 0;
 
     mtx.unlock();
 }

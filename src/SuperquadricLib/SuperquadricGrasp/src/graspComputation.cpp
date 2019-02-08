@@ -1008,8 +1008,10 @@ GraspResults GraspEstimatorApp::computeGraspPoses(vector<Superquadric> &object_s
 
 
 /*****************************************************************/
-void GraspEstimatorApp::refinePoseCost(vector<GraspPoses> &poses_computed)
+void GraspEstimatorApp::refinePoseCost(GraspResults &grasp_res)
 {
+    vector<GraspPoses> poses_computed = grasp_res.grasp_poses;
+
     for (size_t i = 0; i < poses_computed.size(); i++)
     {
       // Pose reachable by the robot
@@ -1068,8 +1070,16 @@ void GraspEstimatorApp::refinePoseCost(vector<GraspPoses> &poses_computed)
               w2 = 0.0;
 
           poses_computed[i].cost += w1 * error_position + w2 * error_orientation;
-      }
+        }
     }
+
+     grasp_res.best_pose = 0;
+     for (size_t i = 0; i < poses_computed.size(); i++)
+     {
+        if (poses_computed[i].cost < poses_computed[grasp_res.best_pose].cost)
+            grasp_res.best_pose = i;
+     }
+
 }
 
 /*****************************************************************/

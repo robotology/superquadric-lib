@@ -196,6 +196,8 @@ struct GraspResults
     /* Final average distance w.r.t to the obstacles */
     std::vector<std::deque<double>> F_final_obstacles;
 
+    int best_pose;
+
 };
 class GraspEstimatorApp : public Options
 {
@@ -204,7 +206,7 @@ public:
      /*****************************************************************/
      GraspResults computeGraspPoses(std::vector<SuperqModel::Superquadric> &superqs);
      /*****************************************************************/
-     void refinePoseCost(std::vector<SuperqGrasp::GraspPoses> &pose_computed);
+     void refinePoseCost(SuperqGrasp::GraspResults &pose_computed);
      /*****************************************************************/
      double getPlaneHeight();
      /*****************************************************************/
