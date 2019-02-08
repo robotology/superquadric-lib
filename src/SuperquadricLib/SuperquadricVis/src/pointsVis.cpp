@@ -16,7 +16,7 @@ using namespace Eigen;
 using namespace SuperqVis;
 
 /**********************************************/
-PointsVis::PointsVis(const vector<Vector3d> &points, const int &point_size)
+PointsVis::PointsVis(const vector<Vector3d, aligned_allocator<Vector3d>> &points, const int &point_size)
 {
     if (points[0].size() == 3 || points[0].size() == 6)
     {
@@ -41,7 +41,7 @@ PointsVis::PointsVis(const vector<Vector3d> &points, const int &point_size)
 }
 
 /**********************************************/
-void PointsVis::set_points(const vector<Vector3d> &points)
+void PointsVis::set_points(const vector<Vector3d, aligned_allocator<Vector3d>> &points)
 {
     vtk_points = vtkSmartPointer<vtkPoints>::New();
     for (auto point:points)

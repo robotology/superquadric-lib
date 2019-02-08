@@ -47,16 +47,21 @@ protected:
     bool closing;
     std::vector<double> backgroundColor;
 
+    // For visualizing point clouds
     std::unique_ptr<SuperqVis::PointsVis> vtk_all_points;
     std::unique_ptr<SuperqVis::PointsVis> vtk_dwn_points;
-    std::vector<std::unique_ptr<SuperqVis::SuperquadricVis>> vtk_superquadrics;
-    std::unique_ptr<SuperqVis::PlaneVis> vtk_plane;
     std::vector<std::vector<unsigned char>> all_colors;
+    // For visualizing superquadrics
+    std::vector<std::unique_ptr<SuperqVis::SuperquadricVis>> vtk_superquadrics;
+    // For visualizing plane
+    std::unique_ptr<SuperqVis::PlaneVis> vtk_plane;
 
+    // For visualizing poses
     std::vector<std::shared_ptr<SuperqVis::PoseVis>> pose_candidates;
     std::vector<vtkSmartPointer<vtkAxesActor>> pose_actors;
-    std::vector<vtkSmartPointer<vtkCaptionActor2D>> pose_captions;
+    std::vector<vtkSmartPointer<vtkCaptionActor2D>> cap_actors;
 
+    // Renderer members
     vtkSmartPointer<vtkRenderer> vtk_renderer;
     vtkSmartPointer<vtkRenderWindow> vtk_renderWindow;
     vtkSmartPointer<vtkRenderWindowInteractor> vtk_renderWindowInteractor;
@@ -83,11 +88,6 @@ public:
     void visualize();
 
     /**
-    * Remove actors
-    */
-    void clean();
-
-    /**
     * Save a screenshot without visualization
     * @param name is the string that is add in the file name
     * @return true/false on success/failuer
@@ -110,13 +110,28 @@ public:
     * @param p is a points visualizer
     * @return true/false on success/failuer
     */
-    void addPoints(SuperqModel::PointCloud &point_cloud, const bool &show_downsample);
+    void addPoints(SuperqModel::PointCloud point_cloud, const bool &show_downsample);
 
     /** Start visualizer
     * @param p is a pose visualizer
     * @return true/false on success/failuer
     */
-    void addPoses(const std::vector<SuperqGrasp::GraspPoses> &poses);
+    void addPoses(std::vector<SuperqGrasp::GraspPoses> &poses);
+
+    /**********************************************/
+    void addPoses(std::vector<SuperqGrasp::GraspPoses> &poses1, std::vector<SuperqGrasp::GraspPoses> &poses2);
+
+    /**********************************************/
+    void addPosesAux(const size_t start, std::vector<SuperqGrasp::GraspPoses> &poses);
+
+    /**********************************************/
+    void resetSuperq();
+    
+    /**********************************************/
+    void resetPoses();
+
+    /**********************************************/
+    void resetPoints();
 };
 }
 #endif

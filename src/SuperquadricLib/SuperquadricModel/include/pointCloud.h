@@ -2,6 +2,7 @@
 #define POINTCLOUD_H
 
 #include <Eigen/Dense>
+#include <Eigen/StdVector>
 #include <Eigen/SVD>
 #include <deque>
 #include <vector>
@@ -23,8 +24,8 @@ class PointCloud
 public:
 
     int n_points;
-    std::vector<Eigen::Vector3d> points;
-    std::vector<Eigen::Vector3d> points_for_vis;
+    std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> points;
+    std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> points_for_vis;
     std::vector<std::vector<unsigned char>> colors;
     Eigen::Vector3d barycenter;
     Eigen::Matrix3d orientation;

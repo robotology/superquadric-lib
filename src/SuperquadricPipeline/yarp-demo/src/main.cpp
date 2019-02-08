@@ -39,8 +39,6 @@
  using namespace yarp::dev;
  using namespace yarp::math;
 
- Mutex mutex;
-
  /****************************************************************/
 enum class WhichHand
 {
@@ -552,24 +550,34 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
       /************************************************************************/
       void computeSuperqAndGrasp(bool choose_hand)
       {
-          //vis.clean();
+          // Reset visualizer for new computations
+          vis.resetSuperq();
+          vis.resetPoses();
+          vis.resetPoints();
+
+          // Visualize acquired point cloud
           vis.addPoints(point_cloud, false);
 
           // Compute superq
           superqs = estim.computeSuperq(point_cloud);
 
+          // Visualize downsampled point cloud and estimated superq
           vis.addPoints(point_cloud, true);
           vis.addSuperq(superqs);
 
+          // Compute grasp pose
           grasp_res_hand1 = grasp_estim.computeGraspPoses(superqs);
-          //vis.addPoses(grasp_res_hand1.grasp_poses);
-          //vis.addPlane(grasp_estim.getPlaneHeight());
 
+          // Show computed grasp pose and plane
+          vis.addPoses(grasp_res_hand1.grasp_poses);
+          vis.addPlane(grasp_estim.getPlaneHeight());
+
+          // Compute and show grasp pose for the other hand
           if (grasping_hand == WhichHand::BOTH)
           {
               grasp_estim.SetStringValue("left_or_right", "left");
               grasp_res_hand2 = grasp_estim.computeGraspPoses(superqs);
-              //vis.addPoses(grasp_res_hand2.grasp_poses);
+              vis.addPoses(grasp_res_hand1.grasp_poses, grasp_res_hand2.grasp_poses);
           }
       }
 

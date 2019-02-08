@@ -47,18 +47,25 @@ Visualizer::Visualizer()
     vtk_widget->SetEnabled(1);
     vtk_widget->InteractiveOn();
 
+    vtk_camera = vtkSmartPointer<vtkCamera>::New();
+    vtk_camera->SetPosition(0.1, 0.0, 0.5);
+    vtk_camera->SetViewUp(0.0,0.0,1.0);
+    vtk_renderer->SetActiveCamera(vtk_camera);
+
     vtk_style = vtkSmartPointer<vtkInteractorStyleSwitch>::New();
     vtk_style->SetCurrentStyleToTrackballCamera();
     vtk_renderWindowInteractor->SetInteractorStyle(vtk_style);
 
-    vector<Vector3d> all_points;
-    vector<Vector3d> dwn_points;
+    vector<Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> all_points;
+    vector<Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> dwn_points;
 
     vtk_all_points = unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
     vtk_dwn_points = unique_ptr<PointsVis>(new PointsVis(dwn_points,size_points));
-
     vtk_renderer->AddActor(vtk_all_points->get_actor());
     vtk_renderer->AddActor(vtk_dwn_points->get_actor());
+
+    vtk_plane = unique_ptr<PlaneVis>(new PlaneVis(-0.18));
+    vtk_renderer->AddActor(vtk_plane->get_actor());
 
     for (int i = 0; i < max_superq_vis; i++)
     {
@@ -67,6 +74,28 @@ Visualizer::Visualizer()
         vtk_superquadrics.push_back(unique_ptr<SuperquadricVis>(new SuperquadricVis(r)));
         vtk_renderer->AddActor(vtk_superquadrics[i]->get_actor());
     }
+
+    for (size_t idx = 0; idx < max_superq_vis * 2; idx++)
+    {
+        vtkSmartPointer<vtkAxesActor> ax_actor = vtkSmartPointer<vtkAxesActor>::New();
+        vtkSmartPointer<vtkCaptionActor2D> cap_actor = vtkSmartPointer<vtkCaptionActor2D>::New();
+        shared_ptr<PoseVis> candidate_pose = shared_ptr<PoseVis>(new PoseVis);
+        ax_actor->VisibilityOff();
+        cap_actor->VisibilityOff();
+        pose_actors.push_back(ax_actor);
+        cap_actors.push_back(cap_actor);
+        vtk_renderer->AddActor(pose_actors[idx]);
+        vtk_renderer->AddActor(cap_actors[idx]);
+        pose_candidates.push_back(candidate_pose);
+    }
+
+    vtk_renderWindowInteractor->Initialize();
+    vtk_renderWindowInteractor->CreateRepeatingTimer(10);
+
+    vtk_updateCallback = vtkSmartPointer<UpdateCommand>::New();
+
+    vtk_updateCallback->set_closing(closing);
+    vtk_renderWindowInteractor->AddObserver(vtkCommand::TimerEvent,vtk_updateCallback);
 }
 
 /**********************************************/
@@ -76,27 +105,22 @@ Visualizer::~Visualizer()
 }
 
 /**********************************************/
-void Visualizer::addPoints(PointCloud &point_cloud, const bool &show_downsample)
+void Visualizer::addPoints(PointCloud point_cloud, const bool &show_downsample)
 {
-    vector<Vector3d> &all_points = point_cloud.points_for_vis;
+    vector<Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> all_points = point_cloud.points_for_vis;
     vector<vector<unsigned char>> all_colors = point_cloud.colors;
 
     size_points = 4;
-    //vtk_all_points = unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
     mtx.lock();
     vtk_all_points->set_points(all_points);
     vtk_all_points->set_colors(all_colors);
 
-    //vtk_renderer->AddActor(vtk_all_points->get_actor());
-
     if (show_downsample)
     {
         size_points = 8;
-        vector<Vector3d> &dwn_points = point_cloud.points;
-        //vtk_dwn_points = unique_ptr<PointsVis>(new PointsVis(dwn_points,size_points));
+        vector<Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> dwn_points = point_cloud.points;
         vtk_dwn_points->set_points(dwn_points);
         vtk_dwn_points->get_actor()->GetProperty()->SetColor(1.0,0.0,0.0);
-        //vtk_renderer->AddActor(vtk_dwn_points->get_actor());
     }
 
     vector<double> bounds(6),centroid(3);
@@ -105,19 +129,18 @@ void Visualizer::addPoints(PointCloud &point_cloud, const bool &show_downsample)
     for (size_t i = 0; i < centroid.size(); i++)
         centroid[i] = 0.5*(bounds[i << 1] + bounds[(i << 1) + 1]);
 
-    vtk_camera = vtkSmartPointer<vtkCamera>::New();
     vtk_camera->SetPosition(centroid[0] + 0.5,centroid[1],centroid[2] + 0.4);
     vtk_camera->SetFocalPoint(centroid.data());
     vtk_camera->SetViewUp(0.0,0.0,1.0);
-    vtk_renderer->SetActiveCamera(vtk_camera);
     mtx.unlock();
 }
 
 /**********************************************/
 void Visualizer::addPlane(const double &z)
 {
-    vtk_plane = unique_ptr<PlaneVis>(new PlaneVis(-z));
-    vtk_renderer->AddActor(vtk_plane->get_actor());
+    mtx.lock();
+    vtk_plane->setHeight(-z);
+    mtx.unlock();
 }
 
 /**********************************************/
@@ -135,13 +158,7 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
         r.segment(10, 2) = s[i].getSuperqExps();
 
         vtk_superquadrics[i]->set_parameters(r);
-
-        //vtk_superquadric = unique_ptr<SuperquadricVis>(new SuperquadricVis(r));
-
-        //vtk_renderer->AddActor(vtk_superquadric->get_actor());
     }
-
-    vtk_camera = vtkSmartPointer<vtkCamera>::New();
 
     Vector3d center(3);
     if (s.size() == 1)
@@ -160,100 +177,137 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
     vtk_camera->SetPosition(center(0)+0.5,center(1),center(2)+0.4);
     vtk_camera->SetFocalPoint(center.data());
     vtk_camera->SetViewUp(0.0,0.0,1.0);
-    vtk_renderer->SetActiveCamera(vtk_camera);
 
     mtx.unlock();
 }
 
 /**********************************************/
-void Visualizer::addPoses(const vector<SuperqGrasp::GraspPoses> &poses)
+void Visualizer::resetSuperq()
+{
+    mtx.lock();
+
+    for (size_t i = 0; i < vtk_superquadrics.size(); i++)
+    {
+        Vector12d r;
+        r.setZero();
+
+        vtk_superquadrics[i]->set_parameters(r);
+    }
+    
+    mtx.unlock();
+}
+
+/**********************************************/
+void Visualizer::addPoses(vector<GraspPoses> &poses1)
+{
+    mtx.lock();
+
+    addPosesAux(0, poses1);
+
+    mtx.unlock();
+}
+
+/**********************************************/
+void Visualizer::addPoses(vector<GraspPoses> &poses1, vector<GraspPoses> &poses2)
+{
+    mtx.lock();
+
+    addPosesAux(0, poses1);
+    addPosesAux(poses1.size(), poses2);
+
+    mtx.unlock();
+}
+
+/**********************************************/
+void Visualizer::addPosesAux(const size_t start, vector<GraspPoses> &poses)
 {
     Vector6d pose_vect;
     double offset=0.0;
     int i=0;
 
-    for (auto pose : poses)
+    for (size_t idx = 0; idx < poses.size(); idx++)
     {
+        GraspPoses pose = poses[idx];
         if (pose.getGraspParams().norm() > 0.0)
         {
             pose_vect = pose.getGraspParams();
-            vtkSmartPointer<vtkAxesActor> ax_actor = vtkSmartPointer<vtkAxesActor>::New();
-            vtkSmartPointer<vtkCaptionActor2D> cap_actor = vtkSmartPointer<vtkCaptionActor2D>::New();
-            ax_actor->VisibilityOff();
-            cap_actor->VisibilityOff();
-            pose_actors.push_back(ax_actor);
-            pose_captions.push_back(cap_actor);
-            vtk_renderer->AddActor(ax_actor);
+            pose_actors[idx + start]->VisibilityOff();
+            cap_actors[idx + start]->VisibilityOff();
 
-            vtk_renderer->AddActor(cap_actor);
+            pose_candidates[idx + start]->setvtkTransform(pose_vect);
+            pose_candidates[idx + start]->pose_vtk_actor->SetUserTransform(pose_candidates[idx + start]->pose_vtk_transform);
+            pose_actors[idx + start]->SetUserTransform(pose_candidates[idx + start]->pose_vtk_transform);
 
-            shared_ptr<PoseVis> candidate_pose = shared_ptr<PoseVis>(new PoseVis);
+            pose_candidates[idx + start]->pose_vtk_actor->ShallowCopy(pose_actors[idx + start]);
+            pose_actors[idx + start]->AxisLabelsOff();
+            pose_actors[idx + start]->SetTotalLength(0.02, 0.02, 0.02);
+            pose_actors[idx + start]->SetShaftTypeToCylinder();
+            pose_actors[idx + start]->VisibilityOn();
 
-            candidate_pose->setvtkTransform(pose_vect);
-            candidate_pose->pose_vtk_actor->SetUserTransform(candidate_pose->pose_vtk_transform);
-            ax_actor->SetUserTransform(candidate_pose->pose_vtk_transform);
-
-            candidate_pose->pose_vtk_actor->ShallowCopy(ax_actor);
-            ax_actor->AxisLabelsOff();
-            ax_actor->SetTotalLength(0.02, 0.02, 0.02);
-            ax_actor->SetShaftTypeToCylinder();
-            ax_actor->VisibilityOn();
-
-            cap_actor->VisibilityOn();
-            cap_actor->GetTextActor()->SetTextScaleModeToNone();
+            cap_actors[idx + start]->VisibilityOn();
+            cap_actors[idx + start]->GetTextActor()->SetTextScaleModeToNone();
 
             stringstream ss;
             ss << pose.getHandName()<<" : "<<setprecision(3)<<pose.cost;
 
             offset += 0.01;
 
-            candidate_pose->setvtkActorCaption(ss.str(), offset);
-            cap_actor->SetCaption(candidate_pose->pose_vtk_caption_actor->GetCaption());
-            cap_actor->BorderOff();
-            cap_actor->LeaderOn();
-            cap_actor->GetCaptionTextProperty()->SetFontSize(15);
-            cap_actor->GetCaptionTextProperty()->FrameOff();
-            cap_actor->GetCaptionTextProperty()->ShadowOff();
+            pose_candidates[idx + start]->setvtkActorCaption(ss.str(), offset);
+            cap_actors[idx + start]->SetCaption(pose_candidates[idx + start]->pose_vtk_caption_actor->GetCaption());
+            cap_actors[idx + start]->BorderOff();
+            cap_actors[idx + start]->LeaderOn();
+            cap_actors[idx + start]->GetCaptionTextProperty()->SetFontSize(15);
+            cap_actors[idx + start]->GetCaptionTextProperty()->FrameOff();
+            cap_actors[idx + start]->GetCaptionTextProperty()->ShadowOff();
 
-            cap_actor->GetCaptionTextProperty()->BoldOff();
-            cap_actor->GetCaptionTextProperty()->ItalicOff();
-            cap_actor->GetCaptionTextProperty()->SetColor(0.1, 0.1, 0.1);
+            cap_actors[idx + start]->GetCaptionTextProperty()->BoldOff();
+            cap_actors[idx + start]->GetCaptionTextProperty()->ItalicOff();
+            cap_actors[idx + start]->GetCaptionTextProperty()->SetColor(0.1, 0.1, 0.1);
 
             // This should be done only for best pose (TO UPDATE)
-            cap_actor->GetCaptionTextProperty()->BoldOn();
-            cap_actor->GetCaptionTextProperty()->SetColor(0., 0.35, 0.0);
-            cap_actor->GetCaptionTextProperty()->SetFontSize(20);
+            cap_actors[idx + start]->GetCaptionTextProperty()->BoldOn();
+            cap_actors[idx + start]->GetCaptionTextProperty()->SetColor(0., 0.35, 0.0);
+            cap_actors[idx + start]->GetCaptionTextProperty()->SetFontSize(20);
 
-            cap_actor->SetAttachmentPoint(candidate_pose->pose_vtk_caption_actor->GetAttachmentPoint());
+            cap_actors[idx + start]->SetAttachmentPoint(pose_candidates[idx + start]->pose_vtk_caption_actor->GetAttachmentPoint());
 
             i++;
-            pose_candidates.push_back(candidate_pose);
         }
     }
+}
 
+/**********************************************/
+void Visualizer::resetPoses()
+{
+    mtx.lock();
+
+    for (size_t i = 0; i < pose_candidates.size(); i++)
+    {
+        pose_actors[i]->VisibilityOff();
+        cap_actors[i]->VisibilityOff();
+    }
+
+    mtx.unlock();
+}
+
+/**********************************************/
+void Visualizer::resetPoints()
+{
+    vector<Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> all_points;
+
+    mtx.lock();
+    vtk_all_points->set_points(all_points);
+    vtk_dwn_points->set_points(all_points);
+    mtx.unlock();
 }
 
 /**********************************************/
 void Visualizer::visualize()
 {
-    vtk_renderWindowInteractor->Initialize();
-    vtk_renderWindowInteractor->CreateRepeatingTimer(10);
-
-    vtk_updateCallback = vtkSmartPointer<UpdateCommand>::New();
-
-    vtk_updateCallback->set_closing(closing);
-    vtk_renderWindowInteractor->AddObserver(vtkCommand::TimerEvent,vtk_updateCallback);
-
     vtk_renderWindowInteractor->Start();
 }
 
 /**********************************************/
-void Visualizer::clean()
-{
-    vtk_renderer->RemoveAllViewProps();
-}
-/*********
-*************************************/
 void Visualizer::saveScreenshot(const string &object, const int &number)
 {
     vtk_renderWindowInteractor->Render();
