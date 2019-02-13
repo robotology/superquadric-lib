@@ -135,7 +135,24 @@ void Options::SetIntegerValue(const string &tag, const int &value)
         cout << "|| ---------------------------------------------------- ||" << endl << endl;
     }
 }
-
+/****************************************************************/
+void Options::SetBoolValue(const string &tag, const bool &value)
+{
+    if (tag == "random_sampling")
+    {
+        pars.random_sampling = value;
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Random sampling set                                      : " << pars.random_sampling <<endl;
+        cout << "|| ---------------------------------------------------- ||" << endl << endl;
+    }
+    else if (tag == "merge_model")
+    {
+        m_pars.merge_model = value;
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Merge model set                                      : " << m_pars.merge_model <<endl;
+        cout << "|| ---------------------------------------------------- ||" << endl << endl;
+    }
+}
 /****************************************************************/
 void Options::SetStringValue(const string &tag, const string &value)
 {

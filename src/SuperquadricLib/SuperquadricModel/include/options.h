@@ -95,6 +95,9 @@ public:
 
   /****************************************************************/
   void SetStringValue(const std::string &tag, const std::string &value);
+
+  /****************************************************************/
+  void SetBoolValue(const std::string &tag, const bool &value);
 };
 
 

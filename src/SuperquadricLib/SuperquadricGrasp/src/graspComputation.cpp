@@ -1010,7 +1010,7 @@ GraspResults GraspEstimatorApp::computeGraspPoses(vector<Superquadric> &object_s
 /*****************************************************************/
 void GraspEstimatorApp::refinePoseCost(GraspResults &grasp_res)
 {
-    vector<GraspPoses> poses_computed = grasp_res.grasp_poses;
+    vector<GraspPoses> &poses_computed = grasp_res.grasp_poses;
 
     for (size_t i = 0; i < poses_computed.size(); i++)
     {
@@ -1058,7 +1058,8 @@ void GraspEstimatorApp::refinePoseCost(GraspResults &grasp_res)
 
           double error_orientation = (orientation_error_vector.axis()).norm() * fabs(sin(orientation_error_vector.angle()));
 
-          double w1, w2;
+          double w1 = 1;
+          double w2 = 1;
 
           if (error_position > 0.01)
           {

@@ -72,17 +72,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
     string robot;
     WhichHand grasping_hand;
-    WhichHand grasping_hand_best;
 
     PolyDriver left_arm_client, right_arm_client;
-    ICartesianControl *icart;
+    ICartesianControl *icart_right, *icart_left;
 
-    // TODO Check if to put it in Eigen
-    Vector planar_obstacle; // plane to avoid, typically a table (format (a b c d) following plane equation a.x+b.y+c.z+d=0)
-    Vector grasper_bounding_box; // bounding box of the grasper (x_min x_max y_min _y_max z_min z_max) expressed in the robot grasper frame used by the controller
-    double obstacle_safety_distance; // minimal distance to respect between the grasper and the obstacle
-    double palm_width;
-    double finger_length;
     Matrix grasper_specific_transform_right;
     Matrix grasper_specific_transform_left;
     Vector grasper_approach_parameters_right;
@@ -103,6 +96,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     GraspEstimatorApp grasp_estim;
     Visualizer vis;
 
+    Eigen::Vector4d plane;
+    Eigen::Vector3d displacement;
+
+
    /****************************************************************/
    bool configure(ResourceFinder &rf) override
     {
@@ -119,6 +116,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         yInfo() << "Opening module for connection with robot" << robot;
 
         string control_arms = rf.check("control-arms", Value("both")).toString();
+
         x = rf.check("x", Value(0)).asInt();
         y = rf.check("y", Value(0)).asInt();
         w = rf.check("width", Value(600)).asInt();
@@ -190,9 +188,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         list = rf.find("approach_right").asList();
         grasper_approach_parameters_right.resize(4, 0.0);
-        if(list)
+        if (list)
         {
-            if(list->size() == 4)
+            if (list->size() == 4)
             {
                 for(int i = 0; i < 4; i++) grasper_approach_parameters_right[i] = list->get(i).asDouble();
             }
@@ -212,9 +210,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         list = rf.find("approach_left").asList();
         grasper_approach_parameters_left.resize(4, 0.0);
-        if(list)
+        if (list)
         {
-            if(list->size() == 4)
+            if (list->size() == 4)
             {
                 for(int i=0 ; i<4 ; i++) grasper_approach_parameters_left[i] = list->get(i).asDouble();
             }
@@ -231,42 +229,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             grasper_approach_parameters_left[3] = 0.0;
         }
         yInfo() << "Grabber specific approach for left arm loaded\n" << grasper_approach_parameters_left.toString();
-
-        list = rf.find("grasp_bounding_box").asList();
-        if(list)
-        {
-            if(list->size() == 6)
-            {
-                for(int i = 0; i < 6; i++) grasper_bounding_box[i] = list->get(i).asDouble();
-            }
-            else
-            {
-                yError() << prettyError(__FUNCTION__, "Invalid grasp_bounding_box dimension in config. Should be 6.");
-            }
-        }
-        yInfo() << "Grabber bounding box loaded\n" << grasper_bounding_box.toString();
-
-        list = rf.find("planar_obstacle").asList();
-        if(list)
-        {
-            if(list->size() == 4)
-            {
-                for(int i = 0; i < 4; i++) planar_obstacle[i] = list->get(i).asDouble();
-            }
-            else
-            {
-                planar_obstacle[0] = 0.0;
-                planar_obstacle[1] = 0.0;
-                planar_obstacle[2] = 1;
-                planar_obstacle[3] = -(-0.15);
-                yError() << prettyError(__FUNCTION__, "Invalid planar_obstacle dimension in config. Should be 4.");
-            }
-        }
-        yInfo() << "Planar obstacle loaded\n" << planar_obstacle.toString();
-
-
-        obstacle_safety_distance = rf.check("obstacle_safety_distance", Value(0.0)).asDouble();
-        yInfo() << "Obstacle safety distance loaded=" << obstacle_safety_distance;
 
         //  open the necessary ports
         point_cloud_rpc.open("/" + moduleName + "/pointCloud:rpc");
@@ -315,6 +277,86 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         attach(user_rpc);
 
         fixate_object = false;
+
+        double tol_superq = rf.check("tol_superq", Value(1e-5)).asDouble();
+        int print_level_superq = rf.check("print_level_superq", Value(0)).asInt();
+        string object_class = rf.check("object_class", Value("default")).toString();
+        int optimizer_points = rf.check("optimizer_points", Value(50)).asInt();
+        bool random_sampling = rf.check("random_sampling", Value(true)).asBool();
+
+        estim.SetNumericValue("tol", tol_superq);
+        estim.SetIntegerValue("print_level", print_level_superq);
+        estim.SetStringValue("object_class", object_class);
+        estim.SetIntegerValue("optimizer_points", optimizer_points);
+        estim.SetBoolValue("random_sampling", random_sampling);
+
+        bool merge_model = rf.check("merge_model", Value(true)).asBool();
+        int minimum_points = rf.check("minimum_points", Value(150)).asInt();
+        int fraction_pc = rf.check("fraction_pc", Value(8)).asInt();
+        double threshold_axis = rf.check("tol_threshold_axissuperq", Value(0.7)).asDouble();
+        double threshold_section1 = rf.check("threshold_section1", Value(0.6)).asDouble();
+        double threshold_section2 = rf.check("threshold_section2", Value(0.03)).asDouble();
+
+        estim.SetBoolValue("merge_model", merge_model);
+        estim.SetIntegerValue("minimum_points", minimum_points);
+        estim.SetIntegerValue("fraction_pc", fraction_pc);
+        estim.SetNumericValue("threshold_axis", threshold_axis);
+        estim.SetNumericValue("threshold_section1", threshold_section1);
+        estim.SetNumericValue("threshold_section2", threshold_section2);
+
+        double tol_grasp = rf.check("tol_grasp", Value(1e-5)).asDouble();
+        int print_level_grasp = rf.check("print_level_grasp", Value(0)).asInt();
+        double constr_tol = rf.check("constr_tol", Value(1e-4)).asDouble();
+
+        grasp_estim.SetNumericValue("tol", tol_grasp);
+        grasp_estim.SetIntegerValue("print_level", print_level_grasp);
+        grasp_estim.SetNumericValue("constr_tol", constr_tol);
+        grasp_estim.SetStringValue("left_or_right", "right");
+
+        list = rf.find("plane_table").asList();
+        if (list)
+        {
+            if (list->size() == 4)
+            {
+                for(int i=0 ; i<4 ; i++) plane(i) = list->get(i).asDouble();
+            }
+        }
+        else
+        {
+            plane(0) = 0.0; plane(1) = 0.0; plane(2) = 1.0; plane(3) = 0.15;
+        }
+
+        grasp_estim.setVector("plane", plane);
+        
+        list = rf.find("displacement").asList();
+        if (list)
+        {
+            if (list->size() == 4)
+            {
+                for(int i=0 ; i<4 ; i++) displacement(i) = list->get(i).asDouble();
+            }
+        }
+        else
+        {
+            displacement(0) = 0.0; displacement(1) = 0.0; displacement(2) = 1.0;
+        }
+
+        grasp_estim.setVector("displacement", displacement);
+        //
+        // g_params.disp <<  0.0, 0.0, 0.0;
+        // g_params.max_superq = 4;
+        // g_params.bounds_right << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
+        // g_params.bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3,  -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
+        // g_params.bounds_constr_left.resize(8,2);
+        // g_params.bounds_constr_left << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
+        //                                     10.0, 0.0, 1.0, 0.00001, 10.0, 0.00001, 10.0, 0.00001, 10.0;
+        // g_params.bounds_constr_right.resize(8,2);
+        // g_params.bounds_constr_right << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.001,
+        //                                     10.0, 0.0, 1.0, 0.00001, 10.0, 0.00001, 10.0, 0.00001, 10.0;
+        //
+        // Superquadric hand;
+        // Vector11d hand_vector;
+        // hand_vector << 0.03, 0.06, 0.03, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
 
         vis.visualize();
 
@@ -481,6 +523,42 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           return ok;
       }
 
+      /****************************************************************/
+      bool grasp()
+      {
+          Vector best_pose;
+
+          if (grasping_hand == WhichHand::BOTH)
+          {
+              if (best_hand == "right")
+              {
+                  Eigen::VectorXd pose;
+                  pose.resize(7);
+                  pose.head(3) = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose].getGraspPosition();
+                  pose.tail(4) = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose].getGraspAxisAngle();
+                  best_pose = eigenToYarp(pose);
+              }
+              else if (best_hand == "left")
+              {
+                  Eigen::VectorXd pose;
+                  pose.resize(7);
+                  pose.head(3) = grasp_res_hand1.grasp_poses[grasp_res_hand2.best_pose].getGraspPosition();
+                  pose.tail(4) = grasp_res_hand1.grasp_poses[grasp_res_hand2.best_pose].getGraspAxisAngle();
+                  best_pose = eigenToYarp(pose);
+              }
+          }
+          else
+          {
+              Eigen::VectorXd pose;
+              pose.resize(7);
+              pose.head(3) = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose].getGraspPosition();
+              pose.tail(4) = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose].getGraspAxisAngle();
+              best_pose = eigenToYarp(pose);
+          }
+
+          executeGrasp(best_pose, best_hand);
+      }
+
       /************************************************************************/
       bool requestPointCloud(const string &object)
       {
@@ -565,6 +643,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           vis.addPoints(point_cloud, true);
           vis.addSuperq(superqs);
 
+          getTable();
+
           // Compute grasp pose
           grasp_res_hand1 = grasp_estim.computeGraspPoses(superqs);
 
@@ -582,18 +662,39 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
           if (choose_hand)
           {
-              Vector6d robot_pose;
-              robot_pose<< -0.4, 0.1, -0.15, 0.0, 0.0, 0.0;
-
-              for (size_t i = 0; i < grasp_res_hand1.grasp_poses.size(); i++)
-              {
-                  grasp_res_hand1.grasp_poses[i].setGraspParamsHat(robot_pose);
-              }
+              // TODO extend to R1 (see cardinal-grasp-pointss)
               if (grasping_hand == WhichHand::BOTH)
               {
-                  for (size_t i = 0; i < grasp_res_hand2.grasp_poses.size(); i++)
+                  if (left_arm_client.isValid())
                   {
-                      grasp_res_hand2.grasp_poses[i].setGraspParamsHat(robot_pose);
+                      left_arm_client.view(icart_left);
+
+                      computePoseHat(grasp_res_hand2, icart_left);
+                  }
+
+                  if (right_arm_client.isValid())
+                  {
+                      right_arm_client.view(icart_right);
+
+                      computePoseHat(grasp_res_hand1, icart_right);
+                  }
+              }
+              else if (grasping_hand == WhichHand::HAND_RIGHT)
+              {
+                  if (right_arm_client.isValid())
+                  {
+                      right_arm_client.view(icart_right);
+
+                      computePoseHat(grasp_res_hand1, icart_right);
+                  }
+              }
+              else if (grasping_hand == WhichHand::HAND_LEFT)
+              {
+                  if (left_arm_client.isValid())
+                  {
+                      left_arm_client.view(icart_left);
+
+                      computePoseHat(grasp_res_hand1, icart_left);
                   }
               }
 
@@ -613,9 +714,15 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                   int best_left = grasp_res_hand2.best_pose;
 
                   if (grasp_res_hand1.grasp_poses[best_right].cost < grasp_res_hand2.grasp_poses[best_left].cost)
+                  {
+                      best_hand = "right";
                       vis.highlightBestPose("right", "both", best_right);
+                  }
                   else
+                  {
+                      best_hand = "left";
                       vis.highlightBestPose("left", "both", best_left);
+                  }
               }
               else if (grasping_hand == WhichHand::HAND_RIGHT)
               {
@@ -628,6 +735,211 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                   vis.highlightBestPose("left", "both", best_left);
               }
           }
+      }
+
+      /****************************************************************/
+      void getTable()
+      {
+          bool table_ok = false;
+          if (robot != "icubSim" && table_calib_rpc.getOutputCount() > 0)
+          {
+              Bottle table_cmd, table_rply;
+              table_cmd.addVocab(Vocab::encode("get"));
+              table_cmd.addString("table");
+
+              table_calib_rpc.write(table_cmd, table_rply);
+              if (Bottle *payload = table_rply.get(0).asList())
+              {
+                  if (payload->size() >= 2)
+                  {
+                      plane(0) = 0.0;
+                      plane(1) = 0.0;
+                      plane(2) = 1.0;
+
+                      plane(3) = payload->get(1).asDouble();
+                      table_ok = true;
+
+                      grasp_estim.setVector("plane", plane);
+                  }
+              }
+          }
+          if (!table_ok)
+          {
+              yWarning() << " Unable to retrieve table height, using default.";
+          }
+
+          yInfo() << " Using table height =" << - plane[3];
+      }
+
+      /****************************************************************/
+      void setGraspContext(ICartesianControl *icart)
+      {
+          //  set up the context for the grasping planning and execution
+          //  enable all joints
+          Vector dof;
+          icart->getDOF(dof);
+          Vector new_dof(10, 1);
+          new_dof(1) = 0.0;
+          icart->setDOF(new_dof, dof);
+          icart->setPosePriority("position");
+          icart->setInTargetTol(0.001);
+        }
+
+      /****************************************************************/
+      Vector eigenToYarp(Eigen::VectorXd &v)
+      {
+          Vector x;
+          x.resize(v.size());
+
+          for (size_t i = 0; i< x.size(); i++)
+          {
+              x[i] = v[i];
+          }
+
+          return x;
+      }
+
+      /****************************************************************/
+      Eigen::VectorXd yarpToEigen(Vector &v)
+      {
+          Eigen::VectorXd x;
+          x.resize(v.size());
+
+          for (size_t i = 0; i< x.size(); i++)
+          {
+              x[i] = v[i];
+          }
+
+          return x;
+      }
+
+      /****************************************************************/
+      void computePoseHat(GraspResults &grasp_res, ICartesianControl *icart)
+      {
+          for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
+          {
+              int context_backup;
+              icart->storeContext(&context_backup);
+
+              //  set up the context for the computation of the candidates
+              setGraspContext(icart);
+
+              Eigen::VectorXd desired_pose = grasp_res.grasp_poses[i].getGraspPosition();
+              Eigen::VectorXd desired_or = grasp_res.grasp_poses[i].getGraspAxisAngle();
+
+              Vector x_d = eigenToYarp(desired_pose);
+              Vector o_d = eigenToYarp(desired_or);
+
+              Vector x_d_hat, o_d_hat, q_d_hat;
+
+              //yDebug() << "X desired "<<x_d.toString();
+              //yDebug() << "O desired "<<o_d.toString();
+
+              bool success = icart->askForPose(x_d, o_d, x_d_hat, o_d_hat, q_d_hat);
+
+              Eigen::VectorXd pose_hat = yarpToEigen(x_d_hat);
+              Eigen::VectorXd or_hat = yarpToEigen(o_d_hat);
+
+              //yDebug() << "X hat "<<x_d_hat.toString();
+              //yDebug() << "O hat "<<o_d_hat.toString();
+
+              Eigen::VectorXd robot_pose;
+              robot_pose.resize(7);
+              robot_pose.head(3) = pose_hat;
+              robot_pose.tail(4) = or_hat;
+
+              for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
+              {
+                  grasp_res.grasp_poses[i].setGraspParamsHat(robot_pose);
+              }
+
+              //  restore previous context
+              icart->restoreContext(context_backup);
+              icart->deleteContext(context_backup);
+          }
+      }
+
+      /****************************************************************/
+      bool executeGrasp(Vector &pose, string &best_hand)
+      {
+          if(robot == "icubSim" )
+          {
+              //  simulation context, suppose there is no actionsRenderingEngine running
+              if (best_hand == "right")
+              {
+                  int context_backup;
+                  icart_right->storeContext(&context_backup);
+                  setGraspContext(icart_right);
+                  Vector previous_x(3), previous_o(4);
+                  icart_right->getPose(previous_x, previous_o);
+                  icart_right->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
+                  icart_right->waitMotionDone();
+                  icart_right->goToPoseSync(previous_x, previous_o);
+                  icart_right->waitMotionDone();
+                  icart_right->restoreContext(context_backup);
+                  icart_right->deleteContext(context_backup);
+                  return true;
+              }
+              else if (best_hand == "left")
+              {
+                int context_backup;
+                icart_left->storeContext(&context_backup);
+                setGraspContext(icart_left);
+                Vector previous_x(3), previous_o(4);
+                icart_left->getPose(previous_x, previous_o);
+                icart_left->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
+                icart_left->waitMotionDone();
+                icart_left->goToPoseSync(previous_x, previous_o);
+                icart_left->waitMotionDone();
+                icart_left->restoreContext(context_backup);
+                icart_left->deleteContext(context_backup);
+                return true;
+              }
+          }
+          else
+          {
+              //  communication with actionRenderingEngine/cmd:io
+              //  grasp("cartesian" x y z gx gy gz theta) ("approach" (-0.05 0 +-0.05 0.0)) "left"/"right"
+              Bottle command, reply;
+
+              command.addString("grasp");
+              Bottle &ptr = command.addList();
+              ptr.addString("cartesian");
+              ptr.addDouble(pose(0));
+              ptr.addDouble(pose(1));
+              ptr.addDouble(pose(2));
+              ptr.addDouble(pose(3));
+              ptr.addDouble(pose(4));
+              ptr.addDouble(pose(5));
+              ptr.addDouble(pose(6));
+
+
+              Bottle &ptr1 = command.addList();
+              ptr1.addString("approach");
+              Bottle &ptr2 = ptr1.addList();
+              if (grasping_hand == WhichHand::HAND_LEFT)
+              {
+                  for(int i=0 ; i<4 ; i++) ptr2.addDouble(grasper_approach_parameters_left[i]);
+                  command.addString("left");
+              }
+              else
+              {
+                  for(int i=0 ; i<4 ; i++) ptr2.addDouble(grasper_approach_parameters_right[i]);
+                  command.addString("right");
+              }
+
+              yInfo() << command.toString();
+              action_render_rpc.write(command, reply);
+              if (reply.toString() == "[ack]")
+              {
+                  return true;
+              }
+              else
+              {
+                  return false;
+              }
+          }
+
       }
 
       /************************************************************************/
