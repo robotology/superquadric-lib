@@ -1186,8 +1186,8 @@ int main(int argc, char *argv[])
 {
     Network yarp;
     ResourceFinder rf;
-    rf.setDefaultContext("superquadric-lib");
-    rf.setDefaultConfigFile("config-icub-superq-lib.ini");
+    rf.setDefaultContext("Superquadric-Lib-Demo");
+    rf.setDefaultConfigFile("config-icub.ini");
     rf.configure(argc, argv);
 
     if (!yarp.checkNetwork())

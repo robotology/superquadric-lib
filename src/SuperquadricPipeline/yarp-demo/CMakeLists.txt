@@ -1,4 +1,4 @@
-set(EXE_TARGET_NAME Superquadric-Pipeline-Yarp)
+set(EXE_TARGET_NAME Superquadric-Lib-Demo)
 
 find_package(YARP CONFIG REQUIRED
 			COMPONENTS

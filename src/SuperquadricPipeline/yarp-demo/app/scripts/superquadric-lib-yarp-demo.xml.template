@@ -1,0 +1,79 @@
+<application>
+    <name>Superquadric Lib Yarp Demo</name>
+
+    <dependencies>
+        <port>/pointCloudRead/rpc</port>
+        <port>/actionsRenderingEngine/cmd:io</port>
+        <port>/actionsRenderingEngine/get:io</port>
+        <port>/iolReachingCalibration/rpc</port>
+        <port>/SFM/rpc</port>
+        <port>/memory/rpc</port>
+        <port>/icub/camcalib/left/out</port>
+        <port>/lbpExtract/rpc:i</port>
+    </dependencies>
+
+    <module>
+        <name>Superquadric-Pipeline-Yarp</name>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>point-cloud-read</name>
+        <node>localhost</node>
+    </module>
+
+    <connection>
+        <from>/superquadric-lib-demo/pointCloud:rpc</from>
+        <to>/pointCloudRead/rpc</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/superquadric-lib-demo/actionRenderer:rpc</from>
+        <to>/actionsRenderingEngine/cmd:io</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/superquadric-lib-demo/tableCalib:rpc</from>
+        <to>/actionsRenderingEngine/get:io</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/superquadric-lib-demo/reachingCalibration:rpc</from>
+        <to>/iolReachingCalibration/rpc</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+      <from>/icub/camcalib/left/out</from>
+      <to>/pointCloudRead/imgL:i</to>
+      <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+      <from>/pointCloudRead/OPCrpc</from>
+      <to>/memory/rpc</to>
+      <protocol>fast_tcp</protocol>
+  </connection>
+
+  <connection>
+      <from>/pointCloudRead/SFMrpc</from>
+      <to>/SFM/rpc</to>
+      <protocol>fast_tcp</protocol>
+  </connection>
+
+  <connection>
+      <from>/pointCloudRead/segmrpc</from>
+      <to>/lbpExtract/rpc:i</to>
+      <protocol>fast_tcp</protocol>
+  </connection>
+
+  <connection>
+      <from>/iolStateMachineHandler/motor_grasp:rpc</from>
+      <to>/superquadric-lib-demo/cmd:rpc</to>
+      <protocol>fast_tcp</protocol>
+  </connection>
+
+</application>
