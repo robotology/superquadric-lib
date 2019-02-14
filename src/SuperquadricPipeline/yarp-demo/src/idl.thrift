@@ -36,6 +36,8 @@
 
 	 bool grasp();
 
+	 bool drop();
+
      bool set_single_superq(1: string value);
 
 

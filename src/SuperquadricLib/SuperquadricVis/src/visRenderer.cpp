@@ -106,6 +106,18 @@ Visualizer::~Visualizer()
 }
 
 /**********************************************/
+void Visualizer::setPosition(int x, int y)
+{
+    vtk_renderWindow->SetPosition(x,y);
+}
+
+/**********************************************/
+void Visualizer::setSize(int w, int h)
+{
+    vtk_renderWindow->SetSize(w,h);
+}
+
+/**********************************************/
 void Visualizer::addPoints(PointCloud point_cloud, const bool &show_downsample)
 {
     vector<Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> all_points = point_cloud.points_for_vis;

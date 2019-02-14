@@ -24,6 +24,8 @@
  #include <yarp/dev/CartesianControl.h>
  #include <yarp/dev/PolyDriver.h>
 
+ #include <iCub/ctrl/clustering.h>
+
  #include <superquadricEstimator.h>
  #include <visRenderer.h>
  #include <graspComputation.h>
@@ -38,6 +40,7 @@
  using namespace yarp::sig;
  using namespace yarp::dev;
  using namespace yarp::math;
+ using namespace iCub::ctrl;
 
  /****************************************************************/
 enum class WhichHand
@@ -89,6 +92,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     bool single_superq;
     int best_pose_1, best_pose_2;
 
+    // PointCloud filtering
+    double radius;
+    int minpts;
+
     // Superquadric-lib objects
     SuperqModel::PointCloud point_cloud;
     vector<Superquadric> superqs;
@@ -124,6 +131,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         y = rf.check("y", Value(0)).asInt();
         w = rf.check("width", Value(600)).asInt();
         h = rf.check("height", Value(600)).asInt();
+
+        vis.setPosition(x,y);
+        vis.setSize(w,h);
 
         Vector grasp_specific_translation(3, 0.0);
         Vector grasp_specific_orientation(4, 0.0);
@@ -281,12 +291,17 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         fixate_object = false;
 
+        // PointCloud filtering
+        radius = rf.check("radius_dbscan", Value(0.01)).asDouble();
+        minpts = rf.check("points_dbscan", Value(10)).asInt();
+
+        // Set Superquadric Model parameters
         double tol_superq = rf.check("tol_superq", Value(1e-5)).asDouble();
         int print_level_superq = rf.check("print_level_superq", Value(0)).asInt();
         string object_class = rf.check("object_class", Value("default")).toString();
         int optimizer_points = rf.check("optimizer_points", Value(50)).asInt();
         bool random_sampling = rf.check("random_sampling", Value(true)).asBool();
-        bool single_superq = rf.check("random_sampling", Value(true)).asBool();
+        single_superq = rf.check("single_superq", Value(true)).asBool();
 
         estim.SetNumericValue("tol", tol_superq);
         estim.SetIntegerValue("print_level", print_level_superq);
@@ -308,6 +323,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         estim.SetNumericValue("threshold_section1", threshold_section1);
         estim.SetNumericValue("threshold_section2", threshold_section2);
 
+        // Set Superquadric Grasp parameters
         double tol_grasp = rf.check("tol_grasp", Value(1e-5)).asDouble();
         int print_level_grasp = rf.check("print_level_grasp", Value(0)).asInt();
         double constr_tol = rf.check("constr_tol", Value(1e-4)).asDouble();
@@ -329,7 +345,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         }
         else
         {
-            plane << 0.0, 0.0, 1.0, 0.16;
+            plane << 0.0, 0.0, 1.0, 0.20;
         }
 
         grasp_estim.setVector("plane", plane);
@@ -459,6 +475,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         grasp_estim.setMatrix("bounds_constr_left", bounds_constr_left);
 
 
+        // Start visualization
         vis.visualize();
 
         return true;
@@ -546,6 +563,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           }
 
           deque<Eigen::Vector3d> all_points;
+          vector<Vector> points_yarp;
           vector<vector<unsigned char>> all_colors;
 
           ifstream fin(object_file);
@@ -556,7 +574,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               return 0;
           }
 
-          Eigen::Vector3d p(3);
+          Vector p(3);
           vector<unsigned int> c_(3);
           vector<unsigned char> c(3);
 
@@ -566,7 +584,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               istringstream iss(line);
               if (!(iss >> p(0) >> p(1) >> p(2)))
                   break;
-              all_points.push_back(p);
+              points_yarp.push_back(p);
 
               fill(c_.begin(),c_.end(),120);
               iss >> c_[0] >> c_[1] >> c_[2];
@@ -583,6 +601,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
               all_colors.push_back(c);
           }
+
+          all_points = removeOutliers(points_yarp, all_colors);
 
           point_cloud.setPoints(all_points);
           point_cloud.setColors(all_colors);
@@ -621,6 +641,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           {
               return false;
           }
+
+          fixate_object = true;
 
           bool ok = requestPointCloud(object_name);
 
@@ -666,6 +688,46 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           }
 
           executeGrasp(best_pose, best_hand);
+      }
+
+      /****************************************************************/
+      bool drop()
+      {
+          if (action_render_rpc.getOutputCount() > 0)
+          {
+              Bottle cmd, reply;
+              cmd.addVocab(Vocab::encode("drop"));
+              action_render_rpc.write(cmd, reply);
+              if (reply.get(0).asVocab() == Vocab::encode("ack"))
+                  return true;
+              else
+                  return false;
+          }
+          else
+          {
+              return false;
+          }
+      }
+
+      /****************************************************************/
+      bool home()
+      {
+          if (action_render_rpc.getOutputCount() > 0)
+          {
+              Bottle cmd, reply;
+              cmd.addVocab(Vocab::encode("home"));
+              action_render_rpc.write(cmd, reply);
+              if (reply.get(0).asVocab() == Vocab::encode("ack"))
+                  return true;
+              else
+                  return false;
+
+              return true;
+          }
+          else
+          {
+              return false;
+          }
       }
 
       /************************************************************************/
@@ -716,23 +778,78 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
          Bottle* pcBt = cmd_reply.get(0).asList();
          bool success = pc.fromBottle(*pcBt);
 
-         deque<Eigen::Vector3d> acquired_points;
+         vector<Vector> acquired_points;
+         vector<vector<unsigned char>> acquired_colors;
+
+         Vector point;
+         vector<unsigned char> c;
 
          for (size_t i = 0; i < pc.size(); i++)
          {
-            Eigen::Vector3d point;
-            point(0)=pc(0,i).x; point(1)=pc(1,i).y; point(2)=pc(2,i).z;
+            point(0)=pc(i).x; point(1)=pc(i).y; point(2)=pc(i).z;
+            c[0] = pc(i).r;
+            c[1] = pc(i).g;
+            c[2] = pc(i).b;
+
             acquired_points.push_back(point);
+            acquired_colors.push_back(c);
          }
+
+         deque<Eigen::Vector3d> all_points;
+         all_points = removeOutliers(acquired_points, acquired_colors);
 
          if (success && (pc.size() > 0))
          {
-            point_cloud.setPoints(acquired_points);
+            point_cloud.setPoints(all_points);
             return true;
          }
          else
             return false;
       }
+
+      /****************************************************************/
+      deque<Eigen::Vector3d> removeOutliers(vector<Vector> &points_yarp, vector<vector<unsigned char>> &all_colors)
+      {
+          double t0=Time::now();
+
+          deque<Eigen::Vector3d> in_points;
+          vector<vector<unsigned char>> in_colors;
+
+          Property options;
+          options.put("epsilon",radius);
+          options.put("minpts",minpts);
+
+          DBSCAN dbscan;
+          map<size_t,set<size_t>> clusters=dbscan.cluster(points_yarp, options);
+
+          size_t largest_class; size_t largest_size=0;
+          for (auto it=begin(clusters); it!=end(clusters); it++)
+          {
+              if (it->second.size()>largest_size)
+              {
+                  largest_size=it->second.size();
+                  largest_class=it->first;
+              }
+          }
+
+          auto &c=clusters[largest_class];
+          for (size_t i=0; i<points_yarp.size(); i++)
+          {
+              if (c.find(i)!=end(c))
+              {
+                  in_points.push_back(yarpToEigen(points_yarp[i]));
+                  in_colors.push_back(all_colors[i]);
+              }
+          }
+
+          double t1=Time::now();
+          yInfo()<<points_yarp.size() - in_points.size()<<"outliers removed out of"
+                 <<points_yarp.size()<<"points in"<<t1-t0<<"[s]";
+
+          all_colors = in_colors;
+
+          return in_points;
+       }
 
       /************************************************************************/
       void computeSuperqAndGrasp(bool choose_hand)
@@ -757,9 +874,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               vis.addPoints(point_cloud, false);
           }
           // Visualize downsampled point cloud and estimated superq
-
           vis.addSuperq(superqs);
 
+          // Get real value of table height
           getTable();
 
           // Compute grasp pose
@@ -951,16 +1068,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
               Vector x_d_hat, o_d_hat, q_d_hat;
 
-              //yDebug() << "X desired "<<x_d.toString();
-              //yDebug() << "O desired "<<o_d.toString();
-
               bool success = icart->askForPose(x_d, o_d, x_d_hat, o_d_hat, q_d_hat);
 
               Eigen::VectorXd pose_hat = yarpToEigen(x_d_hat);
               Eigen::VectorXd or_hat = yarpToEigen(o_d_hat);
-
-              //yDebug() << "X hat "<<x_d_hat.toString();
-              //yDebug() << "O hat "<<o_d_hat.toString();
 
               Eigen::VectorXd robot_pose;
               robot_pose.resize(7);
