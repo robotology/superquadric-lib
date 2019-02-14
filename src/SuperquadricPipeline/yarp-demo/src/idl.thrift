@@ -36,5 +36,7 @@
 
 	 bool grasp();
 
+     bool set_single_superq(1: string value);
+
 
  }

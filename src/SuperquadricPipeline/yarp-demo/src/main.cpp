@@ -86,6 +86,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     bool fixate_object;
 
     string best_hand;
+    bool single_superq;
     int best_pose_1, best_pose_2;
 
     // Superquadric-lib objects
@@ -98,7 +99,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
     Eigen::Vector4d plane;
     Eigen::Vector3d displacement;
-
+    Eigen::VectorXd hand;
+    Eigen::MatrixXd bounds_right, bounds_left;
+    Eigen::MatrixXd bounds_constr_right, bounds_constr_left;
 
    /****************************************************************/
    bool configure(ResourceFinder &rf) override
@@ -283,6 +286,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         string object_class = rf.check("object_class", Value("default")).toString();
         int optimizer_points = rf.check("optimizer_points", Value(50)).asInt();
         bool random_sampling = rf.check("random_sampling", Value(true)).asBool();
+        bool single_superq = rf.check("random_sampling", Value(true)).asBool();
 
         estim.SetNumericValue("tol", tol_superq);
         estim.SetIntegerValue("print_level", print_level_superq);
@@ -307,9 +311,11 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         double tol_grasp = rf.check("tol_grasp", Value(1e-5)).asDouble();
         int print_level_grasp = rf.check("print_level_grasp", Value(0)).asInt();
         double constr_tol = rf.check("constr_tol", Value(1e-4)).asDouble();
+        int max_superq = rf.check("max_superq", Value(4)).asInt();
 
         grasp_estim.SetNumericValue("tol", tol_grasp);
         grasp_estim.SetIntegerValue("print_level", print_level_grasp);
+        grasp_estim.SetIntegerValue("max_superq", max_superq);
         grasp_estim.SetNumericValue("constr_tol", constr_tol);
         grasp_estim.SetStringValue("left_or_right", "right");
 
@@ -318,45 +324,140 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         {
             if (list->size() == 4)
             {
-                for(int i=0 ; i<4 ; i++) plane(i) = list->get(i).asDouble();
+                for(int i = 0 ; i < 4 ; i++) plane(i) = list->get(i).asDouble();
             }
         }
         else
         {
-            plane(0) = 0.0; plane(1) = 0.0; plane(2) = 1.0; plane(3) = 0.15;
+            plane << 0.0, 0.0, 1.0, 0.16;
         }
 
         grasp_estim.setVector("plane", plane);
-        
+
         list = rf.find("displacement").asList();
         if (list)
         {
-            if (list->size() == 4)
+            if (list->size() == 3)
             {
-                for(int i=0 ; i<4 ; i++) displacement(i) = list->get(i).asDouble();
+                for(int i = 0 ; i < 3 ; i++) displacement(i) = list->get(i).asDouble();
             }
         }
         else
         {
-            displacement(0) = 0.0; displacement(1) = 0.0; displacement(2) = 1.0;
+            displacement << 0.0, 0.0, 0.0;
         }
 
         grasp_estim.setVector("displacement", displacement);
-        //
-        // g_params.disp <<  0.0, 0.0, 0.0;
-        // g_params.max_superq = 4;
-        // g_params.bounds_right << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
-        // g_params.bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3,  -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
-        // g_params.bounds_constr_left.resize(8,2);
-        // g_params.bounds_constr_left << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
-        //                                     10.0, 0.0, 1.0, 0.00001, 10.0, 0.00001, 10.0, 0.00001, 10.0;
-        // g_params.bounds_constr_right.resize(8,2);
-        // g_params.bounds_constr_right << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.001,
-        //                                     10.0, 0.0, 1.0, 0.00001, 10.0, 0.00001, 10.0, 0.00001, 10.0;
-        //
-        // Superquadric hand;
-        // Vector11d hand_vector;
-        // hand_vector << 0.03, 0.06, 0.03, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+
+
+        hand.resize(11);
+        list = rf.find("hand").asList();
+        if (list)
+        {
+            if (list->size() == 11)
+            {
+                for(int i = 0 ; i < 11 ; i++) hand(i) = list->get(i).asDouble();
+            }
+        }
+        else
+        {
+            hand << 0.03, 0.06, 0.03, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+        }
+
+        grasp_estim.setVector("hand", hand);
+
+        bounds_right.resize(6,2);
+        list = rf.find("bounds_right").asList();
+        if (list)
+        {
+            if (list->size() == 12)
+            {
+                for(int i = 0 ; i < 12 ; i = i+2)
+                {
+                   bounds_right(i, 0) = list->get(i).asDouble();
+                }
+                for(int i = 1 ; i < 12 ; i = i+2)
+                {
+                   bounds_right(i, 1) = list->get(i).asDouble();
+                }
+            }
+        }
+        else
+        {
+            bounds_right << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
+        }
+
+        grasp_estim.setMatrix("bounds_right", bounds_right);
+
+        bounds_left.resize(6,2);
+        list = rf.find("bounds_left").asList();
+        if (list)
+        {
+            if (list->size() == 12)
+            {
+                for(int i = 0 ; i < 12 ; i = i+2)
+                {
+                   bounds_left(i, 0) = list->get(i).asDouble();
+                }
+                for(int i = 1 ; i < 12 ; i = i+2)
+                {
+                   bounds_left(i, 1) = list->get(i).asDouble();
+                }
+            }
+        }
+        else
+        {
+            bounds_left << -0.5, 0.0, -0.2, 0.2, -0.3, 0.3, -M_PI, M_PI,-M_PI, M_PI,-M_PI, M_PI;
+        }
+
+        grasp_estim.setMatrix("bounds_left", bounds_left);
+
+        bounds_constr_right.resize(8,2);
+        list = rf.find("bounds_constr_right").asList();
+        if (list)
+        {
+            if (list->size() == 16)
+            {
+                for(int i = 0 ; i < 16 ; i = i+2)
+                {
+                   bounds_constr_right(i, 0) = list->get(i).asDouble();
+                }
+                for(int i = 1 ; i < 16 ; i = i+2)
+                {
+                   bounds_constr_right(i, 1) = list->get(i).asDouble();
+                }
+            }
+        }
+        else
+        {
+            bounds_constr_right << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.001,
+                                     10.0, 0.0, 1.0, 0.00001, 10.0, 0.00001, 10.0, 0.00001, 10.0;
+        }
+        grasp_estim.setMatrix("bounds_constr_right", bounds_constr_right);
+
+        bounds_constr_left.resize(8,2);
+        list = rf.find("bounds_constr_left").asList();
+        if (list)
+        {
+            if (list->size() == 16)
+            {
+                for(int i = 0 ; i < 16 ; i = i+2)
+                {
+                   bounds_constr_left(i, 0) = list->get(i).asDouble();
+                }
+                for(int i = 1 ; i < 16 ; i = i+2)
+                {
+                   bounds_constr_left(i, 1) = list->get(i).asDouble();
+                }
+            }
+        }
+        else
+        {
+            bounds_constr_left << -10000, 0.0, -10000, 0.0, -10000, 0.0, 0.01,
+                                    10.0, 0.0, 1.0, 0.00001, 10.0, 0.00001, 10.0, 0.00001, 10.0;
+        }
+        grasp_estim.setMatrix("bounds_constr_left", bounds_constr_left);
+
 
         vis.visualize();
 
@@ -406,6 +507,14 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           {
               right_arm_client.close();
           }
+
+          return true;
+      }
+
+      /****************************************************************/
+      bool set_single_superq(const string &value)
+      {
+          single_superq = (value == "on");
 
           return true;
       }
@@ -542,8 +651,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               {
                   Eigen::VectorXd pose;
                   pose.resize(7);
-                  pose.head(3) = grasp_res_hand1.grasp_poses[grasp_res_hand2.best_pose].getGraspPosition();
-                  pose.tail(4) = grasp_res_hand1.grasp_poses[grasp_res_hand2.best_pose].getGraspAxisAngle();
+                  pose.head(3) = grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose].getGraspPosition();
+                  pose.tail(4) = grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose].getGraspAxisAngle();
                   best_pose = eigenToYarp(pose);
               }
           }
@@ -637,10 +746,18 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           vis.addPoints(point_cloud, false);
 
           // Compute superq
-          superqs = estim.computeSuperq(point_cloud);
-
+          if (single_superq)
+          {
+              superqs = estim.computeSuperq(point_cloud);
+              vis.addPoints(point_cloud, true);
+          }
+          else
+          {
+              superqs = estim.computeMultipleSuperq(point_cloud);
+              vis.addPoints(point_cloud, false);
+          }
           // Visualize downsampled point cloud and estimated superq
-          vis.addPoints(point_cloud, true);
+
           vis.addSuperq(superqs);
 
           getTable();
@@ -727,11 +844,13 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               else if (grasping_hand == WhichHand::HAND_RIGHT)
               {
                   int best_right = grasp_res_hand1.best_pose;
+                  best_hand = "right";
                   vis.highlightBestPose("right", "both", best_right);
               }
               else if (grasping_hand == WhichHand::HAND_LEFT)
               {
                   int best_left = grasp_res_hand1.best_pose;
+                  best_hand = "left";
                   vis.highlightBestPose("left", "both", best_left);
               }
           }
@@ -862,18 +981,24 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
       /****************************************************************/
       bool executeGrasp(Vector &pose, string &best_hand)
       {
+          Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
+
           if(robot == "icubSim" )
           {
               //  simulation context, suppose there is no actionsRenderingEngine running
               if (best_hand == "right")
               {
                   int context_backup;
+                  cout << "|| ---------------------------------------------------- ||"  << endl;
+                  cout << "|| Right hand reaching  pose                             :" << yarpToEigen(pose).format(CommaInitFmt) << endl;
                   icart_right->storeContext(&context_backup);
                   setGraspContext(icart_right);
                   Vector previous_x(3), previous_o(4);
                   icart_right->getPose(previous_x, previous_o);
                   icart_right->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
                   icart_right->waitMotionDone();
+                  cout << "|| Right hand going back to                              :" << yarpToEigen(previous_x).format(CommaInitFmt) << yarpToEigen(previous_o).format(CommaInitFmt) << endl;
+                  cout << "|| ---------------------------------------------------- ||"  << endl;
                   icart_right->goToPoseSync(previous_x, previous_o);
                   icart_right->waitMotionDone();
                   icart_right->restoreContext(context_backup);
@@ -883,12 +1008,16 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               else if (best_hand == "left")
               {
                 int context_backup;
+                cout << "|| ---------------------------------------------------- ||"  << endl;
+                cout << "|| Left hand reaching  pose                            :" << yarpToEigen(pose).format(CommaInitFmt) << endl;
                 icart_left->storeContext(&context_backup);
                 setGraspContext(icart_left);
                 Vector previous_x(3), previous_o(4);
                 icart_left->getPose(previous_x, previous_o);
                 icart_left->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
                 icart_left->waitMotionDone();
+                cout << "|| Left hand going back to                             :" << yarpToEigen(previous_x).format(CommaInitFmt) << yarpToEigen(previous_o).format(CommaInitFmt) << endl;
+                cout << "|| ---------------------------------------------------- ||"  << endl;
                 icart_left->goToPoseSync(previous_x, previous_o);
                 icart_left->waitMotionDone();
                 icart_left->restoreContext(context_backup);

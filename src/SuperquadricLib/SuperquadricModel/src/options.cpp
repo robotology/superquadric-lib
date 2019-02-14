@@ -142,7 +142,7 @@ void Options::SetBoolValue(const string &tag, const bool &value)
     {
         pars.random_sampling = value;
         cout << "|| ---------------------------------------------------- ||" << endl;
-        cout << "|| Random sampling set                                      : " << pars.random_sampling <<endl;
+        cout << "|| Random sampling set                                  : " << pars.random_sampling <<endl;
         cout << "|| ---------------------------------------------------- ||" << endl << endl;
     }
     else if (tag == "merge_model")
