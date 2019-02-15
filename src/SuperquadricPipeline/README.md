@@ -50,6 +50,20 @@ Here is a brief description of the main steps required to play with `superquadri
      | `m_pars` | Multiple superquadric estimation |  [Link to the code](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricLib/SuperquadricModel/src/superquadricEstimator.cpp#L344) |
     |`iparams_grasp` | Grasping pose computation | [Link to the code](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricLib/SuperquadricGrasp/src/graspComputation.cpp#L875)  |  
     | `g_params` | Grasping pose computation | [Link to the code](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricLib/SuperquadricGrasp/src/graspComputation.cpp#L885)|
+    
+    **Note:** Setting the parameters can be done using the following functions of the `SuperquadricEstimatorApp` and `GraspEstimatorApp` classes:
+    - `SetStringValue(<tag>, <value>)`, for strings;
+    - `SetNumericValue(<tag>, <value>)`, for doubles;
+    - `SetIntegerValue(<tag>, <value>)`, for ints;
+    - `SetBoolValue(<tag>, <value>)`, for bools;
+    - `setVector(<tag>, <value>)`, for Eigen vectors;
+    - `setMatrix(<tag>, <value>)`, for Eigen matrices;
+    
+    Example:
+    ```
+    estim.SetStringValue("object_class", "box");
+    grasp_estim.SetDoubleValue("tol", 1e-5);
+    ```
 
 3. [Read the object point cloud](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/single-superq/main.cpp#L78)
 and save them in `all_points`.
