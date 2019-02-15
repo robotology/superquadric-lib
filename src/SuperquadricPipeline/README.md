@@ -80,7 +80,7 @@ and save them in `all_points`.
 6. (Optional) Refine pose cost according to the kinematics of a specific robot.
 
    In order to choose the best pose for grasping the object, the cost function of each pose also takes into account its     reachability for a specific robot.
-If you are provided with the pose actually reachable by the robot, you can refine the cost like that:
+   If you are provided with the pose actually reachable by the robot, you can refine the cost like that:
 ```
    Vector6d (or Vector7d) pose_reachable;  
    pose_reachable = ... ;                             // This can be obtained by the kinematic 
