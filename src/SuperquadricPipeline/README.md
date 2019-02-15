@@ -51,7 +51,7 @@ Here is a brief description of the main steps required to play with `superquadri
     |`iparams_grasp` | Grasping pose computation | [Link to the code](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricLib/SuperquadricGrasp/src/graspComputation.cpp#L875)  |  
     | `g_params` | Grasping pose computation | [Link to the code](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricLib/SuperquadricGrasp/src/graspComputation.cpp#L885)|
     
-    **Note:** Setting the parameters can be done using the following functions of the `SuperquadricEstimatorApp` and `GraspEstimatorApp` classes:
+    **Note:** Custom parameters can be set using the following functions of the `SuperquadricEstimatorApp` and `GraspEstimatorApp` classes:
     - `SetStringValue(<tag>, <value>)`, for strings;
     - `SetNumericValue(<tag>, <value>)`, for doubles;
     - `SetIntegerValue(<tag>, <value>)`, for ints;
