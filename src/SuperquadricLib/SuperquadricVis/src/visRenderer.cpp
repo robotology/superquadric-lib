@@ -62,8 +62,10 @@ Visualizer::Visualizer()
 
     vtk_all_points = unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
     vtk_dwn_points = unique_ptr<PointsVis>(new PointsVis(dwn_points,size_points));
+    vtk_hand_points = unique_ptr<PointsVis>(new PointsVis(all_points,size_points));
     vtk_renderer->AddActor(vtk_all_points->get_actor());
     vtk_renderer->AddActor(vtk_dwn_points->get_actor());
+    vtk_renderer->AddActor(vtk_hand_points->get_actor());
 
     vtk_plane = unique_ptr<PlaneVis>(new PlaneVis(-0.18));
     vtk_renderer->AddActor(vtk_plane->get_actor());
@@ -74,6 +76,14 @@ Visualizer::Visualizer()
         r.setZero();
         vtk_superquadrics.push_back(unique_ptr<SuperquadricVis>(new SuperquadricVis(r)));
         vtk_renderer->AddActor(vtk_superquadrics[i]->get_actor());
+    }
+
+    for (int i = 0; i < max_superq_vis; i++)
+    {
+        Vector12d r;
+        r.setZero();
+        vtk_hand_superquadrics.push_back(unique_ptr<SuperquadricVis>(new SuperquadricVis(r)));
+        vtk_renderer->AddActor(vtk_hand_superquadrics[i]->get_actor());
     }
 
     for (size_t idx = 0; idx < max_superq_vis * 2; idx++)
@@ -149,6 +159,16 @@ void Visualizer::addPoints(PointCloud point_cloud, const bool &show_downsample)
 }
 
 /**********************************************/
+void Visualizer::addPointsHands(PointCloud point_cloud)
+{
+    vector<Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> all_points = point_cloud.points_for_vis;
+
+    mtx.lock();
+    vtk_hand_points->set_points(all_points);
+    mtx.unlock();
+}
+
+/**********************************************/
 void Visualizer::addPlane(const double &z)
 {
     mtx.lock();
@@ -195,6 +215,27 @@ void Visualizer::addSuperq(vector<SuperqModel::Superquadric> &s)
 }
 
 /**********************************************/
+void Visualizer::addSuperqHands(vector<SuperqModel::Superquadric> &s)
+{
+    Vector12d r;
+
+    mtx.lock();
+
+    for (size_t i = 0; i < s.size(); i++)
+    {
+        r.segment(0,3) = s[i].getSuperqCenter();
+        r.segment(3,4) = s[i].getSuperqAxisAngle();
+        r.segment(7,3) = s[i].getSuperqDims();
+        r.segment(10, 2) = s[i].getSuperqExps();
+
+        vtk_hand_superquadrics[i]->set_parameters(r);
+    }
+
+    mtx.unlock();
+}
+
+
+/**********************************************/
 void Visualizer::resetSuperq()
 {
     mtx.lock();
@@ -205,6 +246,14 @@ void Visualizer::resetSuperq()
         r.setZero();
 
         vtk_superquadrics[i]->set_parameters(r);
+    }
+
+    for (size_t i = 0; i < vtk_hand_superquadrics.size(); i++)
+    {
+        Vector12d r;
+        r.setZero();
+
+        vtk_hand_superquadrics[i]->set_parameters(r);
     }
 
     mtx.unlock();
@@ -329,6 +378,7 @@ void Visualizer::resetPoints()
     mtx.lock();
     vtk_all_points->set_points(all_points);
     vtk_dwn_points->set_points(all_points);
+    vtk_hand_points->set_points(all_points);
     mtx.unlock();
 }
 

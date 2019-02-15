@@ -96,13 +96,7 @@ int main(int argc, char* argv[])
     superqs = estim.computeSuperq(point_cloud);
 
       /*******************************************/
-    // Compute grasp pose for left hand
-    grasp_res = grasp_estim.computeGraspPoses(superqs);
-
-    // Add poses for grasping
-    vis.addPoses(grasp_res.grasp_poses);
-
-    // Compute grasp pose for left hand
+    // Compute grasp pose for right hand
     grasp_res = grasp_estim.computeGraspPoses(superqs);
 
     // Add poses for grasping
@@ -121,10 +115,10 @@ int main(int argc, char* argv[])
     vis.addPlane(grasp_estim.getPlaneHeight());
 
     // Add hands in final pose for grasping
-    vis.addSuperq(grasp_res.hand_superq); // Uncomment this to visualize hand ellipsoid in the final pose
+    vis.addSuperqHands(grasp_res.hand_superq); // Uncomment this to visualize hand ellipsoid in the final pose
 
     points_hand.setPoints(grasp_res.points_on[0]);  // Uncomment this to visualize points on the hand ellipsoid
-    vis.addPoints(points_hand, false);
+    vis.addPointsHands(points_hand);
 
     // Visualize
     vis.visualize();

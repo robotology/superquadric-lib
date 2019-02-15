@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
     /*******************************************/
 
     // Compute superq
-    estim.SetNumericValue("threshold_section2",0.005 );
+    estim.SetNumericValue("threshold_section2",0.03);
     superqs = estim.computeMultipleSuperq(point_cloud);
 
 
@@ -123,11 +123,11 @@ int main(int argc, char* argv[])
 
     // Add poses for grasping
     vis.addPoses(grasp_res.grasp_poses);
-    //vis.addSuperq(grasp_res.hand_superq);           // Uncomment this to visualize the hand ellipsoid
+    //vis.addSuperqHands(grasp_res.hand_superq);           // Uncomment this to visualize the hand ellipsoid
 
     //PointCloud points_hand;
     //points_hand.setPoints(grasp_res.points_on[0]);  // Uncomment this to visualize points on the hand ellipsoid
-    //vis.addPoints(points_hand, false);
+    //vis.addPointsHands(points_hand);
 
     // Outcome visualization
     // Add superquadric to visualizer

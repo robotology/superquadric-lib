@@ -54,6 +54,9 @@ protected:
     std::vector<std::vector<unsigned char>> all_colors;
     // For visualizing superquadrics
     std::vector<std::unique_ptr<SuperqVis::SuperquadricVis>> vtk_superquadrics;
+    // For visualizing hand superquadrics
+    std::vector<std::unique_ptr<SuperqVis::SuperquadricVis>> vtk_hand_superquadrics;
+    std::unique_ptr<SuperqVis::PointsVis> vtk_hand_points;
     // For visualizing plane
     std::unique_ptr<SuperqVis::PlaneVis> vtk_plane;
 
@@ -102,6 +105,12 @@ public:
     void addSuperq(std::vector<SuperqModel::Superquadric> &superq);
 
     /** Start visualizer
+    * @param s is a superquadric visualizer
+    * @return true/false on success/failuer
+    */
+    void addSuperqHands(std::vector<SuperqModel::Superquadric> &s);
+
+    /** Start visualizer
     * @param p is a plane visualizer
     * @return true/false on success/failuer
     */
@@ -112,6 +121,12 @@ public:
     * @return true/false on success/failuer
     */
     void addPoints(SuperqModel::PointCloud point_cloud, const bool &show_downsample);
+
+    /** Start visualizer
+    * @param p is a points visualizer
+    * @return true/false on success/failuer
+    */
+    void addPointsHands(SuperqModel::PointCloud point_cloud);
 
     /** Start visualizer
     * @param p is a pose visualizer
