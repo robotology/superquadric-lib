@@ -40,6 +40,10 @@ This release provides methods to:
  3. `SuperquadricLibVis`, to visualize everything (it requires 1. and 2.);
  4. `Superquadric-Pipeline-Single` and `Superquadric-Pipeline-Multiple`, executables providing an example on how to compute single/multiple superquadric object models and the grasping pose starting from the object point cloud and show the results using the visualizer. They require 1 - 3.
  
+ **Optional:**
+ 
+ Enabling the cmake flag `YARP_EXE`, also a `Yarp-based-Demo`, named `Superquadric-Lib-Demo`, will be compiled. This is a demo that uses the `superquadric-lib` to execute superquadric modeling and grasping on the iCub robot, iCub simulator and R1 robot. An overview of the `Superquadric-Lib-Demo` is provided [here](https://github.com/robotology/superquadric-lib/tree/master/src/SuperquadricPipeline/yarp-demo).
+ 
  ## How to link
  Once the library is installed, you can link it using `CMake` by writing the following line of code in your project `CMakeLists.txt`:
  
