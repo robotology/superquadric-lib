@@ -71,6 +71,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
     RpcServer user_rpc;
 
+    string object_class;
+    vector<string> classes;
+
     bool closing;
 
     string robot;
@@ -298,7 +301,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         // Set Superquadric Model parameters
         double tol_superq = rf.check("tol_superq", Value(1e-5)).asDouble();
         int print_level_superq = rf.check("print_level_superq", Value(0)).asInt();
-        string object_class = rf.check("object_class", Value("default")).toString();
+        object_class = rf.check("object_class", Value("default")).toString();
         int optimizer_points = rf.check("optimizer_points", Value(50)).asInt();
         bool random_sampling = rf.check("random_sampling", Value(true)).asBool();
         single_superq = rf.check("single_superq", Value(true)).asBool();
@@ -470,7 +473,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         }
         grasp_estim.setMatrix("bounds_constr_left", bounds_constr_left);
 
-
+        classes.push_back("box");
+        classes.push_back("sphere");
+        classes.push_back("cylinder");
         // Start visualization
         vis.visualize();
 
@@ -641,6 +646,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           fixate_object = true;
 
           bool ok = requestPointCloud(object_name);
+
+          if (isInClasses(object_name))
+              object_class = object_name;
 
           if (ok == true && point_cloud.getNumberPoints() > 0)
           {
@@ -839,8 +847,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           }
 
           double t1=Time::now();
-          yInfo()<<points_yarp.size() - in_points.size()<<"outliers removed out of"
-                 <<points_yarp.size()<<"points in"<<t1-t0<<"[s]";
+
+          cout << "|| ---------------------------------------------------- ||" << endl;
+          cout<<"|| Outliers removed                                      : "<<points_yarp.size() - in_points.size()<<endl;
+          cout << "|| ---------------------------------------------------- ||" << endl<<endl;
 
           all_colors = in_colors;
 
@@ -859,8 +869,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           vis.addPoints(point_cloud, false);
 
           // Compute superq
-          if (single_superq)
+          if (single_superq || object_class != "default")
           {
+              estim.SetStringValue("object_class", object_class);
               superqs = estim.computeSuperq(point_cloud);
               vis.addPoints(point_cloud, true);
           }
@@ -997,10 +1008,17 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           }
           if (!table_ok)
           {
-              yWarning() << " Unable to retrieve table height, using default.";
+            cout << "|| ---------------------------------------------------- ||" << endl;
+            cout << "|| Unable to retrieve object table                      ||" << endl;
+            cout << "|| Unsig default value                                  : " << -plane[3] << endl;
+            cout << "|| ---------------------------------------------------- ||" << endl << endl;
           }
-
-          yInfo() << " Using table height =" << - plane[3];
+          else
+          {
+              cout << "|| ---------------------------------------------------- ||" << endl;
+              cout << "|| Unsig plane value                                    : " << -plane[3] << endl;
+              cout << "|| ---------------------------------------------------- ||" << endl << endl;
+          }
       }
 
       /****************************************************************/
@@ -1176,6 +1194,21 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               }
           }
 
+      }
+
+      /****************************************************************/
+      bool isInClasses(const string &obj_name)
+      {
+          auto it = find(classes.begin(), classes.end(), obj_name);
+          if (it != classes.end())
+          {
+              cout << "|| ---------------------------------------------------- ||" << endl;
+              cout<<"|| Object name is one of the classes                    ||"<<endl;
+              cout << "|| ---------------------------------------------------- ||" << endl << endl;
+              return true;
+          }
+          else
+              return false;
       }
 
       /************************************************************************/
