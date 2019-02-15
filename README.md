@@ -42,7 +42,7 @@ This release provides methods to:
  
  **Optional:**
  
- Enabling the cmake flag `YARP_EXE`, also a `Yarp-based-Demo`, named `Superquadric-Lib-Demo`, will be compiled. This is a demo that uses the `superquadric-lib` to execute superquadric modeling and grasping on the iCub robot, iCub simulator and R1 robot. An overview of the `Superquadric-Lib-Demo` is provided [here](https://github.com/robotology/superquadric-lib/tree/master/src/SuperquadricPipeline/yarp-demo).
+ Enabling the cmake flag `YARP_EXE` will compile also a `Yarp-based-Demo`, named `Superquadric-Lib-Demo`. This is a demo that uses the `superquadric-lib` to execute superquadric modeling and grasping on the iCub robot, iCub simulator and R1 robot. An overview of the `Superquadric-Lib-Demo` is provided [here](https://github.com/robotology/superquadric-lib/tree/master/src/SuperquadricPipeline/yarp-demo).
  
  ## How to link
  Once the library is installed, you can link it using `CMake` by writing the following line of code in your project `CMakeLists.txt`:
