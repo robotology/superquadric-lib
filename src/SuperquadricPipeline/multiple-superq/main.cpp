@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
     //grasp_res.grasp_poses[0].setGraspParamsHat(pose_robot);
     //pose_robot << -0.4, 0.0, -0.1, 0.0, 0.0, 0.0;
     //grasp_res.grasp_poses[1].setGraspParamsHat(pose_robot);
-    //grasp_estim.refinePoseCost(grasp_res.grasp_poses);
+    //grasp_estim.refinePoseCost(grasp_res);
 
     // Add poses for grasping
     //vis.addPoses(grasp_res.grasp_poses);
