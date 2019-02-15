@@ -57,7 +57,7 @@ Here is a brief description of the main steps required to play with `superquadri
     - `SetIntegerValue(<tag>, <value>)`, for ints;
     - `SetBoolValue(<tag>, <value>)`, for bools;
     - `setVector(<tag>, <value>)`, for Eigen vectors;
-    - `setMatrix(<tag>, <value>)`, for Eigen matrices;
+    - `setMatrix(<tag>, <value>)`, for Eigen matrices.
     
     Example:
     ```
@@ -65,7 +65,7 @@ Here is a brief description of the main steps required to play with `superquadri
     grasp_estim.SetDoubleValue("tol", 1e-5);
     ```
 
-3. [Read the object point cloud](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/single-superq/main.cpp#L78)
+3. [Read the object point cloud](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/single-superq/main.cpp#L51)
 and save them in `all_points`.
 4. Estimate the superquadric:
 ```
