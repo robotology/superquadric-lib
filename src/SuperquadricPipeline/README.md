@@ -81,16 +81,16 @@ and save them in `all_points`.
 
    In order to choose the best pose for grasping the object, the cost function of each pose also takes into account its     reachability for a specific robot.
 If you are provided with the pose actually reachable by the robot, you can refine the cost like that:
-   ```
+```
    Vector6d (or Vector7d) pose_reachable;  
-   pose_reachable = ... ;                            // This can be obtained by the kinematic 
-                                                     //  solver of your robot
+   pose_reachable = ... ;                             // This can be obtained by the kinematic 
+                                                      //  solver of your robot
    for (int i=0; i<grasp_res.grasp_poses.size(); i++)                                                  
-   grasp_res.grasp_poses[i].setGraspParamsHat(       // Set the pose actually reachable
+   grasp_res.grasp_poses[i].setGraspParamsHat(        // Set the pose actually reachable
                               pose_reachable);     
-   grasp_estim.refinePoseCost(grasp_res);            // The cost of each pose involved will be
-                                                     // updated considering the error of reachability
-   ```
+   grasp_estim.refinePoseCost(grasp_res);             // The cost of each pose involved will be
+                                                      // updated considering the error of reachability
+```
    A more extensive example is provided [here](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/multiple-superq/main.cpp#L107).
 
 7. Visualize everything
