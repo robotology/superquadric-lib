@@ -126,9 +126,9 @@ endif()
 
 # Enable RPATH support for installed binaries and libraries
 include(AddInstallRPATHSupport)
-add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_LIBDIR}"
-                          LIB_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
-                          INSTALL_NAME_DIR "${CMAKE_INSTALL_FULL_LIBDIR}"
+add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
+                          LIB_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
+                          INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}"
                           USE_LINK_PATH)
 
 # Encourage user to specify a build type (e.g. Release, Debug, etc.), otherwise set it to Release.
@@ -158,6 +158,7 @@ add_subdirectory(src)
 #
 # Note that if your library depends from other libraries, you are probably
 # required to used the install_basic_package_files() DEPENDENCIES option.
+
 
 include(InstallBasicPackageFiles)
 install_basic_package_files(${PROJECT_NAME}

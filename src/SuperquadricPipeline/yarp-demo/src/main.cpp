@@ -785,8 +785,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
          vector<Vector> acquired_points;
          vector<vector<unsigned char>> acquired_colors;
 
-         Vector point;
+         Vector point(3);
          vector<unsigned char> c;
+         c.resize(3);
 
          for (size_t i = 0; i < pc.size(); i++)
          {
@@ -999,7 +1000,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                       plane(1) = 0.0;
                       plane(2) = 1.0;
 
-                      plane(3) = payload->get(1).asDouble();
+                      plane(3) = -payload->get(1).asDouble();
                       table_ok = true;
 
                       grasp_estim.setVector("plane", plane);

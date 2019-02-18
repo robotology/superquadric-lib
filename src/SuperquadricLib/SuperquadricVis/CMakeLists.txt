@@ -94,6 +94,7 @@ endif()
 
 #set(${PROJECT_NAME}_TARGETS ${${PROJECT_NAME}_TARGETS} ${LIBRARY_TARGET_NAME} PARENT_SCOPE)
 
+
 # Specify installation targets, typology and destination folders.
 install(TARGETS ${LIBRARY_TARGET_NAME}
         EXPORT  ${PROJECT_NAME}
