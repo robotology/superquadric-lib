@@ -806,6 +806,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
          if (success && (pc.size() > 0))
          {
             point_cloud.setPoints(all_points);
+            point_cloud.setColors(acquired_colors);
             return true;
          }
          else
@@ -1000,7 +1001,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                       plane(1) = 0.0;
                       plane(2) = 1.0;
 
-                      plane(3) = -payload->get(1).asDouble();
+                      plane(3) = -payload->get(1).asDouble() + 0.035;
                       table_ok = true;
 
                       grasp_estim.setVector("plane", plane);

@@ -1,5 +1,5 @@
 <application>
-    <name>Superquadric Lib Yarp Demo</name>
+    <name>Superquadric Lib Demo</name>
 
     <dependencies>
         <port>/pointCloudRead/rpc</port>
