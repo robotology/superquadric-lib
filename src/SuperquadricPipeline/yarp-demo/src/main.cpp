@@ -971,13 +971,13 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               {
                   int best_right = grasp_res_hand1.best_pose;
                   best_hand = "right";
-                  vis.highlightBestPose("right", "both", best_right);
+                  vis.highlightBestPose("right", "right", best_right);
               }
               else if (grasping_hand == WhichHand::HAND_LEFT)
               {
                   int best_left = grasp_res_hand1.best_pose;
                   best_hand = "left";
-                  vis.highlightBestPose("left", "both", best_left);
+                  vis.highlightBestPose("left", "left", best_left);
               }
           }
       }
