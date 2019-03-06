@@ -5,7 +5,9 @@ find_package(YARP CONFIG REQUIRED
 			OS
 			math
 			sig
-			gsl)
+			gsl
+			eigen
+			)
 
 find_package(ICUB REQUIRED)
 find_package(ICUBcontrib REQUIRED)
@@ -37,6 +39,7 @@ target_link_libraries(${EXE_TARGET_NAME}
                       YARP::YARP_math
                       YARP::YARP_sig
 					  YARP::YARP_gsl
+					  YARP::YARP_eigen
 					  )
 
 

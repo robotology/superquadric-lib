@@ -20,6 +20,7 @@
  #include <yarp/os/all.h>
  #include <yarp/sig/all.h>
  #include <yarp/math/Math.h>
+ #include <yarp/eigen/Eigen.h>
  #include <yarp/dev/Drivers.h>
  #include <yarp/dev/CartesianControl.h>
  #include <yarp/dev/PolyDriver.h>
@@ -40,6 +41,7 @@
  using namespace yarp::sig;
  using namespace yarp::dev;
  using namespace yarp::math;
+ using namespace yarp::eigen;
  using namespace iCub::ctrl;
 
  /****************************************************************/
@@ -843,7 +845,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           {
               if (c.find(i)!=end(c))
               {
-                  in_points.push_back(yarpToEigen(points_yarp[i]));
+                  in_points.push_back(toEigen(points_yarp[i]));
                   in_colors.push_back(all_colors[i]);
               }
           }
@@ -1050,21 +1052,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
           return x;
       }
-
-      /****************************************************************/
-      Eigen::VectorXd yarpToEigen(Vector &v)
-      {
-          Eigen::VectorXd x;
-          x.resize(v.size());
-
-          for (size_t i = 0; i< x.size(); i++)
-          {
-              x[i] = v[i];
-          }
-
-          return x;
-      }
-
+      
       /****************************************************************/
       void computePoseHat(GraspResults &grasp_res, ICartesianControl *icart)
       {
@@ -1086,8 +1074,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
               bool success = icart->askForPose(x_d, o_d, x_d_hat, o_d_hat, q_d_hat);
 
-              Eigen::VectorXd pose_hat = yarpToEigen(x_d_hat);
-              Eigen::VectorXd or_hat = yarpToEigen(o_d_hat);
+              Eigen::VectorXd pose_hat = toEigen(x_d_hat);
+              Eigen::VectorXd or_hat = toEigen(o_d_hat);
 
               Eigen::VectorXd robot_pose;
               robot_pose.resize(7);
@@ -1117,14 +1105,14 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               {
                   int context_backup;
                   cout << "|| ---------------------------------------------------- ||"  << endl;
-                  cout << "|| Right hand reaching  pose                             :" << yarpToEigen(pose).format(CommaInitFmt) << endl;
+                  cout << "|| Right hand reaching  pose                             :" << toEigen(pose).format(CommaInitFmt) << endl;
                   icart_right->storeContext(&context_backup);
                   setGraspContext(icart_right);
                   Vector previous_x(3), previous_o(4);
                   icart_right->getPose(previous_x, previous_o);
                   icart_right->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
                   icart_right->waitMotionDone();
-                  cout << "|| Right hand going back to                              :" << yarpToEigen(previous_x).format(CommaInitFmt) << yarpToEigen(previous_o).format(CommaInitFmt) << endl;
+                  cout << "|| Right hand going back to                              :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
                   cout << "|| ---------------------------------------------------- ||"  << endl;
                   icart_right->goToPoseSync(previous_x, previous_o);
                   icart_right->waitMotionDone();
@@ -1136,14 +1124,14 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               {
                 int context_backup;
                 cout << "|| ---------------------------------------------------- ||"  << endl;
-                cout << "|| Left hand reaching  pose                            :" << yarpToEigen(pose).format(CommaInitFmt) << endl;
+                cout << "|| Left hand reaching  pose                            :" << toEigen(pose).format(CommaInitFmt) << endl;
                 icart_left->storeContext(&context_backup);
                 setGraspContext(icart_left);
                 Vector previous_x(3), previous_o(4);
                 icart_left->getPose(previous_x, previous_o);
                 icart_left->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
                 icart_left->waitMotionDone();
-                cout << "|| Left hand going back to                             :" << yarpToEigen(previous_x).format(CommaInitFmt) << yarpToEigen(previous_o).format(CommaInitFmt) << endl;
+                cout << "|| Left hand going back to                             :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
                 cout << "|| ---------------------------------------------------- ||"  << endl;
                 icart_left->goToPoseSync(previous_x, previous_o);
                 icart_left->waitMotionDone();
