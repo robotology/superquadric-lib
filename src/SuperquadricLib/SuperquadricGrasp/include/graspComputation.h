@@ -77,6 +77,8 @@ protected:
 
 public:
 
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     /* Points sampled on the hand ellipsoid */
     std::deque<Eigen::Vector3d> points_on;
 

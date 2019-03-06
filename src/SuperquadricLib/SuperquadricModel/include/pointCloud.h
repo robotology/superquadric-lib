@@ -31,6 +31,8 @@ public:
     Eigen::Matrix3d orientation;
     Matrix32d bounding_box;
 
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     /**
     * Constructor
     */
