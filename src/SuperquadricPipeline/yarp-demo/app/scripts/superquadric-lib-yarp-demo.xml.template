@@ -13,7 +13,7 @@
     </dependencies>
 
     <module>
-        <name>Superquadric-Pipeline-Yarp</name>
+        <name>Superquadric-Lib-Demo</name>
         <node>localhost</node>
     </module>
 

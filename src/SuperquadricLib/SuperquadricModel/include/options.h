@@ -12,7 +12,12 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
+#include <string>
+#include <vector>
+
 #include "superquadric.h"
+
+
 
 typedef Eigen::Matrix<double, 6, 2> Matrix62d;
 
