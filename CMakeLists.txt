@@ -165,7 +165,7 @@ install_basic_package_files(${PROJECT_NAME}
                             VERSION ${${PROJECT_NAME}_VERSION}
                             COMPATIBILITY AnyNewerVersion
 							FIRST_TARGET SuperquadricLibModel
-							DEPENDENCIES "VTK 8.1 REQUIRED" Eigen3
+							DEPENDENCIES VTK Eigen3
                             VARS_PREFIX ${PROJECT_NAME}
                             NO_CHECK_REQUIRED_COMPONENTS_MACRO
                             INCLUDE_CONTENT "include(\${VTK_USE_FILE})"
