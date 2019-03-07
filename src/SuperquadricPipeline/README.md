@@ -65,11 +65,14 @@ Here is a brief description of the main steps required to play with `superquadri
     grasp_estim.SetDoubleValue("tol", 1e-5);
     ```
 
-3. [Read the object point cloud](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/single-superq/main.cpp#L51)
-and save them in `all_points`.
-4. Estimate the superquadric:
+3. Read the object point cloud:
 ```
-  point_cloud.setPoints(all_points);                           // Fill the point cloud    
+point_cloud.readFromFile(argv[1]);                       // if from command line as char*
+point_cloud.readFromFile(file_path);                     // or if the file path is stored in a string
+```
+
+4. Estimate the superquadric:
+```                          // Fill the point cloud    
   superqs = estim.computeSuperq(point_cloud);                  // Estimate single superquadric model
   superqs = estim.computeMultipleSuperq(point_cloud);          // or multi-superquadric model
 ```
