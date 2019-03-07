@@ -74,7 +74,7 @@ Visualizer::Visualizer()
     {
         Vector12d r;
         r.setZero();
-        vtk_superquadrics.push_back(unique_ptr<SuperquadricVis>(new SuperquadricVis(r)));
+        vtk_superquadrics.push_back(unique_ptr<SuperquadricVis>(new SuperquadricVis(r, "superq")));
         vtk_renderer->AddActor(vtk_superquadrics[i]->get_actor());
     }
 
@@ -82,7 +82,7 @@ Visualizer::Visualizer()
     {
         Vector12d r;
         r.setZero();
-        vtk_hand_superquadrics.push_back(unique_ptr<SuperquadricVis>(new SuperquadricVis(r)));
+        vtk_hand_superquadrics.push_back(unique_ptr<SuperquadricVis>(new SuperquadricVis(r, "hand")));
         vtk_renderer->AddActor(vtk_hand_superquadrics[i]->get_actor());
     }
 

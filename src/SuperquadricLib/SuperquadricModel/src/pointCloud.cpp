@@ -13,6 +13,7 @@
 #include <boost/range/irange.hpp>
 
 #include <iostream>
+#include <fstream>
 #include <set>
 #include <cstdlib>
 
@@ -37,42 +38,48 @@ PointCloud::~PointCloud()
 /*********************************************/
 bool PointCloud::setPoints(const deque<Vector3d> &p)
 {
-    if (p[0].size() == 3)
+    if (p.size() > 0)
     {
-        deletePoints();
-        for (auto& point : p)
+        if (p[0].size() == 3)
         {
-            points.push_back(point);
-            points_for_vis.push_back(point);
+            deletePoints();
+            for (auto& point : p)
+            {
+                points.push_back(point);
+                points_for_vis.push_back(point);
+            }
+
+            n_points = points.size();
+
+            return true;
         }
-
-        n_points = points.size();
-
-        return true;
+        else
+            return false;
     }
-    else
-        return false;
 }
 
 /*********************************************/
 bool PointCloud::setColors(const vector<vector<unsigned char>> &c)
 {
     colors.clear();
-    if (c[0].size() == 3)
+    if (c.size() > 0)
     {
-        for (auto& color:c)
+        if (c[0].size() == 3)
         {
-            colors.push_back(color);
+            for (auto& color:c)
+            {
+                colors.push_back(color);
+            }
+
+            if (colors.size() == n_points)
+              return true;
+            else
+              return false;
+
         }
-
-        if (colors.size() == n_points)
-          return true;
         else
-          return false;
-
+            return false;
     }
-    else
-        return false;
 }
 
 /*********************************************/
@@ -211,4 +218,116 @@ void PointCloud::subSample(const int &desired_points, const bool &random)
     p_aux.clear();
 
     n_points = points.size();
+}
+
+/*********************************************/
+bool PointCloud::readFromFile(const char* file_name)
+{
+    deque<Vector3d> all_points;
+    vector<vector<unsigned char>> all_colors;
+
+    ifstream fin(file_name);
+    if (!fin.is_open())
+    {
+        cerr << "Unable to open file \"" << file_name << "\""<<endl;
+
+        return false;
+    }
+
+    Vector3d p(3);
+    vector<unsigned int> c_(3);
+    vector<unsigned char> c(3);
+
+    string line;
+
+    while (getline(fin,line))
+    {
+        istringstream iss(line);
+        if (!(iss >> p(0) >> p(1) >> p(2)))
+            break;
+        all_points.push_back(p);
+
+        fill(c_.begin(),c_.end(),120);
+        iss >> c_[0] >> c_[1] >> c_[2];
+        c[0]=(unsigned char)c_[0];
+        c[1]=(unsigned char)c_[1];
+        c[2]=(unsigned char)c_[2];
+
+        if (c[0] == c[1] && c[1] == c[2])
+         {
+             c[0] = 50;
+             c[1] = 100;
+             c[2] = 0;
+         }
+
+        all_colors.push_back(c);
+    }
+
+    if (all_points.size() == 0)
+    {
+        cout << endl;
+        cerr << "   No points found in file " << endl << endl;
+        return false;
+    }
+
+    this->setPoints(all_points);
+    this->setColors(all_colors);
+
+    return true;
+}
+
+/*********************************************/
+bool PointCloud::readFromFile(const string &file_name)
+{
+    deque<Vector3d> all_points;
+    vector<vector<unsigned char>> all_colors;
+
+    ifstream fin(file_name);
+    if (!fin.is_open())
+    {
+        cerr << "Unable to open file \"" << file_name << "\""<<endl;
+
+        return false;
+    }
+
+    Vector3d p(3);
+    vector<unsigned int> c_(3);
+    vector<unsigned char> c(3);
+
+    string line;
+
+    while (getline(fin,line))
+    {
+        istringstream iss(line);
+        if (!(iss >> p(0) >> p(1) >> p(2)))
+            break;
+        all_points.push_back(p);
+
+        fill(c_.begin(),c_.end(),120);
+        iss >> c_[0] >> c_[1] >> c_[2];
+        c[0]=(unsigned char)c_[0];
+        c[1]=(unsigned char)c_[1];
+        c[2]=(unsigned char)c_[2];
+
+        if (c[0] == c[1] && c[1] == c[2])
+         {
+             c[0] = 50;
+             c[1] = 100;
+             c[2] = 0;
+         }
+
+        all_colors.push_back(c);
+    }
+
+    if (all_points.size() == 0)
+    {
+        cout << endl;
+        cerr << "   No points found in file " << endl << endl;
+        return false;
+    }
+
+    this->setPoints(all_points);
+    this->setColors(all_colors);
+
+    return true;
 }

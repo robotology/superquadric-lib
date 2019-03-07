@@ -20,6 +20,7 @@ void UpdateCommand::Execute(vtkObject *caller, unsigned long vtkNotUsed(eventId)
              void *vtkNotUsed(callData))
 {
     mtx.lock();
+
     vtkRenderWindowInteractor* iren=static_cast<vtkRenderWindowInteractor*>(caller);
     if (closing!=nullptr)
     {

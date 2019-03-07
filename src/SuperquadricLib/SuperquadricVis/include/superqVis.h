@@ -35,7 +35,7 @@ public:
     /**
     * Constructor
     */
-    SuperquadricVis(const Vector12d &s);
+    SuperquadricVis(const Vector12d &r, const std::string &type);
 
     /**
     * Destructory

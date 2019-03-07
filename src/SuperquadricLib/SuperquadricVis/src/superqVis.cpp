@@ -19,7 +19,7 @@ using namespace SuperqVis;
 
 
 /**********************************************/
-SuperquadricVis::SuperquadricVis(const Vector12d &r)
+SuperquadricVis::SuperquadricVis(const Vector12d &r, const string &type)
 {
     double bx = 2.0*r(7);
     double by = 2.0*r(8);
@@ -51,7 +51,11 @@ SuperquadricVis::SuperquadricVis(const Vector12d &r)
 
     vtk_actor = vtkSmartPointer<vtkActor>::New();
     vtk_actor->SetMapper(vtk_mapper);
-    vtk_actor->GetProperty()->SetColor(0.0,0.3,0.6);
+    if (type == "superq")
+        vtk_actor->GetProperty()->SetColor(0.0,0.3,0.6);
+    else
+        vtk_actor->GetProperty()->SetColor(0.0,0.6,0.0);
+
     vtk_actor->GetProperty()->SetOpacity(0.25);
 
     vtk_transform = vtkSmartPointer<vtkTransform>::New();
