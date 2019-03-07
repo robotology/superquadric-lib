@@ -19,7 +19,7 @@ This release provides methods to:
 ### Dependencies
  - [`Ipopt`](https://projects.coin-or.org/Ipopt)
  - [`Eigen3`](https://bitbucket.org/eigen/eigen/)
- - [`VTK`](https://vtk.org/)
+ - [`VTK >= 8.1`](https://vtk.org/)
 
  
  ### How to build
@@ -42,15 +42,28 @@ This release provides methods to:
  
  **Optional:**
  
- Enabling the cmake flag `YARP_EXE` will compile also a `Yarp-based-Demo`, named `Superquadric-Lib-Demo`. This is a demo that uses the `superquadric-lib` to execute superquadric modeling and grasping on the iCub robot, iCub simulator and R1 robot. An overview of the `Superquadric-Lib-Demo` is provided [here](https://github.com/robotology/superquadric-lib/tree/master/src/SuperquadricPipeline/yarp-demo).
+ Enabling the cmake flag `YARP_EXE` will compile also a `Yarp-based-Demo`, named `Superquadric-Lib-Demo`. This is a demo that uses the `superquadric-lib` to execute superquadric modeling and grasping on the iCub robot, iCub simulator and R1 robot. 
+ 
+The following dependencies are required for this demo:
+
+- [`Yarp`](https://github.com/robotology/yarp)
+- [`icub-main`](https://github.com/robotology/icub-main)
+- [`icub-contrib-common`](https://github.com/robotology/icub-contrib-common)
+
+An overview of the `Superquadric-Lib-Demo` is provided [here](https://github.com/robotology/superquadric-lib/tree/master/src/SuperquadricPipeline/yarp-demo).
+ 
  
  ## How to link
  Once the library is installed, you can link it using `CMake` by writing the following line of code in your project `CMakeLists.txt`:
  
  ```
-find_package(SuperquadricLib<tag> 0.1 EXACT REQUIRED)
-target_link_libraries(<target> SuperquadricLib<tag>::SuperquadricLib<tag>)
+find_package(SuperquadricLib 0.1.0.0 EXACT REQUIRED)
+target_link_libraries(<target> SuperquadricLib::SuperquadricLib<tag>)
  ```
+ where `<tag>` can be:
+ - `Model`
+ - `Grasp`
+ - `Vis`
  
  ## How to use the library
  
