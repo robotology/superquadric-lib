@@ -908,41 +908,66 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           if (choose_hand)
           {
               // TODO extend to R1 (see cardinal-grasp-pointss)
-              if (grasping_hand == WhichHand::BOTH)
+              if ((robot == "icubSim") || (robot == "icub"))
               {
-                  if (left_arm_client.isValid())
+                  if (grasping_hand == WhichHand::BOTH)
                   {
-                      left_arm_client.view(icart_left);
+                      if (left_arm_client.isValid())
+                      {
+                          left_arm_client.view(icart_left);
 
-                      computePoseHat(grasp_res_hand2, icart_left);
+                          computePoseHat(grasp_res_hand2, icart_left);
+                      }
+
+                      if (right_arm_client.isValid())
+                      {
+                          right_arm_client.view(icart_right);
+
+                          computePoseHat(grasp_res_hand1, icart_right);
+                      }
                   }
-
-                  if (right_arm_client.isValid())
+                  else if (grasping_hand == WhichHand::HAND_RIGHT)
                   {
-                      right_arm_client.view(icart_right);
+                      if (right_arm_client.isValid())
+                      {
+                          right_arm_client.view(icart_right);
 
-                      computePoseHat(grasp_res_hand1, icart_right);
+                          computePoseHat(grasp_res_hand1, icart_right);
+                      }
+                  }
+                  else if (grasping_hand == WhichHand::HAND_LEFT)
+                  {
+                      if (left_arm_client.isValid())
+                      {
+                          left_arm_client.view(icart_left);
+
+                          computePoseHat(grasp_res_hand1, icart_left);
+                      }
                   }
               }
-              else if (grasping_hand == WhichHand::HAND_RIGHT)
+              else
               {
-                  if (right_arm_client.isValid())
+                  if(action_render_rpc.getOutputCount()<1)
                   {
-                      right_arm_client.view(icart_right);
-
-                      computePoseHat(grasp_res_hand1, icart_right);
+                      yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: no connection to action rendering module");
+                  }
+                  else
+                  {
+                      if (grasping_hand == WhichHand::BOTH)
+                      {
+                          computePoseHatR1(grasp_res_hand1, "right");
+                          computePoseHatR1(grasp_res_hand2, "left");
+                      }
+                      else if (grasping_hand == WhichHand::HAND_RIGHT)
+                      {
+                          computePoseHatR1(grasp_res_hand1, "right");
+                      }
+                      else if (grasping_hand == WhichHand::HAND_LEFT)
+                      {
+                          computePoseHatR1(grasp_res_hand1, "left");
+                      }
                   }
               }
-              else if (grasping_hand == WhichHand::HAND_LEFT)
-              {
-                  if (left_arm_client.isValid())
-                  {
-                      left_arm_client.view(icart_left);
-
-                      computePoseHat(grasp_res_hand1, icart_left);
-                  }
-              }
-
               grasp_estim.refinePoseCost(grasp_res_hand1);
 
               if (grasping_hand == WhichHand::BOTH)
@@ -1052,7 +1077,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
           return x;
       }
-      
+
       /****************************************************************/
       void computePoseHat(GraspResults &grasp_res, ICartesianControl *icart)
       {
@@ -1082,14 +1107,68 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               robot_pose.head(3) = pose_hat;
               robot_pose.tail(4) = or_hat;
 
-              for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
-              {
-                  grasp_res.grasp_poses[i].setGraspParamsHat(robot_pose);
-              }
+              //for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
+              //{
+              grasp_res.grasp_poses[i].setGraspParamsHat(robot_pose);
+              //}
 
               //  restore previous context
               icart->restoreContext(context_backup);
               icart->deleteContext(context_backup);
+          }
+      }
+
+      /****************************************************************/
+      void computePoseHatR1(GraspResults &grasp_res, const string &hand)
+      {
+          for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
+          {
+              Eigen::VectorXd desired_pose = grasp_res.grasp_poses[i].getGraspPosition();
+              Eigen::VectorXd desired_or = grasp_res.grasp_poses[i].getGraspAxisAngle();
+
+              Vector x_d = eigenToYarp(desired_pose);
+              Vector o_d = eigenToYarp(desired_or);
+
+              Bottle cmd, reply;
+              cmd.addVocab(Vocab::encode("ask"));
+              Bottle &subcmd = cmd.addList();
+              for(int i=0 ; i<3 ; i++) subcmd.addDouble(x_d[i]);
+              for(int i=0 ; i<4 ; i++) subcmd.addDouble(o_d[i]);
+
+              cmd.addString(hand);
+
+              action_render_rpc.write(cmd, reply);
+
+              if(reply.size()<1)
+              {
+                  yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: empty reply from action rendering module");
+              }
+
+              if(reply.get(0).asVocab() != Vocab::encode("ack"))
+              {
+                  yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: invalid reply from action rendering module:") << reply.toString();
+              }
+
+              if(reply.size()<3)
+              {
+                  yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: invlaid reply size from action rendering module") << reply.toString();
+              }
+
+              if(!reply.check("x"))
+              {
+                  yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: invalid reply from action rendering module: missing x:") << reply.toString();
+              }
+
+              Bottle *position = reply.find("x").asList();
+              Eigen::VectorXd robot_pose;
+              robot_pose.resize(7);
+              for(int i=0 ; i<3 ; i++) robot_pose(i) = position->get(i).asDouble();
+              for(int i=3 ; i<7 ; i++) robot_pose(i) = position->get(i).asDouble();
+
+              // for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
+              // {
+              grasp_res.grasp_poses[i].setGraspParamsHat(robot_pose);
+              // }
           }
       }
 
@@ -1142,6 +1221,11 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           }
           else
           {
+              Vector old_pose = pose;
+
+              cout<< "|| Pose to be fixed with calibration offsets              :" << toEigen(old_pose).format(CommaInitFmt)<< endl;
+              fixReachingOffset(old_pose, pose);
+              cout<< "|| Fixed pose                                             :" << toEigen(pose).format(CommaInitFmt)<< endl;
               //  communication with actionRenderingEngine/cmd:io
               //  grasp("cartesian" x y z gx gy gz theta) ("approach" (-0.05 0 +-0.05 0.0)) "left"/"right"
               Bottle command, reply;
@@ -1205,6 +1289,54 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
       bool attach(RpcServer &source)
       {
         return this->yarp().attachAsServer(source);
+      }
+
+      /****************************************************************/
+      bool fixReachingOffset(const Vector &poseToFix, Vector &poseFixed,
+                             const bool invert=false)
+      {
+          //  fix the pose offset accordint to iolReachingCalibration
+          //  pose is supposed to be (x y z gx gy gz theta)
+          if ((robot == "r1" || robot == "icub") && reach_calib_rpc.getOutputCount() > 0)
+          {
+              Bottle command, reply;
+
+              command.addString("get_location_nolook");
+              if (best_hand == "left")
+              {
+                  command.addString("iol-left");
+              }
+              else
+              {
+                  command.addString("iol-right");
+              }
+
+              command.addDouble(poseToFix(0));    //  x value
+              command.addDouble(poseToFix(1));    //  y value
+              command.addDouble(poseToFix(2));    //  z value
+              command.addInt(invert?1:0);         //  flag to invert input/output map
+
+              reach_calib_rpc.write(command, reply);
+
+              //  incoming reply is going to be (success x y z)
+              if (reply.size() < 2)
+              {
+                  yError() << prettyError( __FUNCTION__,  "Failure retrieving fixed pose");
+                  return false;
+              }
+              else if (reply.get(0).asVocab() == Vocab::encode("ok"))
+              {
+                  poseFixed = poseToFix;
+                  poseFixed(0) = reply.get(1).asDouble();
+                  poseFixed(1) = reply.get(2).asDouble();
+                  poseFixed(2) = reply.get(3).asDouble();
+                  return true;
+              }
+              else
+              {
+                  yWarning() << "Couldn't retrieve fixed pose. Continuing with unchanged pose";
+              }
+          }
       }
 };
 
