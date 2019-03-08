@@ -25,14 +25,11 @@ Instruction on how to build this demo are provided in the main [README.md](https
     - `iKinCartesianSolver` for one or both arms
 3. Communicate with the module through `rpc` commands:
    - `set_single_superq <value>`:
-   
       to use a single superquadric (`<value> = on`) or multiple superquadrics (`<value> = off`) to model the object
    - `from_off_file <file_name> <arm>`
-      
       to compute the superquadric model and grasping pose of the object with point cloud 
       in `<file_name>` for just one arm `<arm>=right or left` or for both `<arm>=both`
    - `grasp`
-   
       to simulate the grasp execution
 
 #### Online
@@ -42,15 +39,11 @@ Instruction on how to build this demo are provided in the main [README.md](https
 3. Launch and connect the modules in [superquadric-lib.xml.template](https://github.com/robotology/superquadric-lib/blob/master/src/SuperquadricPipeline/yarp-demo/app/scripts/superquadric-lib-yarp-demo.xml.template)
 4. Communicate with the module through `rpc` commands:
      - `set_single_superq <value>`
-      
         to use a single superquadric (`<value> = on`) or multiple superquadrics to model the object
      - `compute_superq_and_grasp <object_name> <arm>` 
-        
         to compute the superquadric model and grasping pose of 
       `<object_name>` for just one arm `<arm>=right or left` or for both `<arm>=both`
      - `grasp`
-        
         to execute the grasp
      - `drop`
-        
         to drop the object
