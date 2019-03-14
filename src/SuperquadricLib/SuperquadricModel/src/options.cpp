@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-#include "options.h"
+#include <SuperquadricLibModel/options.h>
 
 using namespace std;
 

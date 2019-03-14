@@ -1,7 +1,7 @@
 #ifndef SUPERQVTK_H
 #define SUPERQVTK_H
 
-#include "vis.h"
+#include <SuperquadricLibVis/vis.h>
 
 #include <vtkSuperquadric.h>
 #include <vtkSampleFunction.h>

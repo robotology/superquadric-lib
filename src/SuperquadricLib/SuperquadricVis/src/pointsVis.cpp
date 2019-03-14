@@ -9,7 +9,7 @@
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
 
-#include "pointsVis.h"
+#include <SuperquadricLibVis/pointsVis.h>
 
 using namespace std;
 using namespace Eigen;

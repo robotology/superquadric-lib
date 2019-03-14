@@ -9,7 +9,7 @@
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
 
-#include "pointCloud.h"
+#include <SuperquadricLibModel/pointCloud.h>
 #include <boost/range/irange.hpp>
 
 #include <iostream>

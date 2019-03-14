@@ -1,4 +1,4 @@
-#include "vis.h"
+#include <SuperquadricLibVis/vis.h>
 
 using namespace std;
 using namespace SuperqVis;

@@ -15,11 +15,11 @@ find_package(IPOPT REQUIRED)
 
 # List of HPP (header) library files.
 set(${LIBRARY_TARGET_NAME}_HDR
-        include/pointCloud.h
-		include/superquadricEstimator.h
-		include/superquadric.h
-		include/tree.h
-		include/options.h
+        include/SuperquadricLibModel/pointCloud.h
+		include/SuperquadricLibModel/superquadricEstimator.h
+		include/SuperquadricLibModel/superquadric.h
+		include/SuperquadricLibModel/tree.h
+		include/SuperquadricLibModel/options.h
 )
 # List of CPP (source) library files.
 set(${LIBRARY_TARGET_NAME}_SRC

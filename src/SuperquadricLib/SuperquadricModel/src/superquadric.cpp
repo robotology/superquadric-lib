@@ -9,7 +9,7 @@
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
 
-#include "superquadric.h"
+#include <SuperquadricLibModel/superquadric.h>
 
 #include <iostream>
 

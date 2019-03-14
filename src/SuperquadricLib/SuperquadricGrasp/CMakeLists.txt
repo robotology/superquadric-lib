@@ -17,8 +17,8 @@ set(${LIBRARY_TARGET_NAME}_SRC
 
 # List of HPP (header) library files.
 set(${LIBRARY_TARGET_NAME}_HDR
-        include/graspComputation.h
-		include/graspPoses.h
+        include/SuperquadricLibGrasp/graspComputation.h
+		include/SuperquadricLibGrasp/graspPoses.h
 )
 
 find_package(Eigen3 QUIET CONFIG)
@@ -56,7 +56,7 @@ set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES VERSION       ${${PROJEC
                                                         PUBLIC_HEADER "${${LIBRARY_TARGET_NAME}_HDR}")
 
 # Specify include directories for both compilation and installation process.
-# The $<INSTALL_PREFIX> generator expression is useful to ensure to create 
+# The $<INSTALL_PREFIX> generator expression is useful to ensure to create
 # relocatable configuration files, see https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html#creating-relocatable-packages
 target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                                                          "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")

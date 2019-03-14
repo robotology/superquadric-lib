@@ -16,10 +16,10 @@
 #include <IpIpoptApplication.hpp>
 #include <IpReturnCodes.hpp>
 
-#include "superquadric.h"
-#include "pointCloud.h"
-#include "tree.h"
-#include "options.h"
+#include <SuperquadricLibModel/superquadric.h>
+#include <SuperquadricLibModel/pointCloud.h>
+#include <SuperquadricLibModel/tree.h>
+#include <SuperquadricLibModel/options.h>
 
 typedef Eigen::Matrix<double, 11, 2>  Matrix112d;
 typedef Eigen::Matrix<double, 3, 2>  Matrix32d;
@@ -199,7 +199,7 @@ protected:
                            Ipopt::IpoptCalculatedQuantities *ip_cq);
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  
+
   SuperqModel::Superquadric solution;
   SuperqModel::PointCloud points_downsampled;
 

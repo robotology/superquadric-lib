@@ -9,7 +9,7 @@
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
 
-#include "visRenderer.h"
+#include <SuperquadricLibVis/visRenderer.h>
 
 using namespace std;
 using namespace SuperqVis;

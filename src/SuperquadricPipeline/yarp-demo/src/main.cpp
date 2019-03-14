@@ -27,9 +27,9 @@
 
  #include <iCub/ctrl/clustering.h>
 
- #include <superquadricEstimator.h>
- #include <visRenderer.h>
- #include <graspComputation.h>
+ #include <SuperquadricLibModel/superquadricEstimator.h>
+ #include <SuperquadricLibVis/visRenderer.h>
+ #include <SuperquadricLibGrasp/graspComputation.h>
  #include "src/SuperquadricPipelineDemo_IDL.h"
 
  using namespace std;

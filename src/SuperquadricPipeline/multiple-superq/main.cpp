@@ -9,9 +9,9 @@
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
 
-#include "superquadricEstimator.h"
-#include "visRenderer.h"
-#include "graspComputation.h"
+#include <SuperquadricLibModel/superquadricEstimator.h>
+#include <SuperquadricLibVis/visRenderer.h>
+#include <SuperquadricLibGrasp/graspComputation.h>
 
 #include <cstdlib>
 #include <cmath>

@@ -14,8 +14,8 @@
 
 #include <Eigen/Dense>
 
-#include "superquadric.h"
-#include "pointCloud.h"
+#include <SuperquadricLibModel/superquadric.h>
+#include <SuperquadricLibModel/pointCloud.h>
 
 namespace SuperqModel {
 

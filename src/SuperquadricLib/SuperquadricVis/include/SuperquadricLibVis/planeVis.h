@@ -1,7 +1,7 @@
 #ifndef PLANEVTK_H
 #define PLANEVTK_H
 
-#include "vis.h"
+#include <SuperquadricLibVis/vis.h>
 
 #include <vtkPlaneSource.h>
 

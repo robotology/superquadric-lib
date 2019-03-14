@@ -27,14 +27,14 @@
 #include <vtkWindowToImageFilter.h>
 #include <vtkPNGWriter.h>
 
-#include "vis.h"
-#include "planeVis.h"
-#include "pointsVis.h"
-#include "poseVis.h"
-#include "superqVis.h"
-#include "superquadric.h"
-#include "pointCloud.h"
-#include "graspPoses.h"
+#include <SuperquadricLibVis/vis.h>
+#include <SuperquadricLibVis/planeVis.h>
+#include <SuperquadricLibVis/pointsVis.h>
+#include <SuperquadricLibVis/poseVis.h>
+#include <SuperquadricLibVis/superqVis.h>
+#include <SuperquadricLibModel/superquadric.h>
+#include <SuperquadricLibModel/pointCloud.h>
+#include <SuperquadricLibGrasp/graspPoses.h>
 
 namespace SuperqVis {
 

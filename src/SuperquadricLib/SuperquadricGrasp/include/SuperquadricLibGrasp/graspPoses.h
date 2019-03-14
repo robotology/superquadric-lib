@@ -14,7 +14,7 @@
 
 #include <Eigen/Dense>
 
-#include "superquadric.h"
+#include <SuperquadricLibModel/superquadric.h>
 
 typedef Eigen::Matrix<double, 6, 1> Vector6d;
 

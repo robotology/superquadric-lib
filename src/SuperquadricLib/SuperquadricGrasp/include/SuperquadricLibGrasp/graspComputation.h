@@ -12,8 +12,8 @@
 #ifndef GRASPCOMPUTATION_H
 #define GRASPCOMPUTATION_H
 
-#include "superquadricEstimator.h"
-#include "graspPoses.h"
+#include <SuperquadricLibModel/superquadricEstimator.h>
+#include <SuperquadricLibGrasp/graspPoses.h>
 
 namespace SuperqGrasp {
 
@@ -78,7 +78,7 @@ protected:
 public:
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    
+
     /* Points sampled on the hand ellipsoid */
     std::deque<Eigen::Vector3d> points_on;
 

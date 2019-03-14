@@ -9,7 +9,7 @@
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
 
-#include "poseVis.h"
+#include <SuperquadricLibVis/poseVis.h>
 
 using namespace std;
 using namespace Eigen;

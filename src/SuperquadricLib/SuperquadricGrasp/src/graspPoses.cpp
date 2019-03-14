@@ -9,7 +9,7 @@
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
 
-#include "graspPoses.h"
+#include <SuperquadricLibGrasp/graspPoses.h>
 
 using namespace std;
 using namespace Eigen;

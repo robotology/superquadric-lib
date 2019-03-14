@@ -1,7 +1,7 @@
 #ifndef POINTSVTK_H
 #define POINTSVTK_H
 
-#include "vis.h"
+#include <SuperquadricLibVis/vis.h>
 
 #include <vector>
 #include <Eigen/Dense>

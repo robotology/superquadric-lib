@@ -12,7 +12,7 @@
 #ifndef POSEVIS_H
 #define POSEVIS_H
 
-#include "vis.h"
+#include <SuperquadricLibVis/vis.h>
 
 #include <Eigen/Dense>
 #include <vtkAxesActor.h>

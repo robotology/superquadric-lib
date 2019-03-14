@@ -1,4 +1,4 @@
-#include "planeVis.h"
+#include <SuperquadricLibVis/planeVis.h>
 
 using namespace std;
 using namespace SuperqVis;

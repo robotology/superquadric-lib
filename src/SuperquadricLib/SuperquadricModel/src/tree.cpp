@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-#include "tree.h"
+#include <SuperquadricLibModel/tree.h>
 
 using namespace std;
 using namespace Eigen;

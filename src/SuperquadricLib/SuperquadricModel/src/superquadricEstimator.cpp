@@ -14,7 +14,7 @@
 #include <iomanip>
 #include <ctime>
 
-#include "superquadricEstimator.h"
+#include <SuperquadricLibModel/superquadricEstimator.h>
 
 using namespace std;
 using namespace Eigen;

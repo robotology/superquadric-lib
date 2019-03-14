@@ -13,7 +13,7 @@
 #include <limits>
 #include <iomanip>
 
-#include "graspComputation.h"
+#include <SuperquadricLibGrasp/graspComputation.h>
 
 using namespace std;
 using namespace Eigen;

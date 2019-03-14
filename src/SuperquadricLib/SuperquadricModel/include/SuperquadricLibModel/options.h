@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "superquadric.h"
+#include <SuperquadricLibModel/superquadric.h>
 
 
 

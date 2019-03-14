@@ -9,7 +9,7 @@
  * @authors: Giulia Vezzani <giulia.vezzani@iit.it>
  */
 
-#include "superqVis.h"
+#include <SuperquadricLibVis/superqVis.h>
 
 #include <cmath>
 
