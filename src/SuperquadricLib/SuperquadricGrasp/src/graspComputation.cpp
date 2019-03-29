@@ -1059,7 +1059,7 @@ void GraspEstimatorApp::refinePoseCost(GraspResults &grasp_res)
           double error_orientation = (orientation_error_vector.axis()).norm() * fabs(sin(orientation_error_vector.angle()));
 
           double w1 = 1;
-          double w2 = 1;
+          double w2 = 0.01;
 
           if (error_position > 0.01)
           {
