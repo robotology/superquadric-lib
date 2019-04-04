@@ -1177,7 +1177,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
       {
           Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
 
-          if(robot == "icubSim" )
+          if(robot == "icubSim" || robot == "icub")
           {
               //  simulation context, suppose there is no actionsRenderingEngine running
               if (best_hand == "right")
