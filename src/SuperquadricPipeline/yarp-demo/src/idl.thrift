@@ -40,5 +40,8 @@
 
      bool set_single_superq(1: string value);
 
+	 bool take_tool();
+
+	 bool open_hand();
 
  }

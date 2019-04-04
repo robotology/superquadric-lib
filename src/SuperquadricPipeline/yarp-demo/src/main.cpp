@@ -1310,6 +1310,63 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
       }
 
       /****************************************************************/
+      bool take_tool()
+      {
+          Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
+
+          Vector grasping_current_pos(3), grasping_current_o(4);
+          icart_right->getPose(grasping_current_pos, grasping_current_o);
+
+          grasping_current_pos[2] += 0.02;
+
+          cout << "|| ---------------------------------------------------- ||"  << endl;
+          cout << "|| Lifting a bit the tool                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+          icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+          icart_right->waitMotionDone();
+
+          grasping_current_pos[0] += 0.08;
+
+          cout << "|| ---------------------------------------------------- ||"  << endl;
+          cout << "|| Moving the tool closer                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+          icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+          icart_right->waitMotionDone();
+
+          if (best_hand == "right")
+             grasping_current_pos[1] += 0.15;
+          else
+             grasping_current_pos[1] -= 0.15;
+
+             cout << "|| ---------------------------------------------------- ||"  << endl;
+             cout << "|| Moving the tool on the side                          :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+          icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+          icart_right->waitMotionDone();
+
+          return true;
+      }
+
+      /****************************************************************/
+      bool open_hand()
+      {
+          if (action_render_rpc.getOutputCount() > 0)
+          {
+              Bottle cmd, reply;
+              cmd.addVocab(Vocab::encode("hand"));
+              action_render_rpc.write(cmd, reply);
+              if (reply.get(0).asVocab() == Vocab::encode("ack"))
+                  return true;
+              else
+                  return false;
+          }
+          else
+          {
+              return false;
+          }
+      }
+
+      /****************************************************************/
       bool executeGrasp(Vector &pose, string &best_hand)
       {
           Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
@@ -1341,13 +1398,13 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                   icart_right->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
                   icart_right->waitMotionDone();
 
-                  cout << "|| Right hand going back to                              :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
-                  cout << "|| ---------------------------------------------------- ||"  << endl;
-                  icart_right->goToPoseSync(previous_x, previous_o);
-                  icart_right->waitMotionDone();
-
-                  icart_right->restoreContext(context_backup);
-                  icart_right->deleteContext(context_backup);
+                  // cout << "|| Right hand going back to                              :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
+                  // cout << "|| ---------------------------------------------------- ||"  << endl;
+                  // icart_right->goToPoseSync(previous_x, previous_o);
+                  // icart_right->waitMotionDone();
+                  //
+                  // icart_right->restoreContext(context_backup);
+                  // icart_right->deleteContext(context_backup);
                   return true;
               }
               else if (best_hand == "left")
@@ -1375,12 +1432,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                   icart_left->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
                   icart_left->waitMotionDone();
 
-                  cout << "|| Left hand going back to                             :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
-                  cout << "|| ---------------------------------------------------- ||"  << endl;
-                  icart_left->goToPoseSync(previous_x, previous_o);
-                  icart_left->waitMotionDone();
-                  icart_left->restoreContext(context_backup);
-                  icart_left->deleteContext(context_backup);
+                  // cout << "|| Left hand going back to                             :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
+                  // cout << "|| ---------------------------------------------------- ||"  << endl;
+                  // icart_left->goToPoseSync(previous_x, previous_o);
+                  // icart_left->waitMotionDone();
+                  // icart_left->restoreContext(context_backup);
+                  // icart_left->deleteContext(context_backup);
                   return true;
               }
           }
