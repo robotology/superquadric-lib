@@ -221,7 +221,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         {
             grasper_approach_parameters_right[0] = -0.05;
             grasper_approach_parameters_right[1] = 0.0;
-            grasper_approach_parameters_right[2] = -0.05;
+            grasper_approach_parameters_right[2] = 0.0;
             grasper_approach_parameters_right[3] = 0.0;
         }
         yInfo() << "Grabber specific approach for right arm loaded\n" << grasper_approach_parameters_right.toString();
@@ -243,7 +243,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         {
             grasper_approach_parameters_left[0] = -0.05;
             grasper_approach_parameters_left[1] = 0.0;
-            grasper_approach_parameters_left[2] = +0.05;
+            grasper_approach_parameters_left[2] = +0.0;
             grasper_approach_parameters_left[3] = 0.0;
         }
         yInfo() << "Grabber specific approach for left arm loaded\n" << grasper_approach_parameters_left.toString();
@@ -1182,41 +1182,69 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               //  simulation context, suppose there is no actionsRenderingEngine running
               if (best_hand == "right")
               {
+                  Vector pose_intermediate(7,0.0);
+                  pose_intermediate.setSubvector(0,pose.subVector(0,2) + grasper_approach_parameters_right.subVector(0,2));
+                  pose_intermediate.setSubvector(3, pose.subVector(3,6));
+
+
                   int context_backup;
                   cout << "|| ---------------------------------------------------- ||"  << endl;
-                  cout << "|| Right hand reaching  pose                             :" << toEigen(pose).format(CommaInitFmt) << endl;
+                  cout << "|| Right hand reaching  intermediate                    :" << toEigen(pose_intermediate).format(CommaInitFmt) << endl;
+
                   icart_right->storeContext(&context_backup);
                   setGraspContext(icart_right);
+
                   Vector previous_x(3), previous_o(4);
                   icart_right->getPose(previous_x, previous_o);
+
+                  icart_right->goToPoseSync(pose_intermediate.subVector(0, 2), pose_intermediate.subVector(3,6));
+                  icart_right->waitMotionDone();
+
+                  cout << "|| Right hand reaching                                  :" << toEigen(pose).format(CommaInitFmt) << endl;
                   icart_right->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
                   icart_right->waitMotionDone();
+
                   cout << "|| Right hand going back to                              :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
                   cout << "|| ---------------------------------------------------- ||"  << endl;
                   icart_right->goToPoseSync(previous_x, previous_o);
                   icart_right->waitMotionDone();
+
                   icart_right->restoreContext(context_backup);
                   icart_right->deleteContext(context_backup);
                   return true;
               }
               else if (best_hand == "left")
               {
-                int context_backup;
-                cout << "|| ---------------------------------------------------- ||"  << endl;
-                cout << "|| Left hand reaching  pose                            :" << toEigen(pose).format(CommaInitFmt) << endl;
-                icart_left->storeContext(&context_backup);
-                setGraspContext(icart_left);
-                Vector previous_x(3), previous_o(4);
-                icart_left->getPose(previous_x, previous_o);
-                icart_left->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
-                icart_left->waitMotionDone();
-                cout << "|| Left hand going back to                             :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
-                cout << "|| ---------------------------------------------------- ||"  << endl;
-                icart_left->goToPoseSync(previous_x, previous_o);
-                icart_left->waitMotionDone();
-                icart_left->restoreContext(context_backup);
-                icart_left->deleteContext(context_backup);
-                return true;
+
+                  Vector pose_intermediate(7,0.0);
+                  pose_intermediate.setSubvector(0,pose.subVector(0,2) + grasper_approach_parameters_left.subVector(0,2));
+                  pose_intermediate.setSubvector(3, pose.subVector(3,6));
+
+                  int context_backup;
+                  cout << "|| ---------------------------------------------------- ||"  << endl;
+                  cout << "|| Left hand reaching  pose intermediate                :" << toEigen(pose_intermediate).format(CommaInitFmt) << endl;
+
+                  icart_left->storeContext(&context_backup);
+                  setGraspContext(icart_left);
+
+                  Vector previous_x(3), previous_o(4);
+                  icart_left->getPose(previous_x, previous_o);
+
+                  icart_left->goToPoseSync(pose_intermediate.subVector(0, 2), pose_intermediate.subVector(3,6));
+                  icart_left->waitMotionDone();
+
+                  cout << "|| ---------------------------------------------------- ||"  << endl;
+                  cout << "|| Left hand reaching  pose                             :" << toEigen(pose).format(CommaInitFmt) << endl;
+                  icart_left->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
+                  icart_left->waitMotionDone();
+
+                  cout << "|| Left hand going back to                             :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
+                  cout << "|| ---------------------------------------------------- ||"  << endl;
+                  icart_left->goToPoseSync(previous_x, previous_o);
+                  icart_left->waitMotionDone();
+                  icart_left->restoreContext(context_backup);
+                  icart_left->deleteContext(context_backup);
+                  return true;
               }
           }
           else
