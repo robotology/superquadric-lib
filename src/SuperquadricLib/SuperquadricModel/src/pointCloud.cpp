@@ -56,6 +56,8 @@ bool PointCloud::setPoints(const deque<Vector3d> &p)
         else
             return false;
     }
+
+    return false;
 }
 
 /*********************************************/
@@ -80,6 +82,8 @@ bool PointCloud::setColors(const vector<vector<unsigned char>> &c)
         else
             return false;
     }
+
+    return false;
 }
 
 /*********************************************/
