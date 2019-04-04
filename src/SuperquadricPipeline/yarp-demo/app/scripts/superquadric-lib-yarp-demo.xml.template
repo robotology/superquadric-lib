@@ -41,6 +41,18 @@
     </connection>
 
     <connection>
+        <from>/superquadric-lib-demo/sfm:rpc</from>
+        <to>/SFM/rpc</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icub/camcalib/left/out</from>
+        <to>/superquadric-lib-demo/img:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
         <from>/superquadric-lib-demo/reachingCalibration:rpc</from>
         <to>/iolReachingCalibration/rpc</to>
         <protocol>fast_tcp</protocol>

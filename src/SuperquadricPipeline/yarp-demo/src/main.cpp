@@ -70,6 +70,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     RpcClient action_render_rpc;
     RpcClient reach_calib_rpc;
     RpcClient table_calib_rpc;
+    RpcClient sfm_rpc;
+
+    // Connection to image
+    BufferedPort<ImageOf<PixelRgb>> img_in;
 
     RpcServer user_rpc;
 
@@ -92,6 +96,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     //  visualization parameters
     int x, y, h, w;
     bool fixate_object;
+
+    // Image crop
+    int u_i,v_i, u_f, v_f;
 
     string best_hand;
     bool single_superq;
@@ -136,6 +143,11 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         y = rf.check("y", Value(0)).asInt();
         w = rf.check("width", Value(600)).asInt();
         h = rf.check("height", Value(600)).asInt();
+
+        u_i = rf.check("u_i", Value(50)).asInt();
+        v_i = rf.check("v_i", Value(20)).asInt();
+        u_f = rf.check("u_f", Value(280)).asInt();
+        v_f = rf.check("v_f", Value(190)).asInt();
 
         vis.setPosition(x,y);
         vis.setSize(w,h);
@@ -254,6 +266,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         reach_calib_rpc.open("/" + moduleName + "/reachingCalibration:rpc");
         table_calib_rpc.open("/" + moduleName + "/tableCalib:rpc");
         user_rpc.open("/" + moduleName + "/cmd:rpc");
+        sfm_rpc.open("/" + moduleName + "/sfm:rpc");
+        img_in.open("/" + moduleName + "/img:i");
+
 
         //  open clients when using iCub
 
@@ -620,7 +635,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
       }
 
       /****************************************************************/
-      bool compute_superq_and_grasp(const string &object_name, const string &hand)
+      bool compute_superq_and_pose(const string &object_name, const string &hand)
       {
           if (hand == "right")
           {
@@ -647,7 +662,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
           fixate_object = true;
 
-          bool ok = requestPointCloud(object_name);
+          bool ok;
+
+          if (object_name != "hanging_tool")
+             ok = requestPointCloud(object_name);
+          else
+             ok = acquireFromSFM();
 
           if (isInClasses(object_name))
               object_class = object_name;
@@ -813,6 +833,123 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
          }
          else
             return false;
+      }
+
+      /****************************************************************/
+      bool acquireFromSFM()
+      {
+          point_cloud.deletePoints();
+
+          vector<Vector> acquired_points;
+          vector<vector<unsigned char>> acquired_colors;
+
+          Bottle cmd_request;
+          Bottle cmd_reply;
+          cmd_request.clear();
+          cmd_reply.clear();
+          cmd_request.addString("Points");
+          Bottle pointsList;
+
+          for (int i = u_i; i < u_f; i++)
+          {
+              for (int j = v_i; j < v_f; j++)
+              {
+                  Bottle &points = pointsList.addList();
+                  cmd_request.addInt(i);
+                  cmd_request.addInt(j);
+                  points.addInt(i);
+                  points.addInt(j);
+              }
+          }
+
+
+          if (!sfm_rpc.write(cmd_request, cmd_reply))
+          {
+             yError() << " Problems in getting points from SFM ";
+             return false;
+          }
+
+          ImageOf<PixelRgb> *inCamImg = img_in.read();
+
+          for (int p_i = 0; p_i < cmd_reply.size()/3 ; p_i ++)
+          {
+              Vector point(3,0.0);
+
+              point[0] = cmd_reply.get(p_i*3).asDouble();
+              point[1] = cmd_reply.get(p_i*3 + 1).asDouble();
+              point[2] = cmd_reply.get(p_i*3 + 2).asDouble();
+
+              if (norm(point) == 0.0 || (point[0] > -0.2) || (point[0] < -0.6) || (point[2] < -0.2))
+                  continue;
+
+              Bottle *point2D = pointsList.get(p_i).asList();
+              PixelRgb point_rgb = inCamImg->pixel(point2D->get(0).asInt(), point2D->get(1).asInt());
+
+              vector<unsigned char> color(3);
+
+              color[0] = point_rgb.r;
+              color[1] = point_rgb.g;
+              color[2] = point_rgb.b;
+
+              acquired_points.push_back(point);
+              acquired_colors.push_back(color);
+          }
+
+          filterPC(acquired_points, acquired_colors);
+
+          deque<Eigen::Vector3d> eigen_points;
+
+          for (size_t i = 0; i < acquired_points.size(); i++)
+          {
+              eigen_points.push_back(toEigen(acquired_points[i]));
+          }
+
+          point_cloud.setPoints(eigen_points);
+          point_cloud.setColors(acquired_colors);
+
+          if (point_cloud.getNumberPoints() > 0)
+             return true;
+          else
+             return false;
+      }
+
+      /****************************************************************/
+      void filterPC(vector<Vector> &point_cloud, vector<vector<unsigned char>> &colors)
+      {
+          double x_max = point_cloud[0][0];
+
+          vector<Vector> new_point_cloud;
+          vector<vector<unsigned char>> new_colors;
+
+          for (size_t i = 1; i < point_cloud.size(); i++)
+          {
+              if (point_cloud[i][0] > x_max)
+                 x_max = point_cloud[i][0];
+          }
+
+          for (size_t i = 0; i < point_cloud.size(); i++)
+          {
+              if (point_cloud[i][0] > x_max - 0.04)
+              {
+                 new_point_cloud.push_back(point_cloud[i]);
+
+                 vector<unsigned char> color(3);
+                 color[0] = colors[i][0];
+                 color[1] = colors[i][1];
+                 color[2] = colors[i][2];
+
+                 new_colors.push_back(color);
+              }
+          }
+
+          point_cloud.clear();
+          colors.clear();
+
+          for (size_t i = 0; i < new_point_cloud.size(); i++)
+          {
+              point_cloud.push_back(new_point_cloud[i]);
+              colors.push_back(new_colors[i]);
+          }
       }
 
       /****************************************************************/
