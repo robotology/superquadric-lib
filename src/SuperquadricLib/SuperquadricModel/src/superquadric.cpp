@@ -161,6 +161,7 @@ bool Superquadric::setSuperqOrientation(const VectorXd &o)
         return params_ok;
     }
 
+    return false;
 }
 
 /*********************************************/
