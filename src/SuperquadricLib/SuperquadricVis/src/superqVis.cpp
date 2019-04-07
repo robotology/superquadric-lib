@@ -21,16 +21,16 @@ using namespace SuperqVis;
 /**********************************************/
 SuperquadricVis::SuperquadricVis(const Vector12d &r, const string &type)
 {
-    double bx = 2.0*r(7);
-    double by = 2.0*r(8);
-    double bz = 2.0*r(9);
+    double bx = r(7);
+    double by = r(9);
+    double bz = r(8);
 
     vtk_superquadric = vtkSmartPointer<vtkSuperquadric>::New();
     vtk_superquadric->ToroidalOff();
     vtk_superquadric->SetSize(1.0);
     vtk_superquadric->SetCenter(0.0, 0.0, 0.0);
 
-    vtk_superquadric->SetScale(r(7),r(8),r(9));
+    vtk_superquadric->SetScale(r(7),r(9),r(8));
     vtk_superquadric->SetPhiRoundness(r(10));
     vtk_superquadric->SetThetaRoundness(r(11));
 
@@ -61,17 +61,18 @@ SuperquadricVis::SuperquadricVis(const Vector12d &r, const string &type)
     vtk_transform = vtkSmartPointer<vtkTransform>::New();
     vtk_transform->Translate(r.segment(0,3).data());
     vtk_transform->RotateWXYZ((180.0/M_PI)*r(6),r.segment(3,3).data());
+    vtk_transform->RotateX(-90.0);
     vtk_actor->SetUserTransform(vtk_transform);
 }
 
 /**********************************************/
 void SuperquadricVis::set_parameters(const Vector12d &r)
 {
-    double bx = 2.0*r(7);
-    double by = 2.0*r(8);
-    double bz = 2.0*r(9);
+    double bx = r(7);
+    double by = r(9);
+    double bz = r(8);
 
-    vtk_superquadric->SetScale(r(7),r(8),r(9));
+    vtk_superquadric->SetScale(r(7),r(9),r(8));
     vtk_superquadric->SetPhiRoundness(r(10));
     vtk_superquadric->SetThetaRoundness(r(11));
 
@@ -80,4 +81,5 @@ void SuperquadricVis::set_parameters(const Vector12d &r)
     vtk_transform->Identity();
     vtk_transform->Translate(r.segment(0,3).data());
     vtk_transform->RotateWXYZ((180.0/M_PI)*r(6),r.segment(3,3).data());
+    vtk_transform->RotateX(-90.0);
 }
