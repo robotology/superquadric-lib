@@ -655,11 +655,6 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
 
       solution.cost = w1*final_F_value + ((num_superq > 0) ? w2 / final_obstacles_value_average : 0.0);
 
-      cout<< "w1 " << w1 << "w2 " << w2 << endl;
-
-      cout<< "final_F_value " << final_F_value << "inal_obstacles_value_average " << final_obstacles_value_average << endl;
-      cout<< "First cost "<< solution.cost << endl;
-
       solution.setGraspParams(robot_pose);
       solution.setHandName(l_o_r);
 
@@ -1079,10 +1074,6 @@ void GraspEstimatorApp::refinePoseCost(GraspResults &grasp_res)
               w2 = 0.0;
 
           poses_computed[i].cost += w1 * error_position + w2 * error_orientation;
-
-          cout<< "w1 " << w1 << "w2 " << w2 << endl;
-
-          cout<< "error_position " << error_position << "error_orientation " << error_orientation << endl;
         }
     }
 

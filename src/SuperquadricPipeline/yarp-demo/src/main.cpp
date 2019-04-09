@@ -713,6 +713,11 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               best_pose = eigenToYarp(pose);
           }
 
+          cout << "|| ---------------------------------------------------- ||" << endl;
+          yInfo() << " || Best pose selected: " << best_pose.toString();
+          cout << "|| ---------------------------------------------------- ||" << endl;
+          cout << endl << endl;
+
           executeGrasp(best_pose, best_hand);
       }
 
@@ -1315,34 +1320,63 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
 
           Vector grasping_current_pos(3), grasping_current_o(4);
-          icart_right->getPose(grasping_current_pos, grasping_current_o);
-
-          grasping_current_pos[2] += 0.02;
-
-          cout << "|| ---------------------------------------------------- ||"  << endl;
-          cout << "|| Lifting a bit the tool                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
-
-          icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
-          icart_right->waitMotionDone();
-
-          grasping_current_pos[0] += 0.08;
-
-          cout << "|| ---------------------------------------------------- ||"  << endl;
-          cout << "|| Moving the tool closer                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
-
-          icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
-          icart_right->waitMotionDone();
-
           if (best_hand == "right")
-             grasping_current_pos[1] += 0.15;
-          else
-             grasping_current_pos[1] -= 0.15;
+          {
+              icart_right->getPose(grasping_current_pos, grasping_current_o);
 
-             cout << "|| ---------------------------------------------------- ||"  << endl;
-             cout << "|| Moving the tool on the side                          :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+              grasping_current_pos[2] += 0.02;
 
-          icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
-          icart_right->waitMotionDone();
+              cout << "|| ---------------------------------------------------- ||"  << endl;
+              cout << "|| Lifting a bit the tool                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+              icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+              icart_right->waitMotionDone();
+
+              grasping_current_pos[0] += 0.08;
+
+              cout << "|| ---------------------------------------------------- ||"  << endl;
+              cout << "|| Moving the tool closer                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+              icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+              icart_right->waitMotionDone();
+
+              grasping_current_pos[1] += 0.15;
+
+              cout << "|| ---------------------------------------------------- ||"  << endl;
+              cout << "|| Moving the tool on the side                          :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+              icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+              icart_right->waitMotionDone();
+          }
+          else if (best_hand == "left")
+          {
+              icart_left->getPose(grasping_current_pos, grasping_current_o);
+
+              grasping_current_pos[2] += 0.02;
+
+              cout << "|| ---------------------------------------------------- ||"  << endl;
+              cout << "|| Lifting a bit the tool                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+              icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
+              icart_left->waitMotionDone();
+
+              grasping_current_pos[0] += 0.08;
+
+              cout << "|| ---------------------------------------------------- ||"  << endl;
+              cout << "|| Moving the tool closer                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+              icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
+              icart_left->waitMotionDone();
+
+              grasping_current_pos[1] -= 0.15;
+
+              cout << "|| ---------------------------------------------------- ||"  << endl;
+              cout << "|| Moving the tool on the side                          :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+              icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
+              icart_left->waitMotionDone();
+          }
+
 
           return true;
       }
@@ -1353,7 +1387,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           if (action_render_rpc.getOutputCount() > 0)
           {
               Bottle cmd, reply;
-              cmd.addVocab(Vocab::encode("hand"));
+              cmd.addVocab(Vocab::encode("hand"));    // TODO Check how command is to be implemented
+
               action_render_rpc.write(cmd, reply);
               if (reply.get(0).asVocab() == Vocab::encode("ack"))
                   return true;
@@ -1443,11 +1478,14 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
           }
           else
           {
-              Vector old_pose = pose;
+              // TODO See if calibration is necessary and in case adapt fixReachingOffset
+              // to the tool scenario
+              // Vector old_pose = pose;
+              //
+              // cout<< "|| Pose to be fixed with calibration offsets              :" << toEigen(old_pose).format(CommaInitFmt)<< endl;
+              // fixReachingOffset(old_pose, pose);
+              // cout<< "|| Fixed pose                                             :" << toEigen(pose).format(CommaInitFmt)<< endl;
 
-              cout<< "|| Pose to be fixed with calibration offsets              :" << toEigen(old_pose).format(CommaInitFmt)<< endl;
-              fixReachingOffset(old_pose, pose);
-              cout<< "|| Fixed pose                                             :" << toEigen(pose).format(CommaInitFmt)<< endl;
               //  communication with actionRenderingEngine/cmd:io
               //  grasp("cartesian" x y z gx gy gz theta) ("approach" (-0.05 0 +-0.05 0.0)) "left"/"right"
               Bottle command, reply;
@@ -1463,11 +1501,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               ptr.addDouble(pose(5));
               ptr.addDouble(pose(6));
 
-
               Bottle &ptr1 = command.addList();
               ptr1.addString("approach");
               Bottle &ptr2 = ptr1.addList();
-              if (grasping_hand == WhichHand::HAND_LEFT)
+              if (best_hand == "left")
               {
                   for(int i=0 ; i<4 ; i++) ptr2.addDouble(grasper_approach_parameters_left[i]);
                   command.addString("left");
