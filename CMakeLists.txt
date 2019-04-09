@@ -159,16 +159,20 @@ add_subdirectory(src)
 # Note that if your library depends from other libraries, you are probably
 # required to used the install_basic_package_files() DEPENDENCIES option.
 
+set(PROJECT_INCLUDE_CONTENT "include(\${VTK_USE_FILE})
+if(VTK_VERSION VERSION_LESS \"8.1\")
+	message(ERROR \"Wrong VTK version! At least 8.1 required!\")
+endif()")
 
 include(InstallBasicPackageFiles)
 install_basic_package_files(${PROJECT_NAME}
                             VERSION ${${PROJECT_NAME}_VERSION}
                             COMPATIBILITY AnyNewerVersion
                             FIRST_TARGET SuperquadricLibModel
-                            DEPENDENCIES Eigen3 "VTK 8.1"
+                            DEPENDENCIES Eigen3 VTK
                             VARS_PREFIX ${PROJECT_NAME}
                             NO_CHECK_REQUIRED_COMPONENTS_MACRO
-                            INCLUDE_CONTENT "include(\${VTK_USE_FILE})"
+                            INCLUDE_CONTENT ${PROJECT_INCLUDE_CONTENT}
                             NO_COMPATIBILITY_VARS)
 # Add the uninstall target
 include(AddUninstallTarget)

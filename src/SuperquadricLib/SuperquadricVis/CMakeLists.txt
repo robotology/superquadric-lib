@@ -30,7 +30,6 @@ set(${LIBRARY_TARGET_NAME}_HDR
 )
 
 find_package(VTK 8.1 REQUIRED)
-message(STATUS "vtk use file ${VTK_USE_FILE}")
 include(${VTK_USE_FILE})
 
 find_package(Eigen3 QUIET CONFIG)
