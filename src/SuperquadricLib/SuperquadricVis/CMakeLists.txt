@@ -29,7 +29,10 @@ set(${LIBRARY_TARGET_NAME}_HDR
 		include/SuperquadricLibVis/superqVis.h
 )
 
-find_package(VTK 8.1 REQUIRED)
+find_package(VTK REQUIRED)
+if(VTK_VERSION VERSION_LESS \"8.1\")
+	message(ERROR \"Wrong VTK version! At least 8.1 required!\")
+endif()
 include(${VTK_USE_FILE})
 
 find_package(Eigen3 QUIET CONFIG)
