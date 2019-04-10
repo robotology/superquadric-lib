@@ -932,6 +932,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                  x_max = point_cloud[i][0];
           }
 
+          yDebug() << "X max " << x_max;
+
+          yDebug() << "x_max - 0.04" << x_max - 0.04;
+
           for (size_t i = 0; i < point_cloud.size(); i++)
           {
               if (point_cloud[i][0] > x_max - 0.04)
