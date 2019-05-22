@@ -99,6 +99,14 @@ public:
     Eigen::MatrixXd getBoundingBox();
 
     /**
+     * get the bounding box of the point cloud in the superquadric reference frame
+     * @param the orientation of the point cloud
+     * @return a 3d matrix containing the bounding box of the point cloud
+     */
+    /*********************************************/
+    Eigen::MatrixXd getBoundingBoxSuperqFrame(const Eigen::Matrix3d &orientation);
+
+    /**
      * get the barycenter of the point cloud
      * @return a 3d vector containing the barycenter of the point cloud
      */

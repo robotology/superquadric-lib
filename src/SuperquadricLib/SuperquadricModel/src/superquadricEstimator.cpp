@@ -72,16 +72,17 @@ void SuperqEstimator::computeX0(Vector11d &x0, PointCloud &point_cloud)
     // Initial value for superquadric dimensions is obtained from point cloud
     // bounding boxes
     Matrix32d bounding_box(3,2);
-    bounding_box=point_cloud.getBoundingBox();
+    bounding_box=point_cloud.getBoundingBoxSuperqFrame(orientation);
+
     x0(0) = (-bounding_box(0,0) + bounding_box(0,1))/2;
     x0(1) = (-bounding_box(1,0) + bounding_box(1,1))/2;
     x0(2) = (-bounding_box(2,0) + bounding_box(2,1))/2;
 
     // Intial value of the superquadric center is obtained from the point cloud
-    bounding_box = orientation * bounding_box;
-    x0(5) = (bounding_box(0,0) + bounding_box(0,1))/2;
-    x0(6) = (bounding_box(1,0) + bounding_box(1,1))/2;
-    x0(7) = (bounding_box(2,0) + bounding_box(2,1))/2;
+    Vector3d barycenter = point_cloud.getBarycenter();
+    x0(5) = barycenter(0);
+    x0(6) = barycenter(1);
+    x0(7) = barycenter(2);
 }
 
 /****************************************************************/
@@ -100,9 +101,9 @@ bool SuperqEstimator::get_nlp_info(Ipopt::Index &n, Ipopt::Index &m,Ipopt::Index
 void SuperqEstimator::computeBounds()
 {
     // Compute bounds starting from x0
-    bounds(0,1) = x0(0)*1.3;
-    bounds(1,1) = x0(1)*1.3;
-    bounds(2,1) = x0(2)*1.3;
+    bounds(0,1) = x0(0)*1.5;
+    bounds(1,1) = x0(1)*1.5;
+    bounds(2,1) = x0(2)*1.5;
 
     bounds(0,0) = x0(0)*0.7;
     bounds(1,0) = x0(1)*0.7;

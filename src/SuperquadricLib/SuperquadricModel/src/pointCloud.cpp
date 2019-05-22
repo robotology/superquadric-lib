@@ -123,6 +123,37 @@ MatrixXd PointCloud::getBoundingBox()
 
   for (auto& point : points)
   {
+      if (bounding_box(0,0) > point(0))
+          bounding_box(0,0) = point(0);
+      if (bounding_box(0,1) < point(0))
+          bounding_box(0,1) = point(0);
+
+      if (bounding_box(1,0) > point(1))
+          bounding_box(1,0) = point(1);
+      if (bounding_box(1,1) < point(1))
+          bounding_box(1,1) = point(1);
+
+      if (bounding_box(2,0) > point(2))
+          bounding_box(2,0) = point(2);
+      if (bounding_box(2,1) < point(2))
+          bounding_box(2,1) = point(2);
+  }
+
+  return bounding_box;
+}
+
+/*********************************************/
+MatrixXd PointCloud::getBoundingBoxSuperqFrame(const Matrix3d &orientation)
+{
+  bounding_box(0,0) = numeric_limits<double>::infinity();
+  bounding_box(1,0) = numeric_limits<double>::infinity();
+  bounding_box(2,0) = numeric_limits<double>::infinity();
+  bounding_box(0,1) = -numeric_limits<double>::infinity();
+  bounding_box(1,1) = -numeric_limits<double>::infinity();
+  bounding_box(2,1) = -numeric_limits<double>::infinity();
+
+  for (auto& point : points)
+  {
       Vector3d point_tmp = orientation.transpose() * point;
       if (bounding_box(0,0) > point_tmp(0))
           bounding_box(0,0) = point_tmp(0);
@@ -146,12 +177,12 @@ MatrixXd PointCloud::getBoundingBox()
 /*********************************************/
 Vector3d PointCloud::getBarycenter()
 {
-    getBoundingBox();
+    bounding_box = getBoundingBox();
 
     barycenter.resize(3);
-    barycenter(0) = (-bounding_box(0,0)+bounding_box(0,1))/2;
-    barycenter(1) = (-bounding_box(0,0)+bounding_box(0,1))/2;
-    barycenter(2) = (-bounding_box(0,0)+bounding_box(0,1))/2;
+    barycenter(0) = (bounding_box(0,0)+bounding_box(0,1))/2;
+    barycenter(1) = (bounding_box(1,0)+bounding_box(1,1))/2;
+    barycenter(2) = (bounding_box(2,0)+bounding_box(2,1))/2;
 
     return barycenter;
 }
@@ -162,6 +193,7 @@ Matrix3d PointCloud::getAxes()
     Matrix3d M;
     M.setZero();
     barycenter.setZero();
+    barycenter = getBarycenter();
 
     for (auto& point: points)
     {
@@ -200,7 +232,6 @@ void PointCloud::subSample(const int &desired_points, const bool &random)
         if (!random)
         {
             int count = n_points/desired_points;
-
 
             for (auto i : irange(0,n_points, count))
             {
