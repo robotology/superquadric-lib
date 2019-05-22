@@ -117,43 +117,43 @@ public:
      * Get all superquadric parameters
      * @return a 11D vector containing the parameters
      */
-    Vector11d getSuperqParams();
+    Vector11d getSuperqParams() const;
 
     /**
      * Get  superquadric dimensions
      * @return a 3D vector containing the dimensions
      */
-    Eigen::Vector3d getSuperqDims();
+    Eigen::Vector3d getSuperqDims() const;
 
     /**
      * Get  superquadric exponents
      * @return a 2D vector containing the exponents
      */
-    Eigen::Vector2d getSuperqExps();
+    Eigen::Vector2d getSuperqExps() const;
 
     /**
      * Get  superquadric center coordinates
      * @return a 3D vector containing the  enter
      */
-    Eigen::Vector3d getSuperqCenter();
+    Eigen::Vector3d getSuperqCenter() const;
 
     /**
      * Get  superquadric orientation
      * return a 4D vector containing the axis angle
      */
-    Eigen::Vector4d getSuperqAxisAngle();
+    Eigen::Vector4d getSuperqAxisAngle() const;
 
     /**
      * Get  superquadric orientation
      * @return a 3D vector containing the Euler angles
      */
-    Eigen::Vector3d getSuperqEulerZYZ();
+    Eigen::Vector3d getSuperqEulerZYZ() const;
 
     /**
      * Get superquadric axes
      * @return a 3x3 Matrix containing the axes
      */
-    Eigen::Matrix3d getSuperqAxes();
+    Eigen::Matrix3d getSuperqAxes() const;
 
     /**
      * Compute the inside-outside function of the superquadric

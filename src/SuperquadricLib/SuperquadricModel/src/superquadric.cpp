@@ -67,7 +67,7 @@ bool Superquadric::setSuperqParams(const Vector11d &p)
 }
 
 /*********************************************/
-Vector11d Superquadric::getSuperqParams()
+Vector11d Superquadric::getSuperqParams() const
 {
     return params;
 }
@@ -89,7 +89,7 @@ bool Superquadric::setSuperqDims(const Vector3d &d)
 }
 
 /*********************************************/
-Vector3d Superquadric::getSuperqDims()
+Vector3d Superquadric::getSuperqDims() const
 {
     return dim;
 }
@@ -111,7 +111,7 @@ bool Superquadric::setSuperqExps(const Vector2d &e)
 }
 
 /*********************************************/
-Vector2d Superquadric::getSuperqExps()
+Vector2d Superquadric::getSuperqExps() const
 {
     return exp;
 }
@@ -127,7 +127,7 @@ bool Superquadric::setSuperqCenter(const Vector3d &c)
 }
 
 /*********************************************/
-Vector3d Superquadric::getSuperqCenter()
+Vector3d Superquadric::getSuperqCenter() const
 {
     return center;
 }
@@ -176,19 +176,19 @@ bool Superquadric::setSuperqOrientation(const VectorXd &o)
 }
 
 /*********************************************/
-Vector3d Superquadric::getSuperqEulerZYZ()
+Vector3d Superquadric::getSuperqEulerZYZ() const
 {
     return ea;
 }
 
 /*********************************************/
-Vector4d Superquadric::getSuperqAxisAngle()
+Vector4d Superquadric::getSuperqAxisAngle() const
 {
     return axisangle;
 }
 
 /*********************************************/
-Matrix3d Superquadric::getSuperqAxes()
+Matrix3d Superquadric::getSuperqAxes() const
 {
     return axes;
 }
