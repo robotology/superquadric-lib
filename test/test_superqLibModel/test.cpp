@@ -1,6 +1,6 @@
-#include "superquadric.h"
-#include "pointCloud.h"
-#include "graspPoses.h"
+#include <SuperquadricLibModel/superquadric.h>
+#include <SuperquadricLibModel/pointCloud.h>
+#include <SuperquadricLibGrasp/graspPoses.h>
 
 #include <cstdlib>
 #include <cmath>
@@ -87,7 +87,7 @@ int main()
     }
 
 
-    deque<VectorXd> test_points;
+    deque<Vector3d> test_points;
     VectorXd point(3);
     point<< 1, 0, 0;
     test_points.push_back(point);

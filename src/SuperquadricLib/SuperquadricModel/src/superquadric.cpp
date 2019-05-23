@@ -195,16 +195,31 @@ Matrix3d Superquadric::getSuperqAxes() const
 
 
 /*********************************************/
-double Superquadric::insideOutsideF(const Vector11d &pose, const Vector3d &point)
+double Superquadric::insideOutsideF(const VectorXd &pose, const Vector3d &point) const
 {
     Vector3d c = pose.head(3);
-    Vector3d ea = pose.tail(3);
-    setSuperqCenter(c);
-    setSuperqOrientation(ea);
+    Matrix3d axes;
 
-    double num1 = axes.col(0).dot(point - center);
-    double num2 = axes.col(1).dot(point - center);
-    double num3 = axes.col(2).dot(point - center);
+    if (pose.size() == 6)
+    {
+        Vector3d ea = pose.tail(3);
+        axes = AngleAxisd(ea(0), Vector3d::UnitZ())*
+               AngleAxisd(ea(1), Vector3d::UnitY())*
+               AngleAxisd(ea(2), Vector3d::UnitZ());
+    }
+    else if (pose.size() == 7)
+    {
+        axes = AngleAxisd(pose(6), pose.segment(3,5));
+    }
+    else
+    {
+        cout << " =====> Error in insideOutsideF: Wrong dimensions of pose vector! " << endl;
+        return 0.0;
+    }
+
+    double num1 = axes.col(0).dot(point - c);
+    double num2 = axes.col(1).dot(point - c);
+    double num3 = axes.col(2).dot(point - c);
 
     double inner = pow(abs(num1/dim(0)), 2.0/exp(1)) + pow(abs(num2/dim(1)), 2.0/exp(1));
 

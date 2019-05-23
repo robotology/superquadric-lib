@@ -161,7 +161,7 @@ public:
      * @param point is a point where we want to evaluate the inside-ouside function
      * @return the value of the inside-outside function
      */
-    double insideOutsideF(const Vector11d &pose, const Eigen::Vector3d &point);
+    double insideOutsideF(const Eigen::VectorXd &pose, const Eigen::Vector3d &point) const;
 };
 
 }
