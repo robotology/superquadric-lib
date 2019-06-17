@@ -193,7 +193,6 @@ Matrix3d Superquadric::getSuperqAxes() const
     return axes;
 }
 
-
 /*********************************************/
 double Superquadric::insideOutsideF(const VectorXd &pose, const Vector3d &point) const
 {

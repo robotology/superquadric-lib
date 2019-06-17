@@ -45,14 +45,14 @@
 
      bool compute_superq_and_pose(1: string object_name, 2: string hand);
 
-	 bool grasp();
+     bool grasp();
 
-	 bool drop();
+     bool drop();
 
      bool set_single_superq(1: string value);
 
-	 bool take_tool();
+     bool take_tool();
 
-	 bool open_hand();
+     bool open_hand();
 
  }

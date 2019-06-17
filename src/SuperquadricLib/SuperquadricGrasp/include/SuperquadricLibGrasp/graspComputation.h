@@ -119,20 +119,20 @@ public:
                                  bool init_z, Ipopt::Number *z_L, Ipopt::Number *z_U,
                                  Ipopt::Index m, bool init_lambda, Ipopt::Number *lambda);
 
-   /****************************************************************/
-   bool eval_f(Ipopt::Index n, const Ipopt::Number *x, bool new_x,
+    /****************************************************************/
+    bool eval_f(Ipopt::Index n, const Ipopt::Number *x, bool new_x,
                                 Ipopt::Number &obj_value);
 
-   /****************************************************************/
-   double F(const Ipopt::Number *x, std::deque<Eigen::Vector3d> &points_on, bool new_x);
+    /****************************************************************/
+    double F(const Ipopt::Number *x, std::deque<Eigen::Vector3d> &points_on, bool new_x);
 
-   /****************************************************************/
-   double f(const Ipopt::Number *x, Eigen::Vector3d &point);
+    /****************************************************************/
+    double f(const Ipopt::Number *x, Eigen::Vector3d &point);
 
-   /****************************************************************/
-   double F_v(const Vector6d &x);
+    /****************************************************************/
+    double F_v(const Vector6d &x);
 
-   /****************************************************************/
+    /****************************************************************/
     double f_v(const Vector6d &x, const Eigen::Vector3d &point);
 
     /****************************************************************/

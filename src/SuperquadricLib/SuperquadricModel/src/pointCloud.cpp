@@ -110,7 +110,6 @@ void PointCloud::deletePoints()
     points_for_vis.clear();
 }
 
-
 /*********************************************/
 MatrixXd PointCloud::getBoundingBox()
 {

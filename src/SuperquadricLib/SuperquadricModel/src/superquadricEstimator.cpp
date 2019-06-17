@@ -140,10 +140,10 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
 }
 
 /****************************************************************/
- bool SuperqEstimator::get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number *x,
+bool SuperqEstimator::get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number *x,
                             bool init_z, Ipopt::Number *z_L, Ipopt::Number *z_U,
                             Ipopt::Index m, bool init_lambda, Ipopt::Number *lambda)
- {
+{
      // Set initial x
      for (Ipopt::Index i = 0; i < n;  i++)
      {
@@ -151,24 +151,24 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
      }
 
      return true;
- }
+}
 
- /****************************************************************/
-  bool SuperqEstimator::eval_f(Ipopt::Index n, const Ipopt::Number *x, bool new_x,
-                 Ipopt::Number &obj_value)
-  {
-      // Compute cost function
-      F(x, new_x);
-      obj_value = aux_objvalue;
+/****************************************************************/
+bool SuperqEstimator::eval_f(Ipopt::Index n, const Ipopt::Number *x, bool new_x,
+             Ipopt::Number &obj_value)
+{
+    // Compute cost function
+    F(x, new_x);
+    obj_value = aux_objvalue;
 
-      return true;
-  }
+    return true;
+}
 
-  /****************************************************************/
- void SuperqEstimator::F(const Ipopt::Number *x, bool &new_x)
- {
-     if (new_x)
-     {
+/****************************************************************/
+void SuperqEstimator::F(const Ipopt::Number *x, bool &new_x)
+{
+    if (new_x)
+    {
          double value = 0.0;
          for(auto point : points_downsampled.points)
          {
@@ -177,12 +177,12 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
          }
          value *= x[0]*x[1]*x[2]/used_points;
          aux_objvalue = value;
-     }
- }
+    }
+}
 
- /****************************************************************/
- double SuperqEstimator::f(const Ipopt::Number *x, const Vector3d &point_cloud)
- {
+/****************************************************************/
+double SuperqEstimator::f(const Ipopt::Number *x, const Vector3d &point_cloud)
+{
      Vector3d euler;
      euler(0) = x[8];
      euler(1) =x [9];
@@ -198,11 +198,11 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
      double tmp = pow(abs(num1/x[0]),2.0/x[4]) + pow(abs(num2/x[1]),2.0/x[4]);
 
      return pow( abs(tmp),x[4]/x[3]) + pow( abs(num3/x[2]),(2.0/x[3]));
- }
+}
 
- /****************************************************************/
- double SuperqEstimator::F_v(const Vector11d &x)
- {
+/****************************************************************/
+double SuperqEstimator::F_v(const Vector11d &x)
+{
      // Evaluate cost function for finite difference gradient computation
      double value=0.0;
 
@@ -215,38 +215,38 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
      value *= x(0)*x(1)*x(2)/used_points;
 
      return value;
- }
+}
 
-   /****************************************************************/
-  double SuperqEstimator::f_v(const Vector11d &x, const Vector3d &point_cloud)
-  {
-      Matrix3d R;
-      R = AngleAxisd(x(8), Vector3d::UnitZ())*
-          AngleAxisd(x(9), Vector3d::UnitY())*
-          AngleAxisd(x(10), Vector3d::UnitZ());
+/****************************************************************/
+double SuperqEstimator::f_v(const Vector11d &x, const Vector3d &point_cloud)
+{
+    Matrix3d R;
+    R = AngleAxisd(x(8), Vector3d::UnitZ())*
+      AngleAxisd(x(9), Vector3d::UnitY())*
+      AngleAxisd(x(10), Vector3d::UnitZ());
 
-      double num1 = R(0,0)*point_cloud(0) + R(1,0)*point_cloud(1) + R(2,0)*point_cloud(2) - x(5)*R(0,0) - x(6)*R(1,0) - x(7)*R(2,0);
-      double num2 = R(0,1)*point_cloud(0) + R(1,1)*point_cloud(1) + R(2,1)*point_cloud(2) - x(5)*R(0,1) - x(6)*R(1,1) - x(7)*R(2,1);
-      double num3 = R(0,2)*point_cloud(0) + R(1,2)*point_cloud(1) + R(2,2)*point_cloud(2) - x(5)*R(0,2) - x(6)*R(1,2) - x(7)*R(2,2);
-      double tmp = pow(abs(num1/x(0)),2.0/x(4)) + pow(abs(num2/x(1)),2.0/x(4));
+    double num1 = R(0,0)*point_cloud(0) + R(1,0)*point_cloud(1) + R(2,0)*point_cloud(2) - x(5)*R(0,0) - x(6)*R(1,0) - x(7)*R(2,0);
+    double num2 = R(0,1)*point_cloud(0) + R(1,1)*point_cloud(1) + R(2,1)*point_cloud(2) - x(5)*R(0,1) - x(6)*R(1,1) - x(7)*R(2,1);
+    double num3 = R(0,2)*point_cloud(0) + R(1,2)*point_cloud(1) + R(2,2)*point_cloud(2) - x(5)*R(0,2) - x(6)*R(1,2) - x(7)*R(2,2);
+    double tmp = pow(abs(num1/x(0)),2.0/x(4)) + pow(abs(num2/x(1)),2.0/x(4));
 
-      return pow( abs(tmp),x(4)/x(3)) + pow( abs(num3/x(2)),(2.0/x(3)));
-  }
+    return pow( abs(tmp),x(4)/x(3)) + pow( abs(num3/x(2)),(2.0/x(3)));
+}
 
-  /****************************************************************/
- bool SuperqEstimator::eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x,
-                  Ipopt::Number *grad_f)
- {
-     // Evaluate gradient with finite differences
-     Vector11d x_tmp(n);
-     double grad_p, grad_n;
-     double eps = 1e-8;
+/****************************************************************/
+bool SuperqEstimator::eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x,
+              Ipopt::Number *grad_f)
+{
+    // Evaluate gradient with finite differences
+    Vector11d x_tmp(n);
+    double grad_p, grad_n;
+    double eps = 1e-8;
 
-     for (Ipopt::Index j = 0; j < n; j++)
-         x_tmp(j) = x[j];
+    for (Ipopt::Index j = 0; j < n; j++)
+        x_tmp(j) = x[j];
 
-     for (Ipopt::Index j = 0; j < n; j++)
-     {
+    for (Ipopt::Index j = 0; j < n; j++)
+    {
          x_tmp(j) += eps;
 
          grad_p = F_v(x_tmp);
@@ -256,10 +256,10 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
          grad_n = F_v(x_tmp);
 
          grad_f[j] = (grad_p-grad_n)/eps;
-      }
+    }
 
-     return true;
- }
+    return true;
+}
 
  /****************************************************************/
  bool SuperqEstimator::eval_g(Ipopt::Index n, const Ipopt::Number *x, bool new_x,
@@ -277,7 +277,7 @@ bool SuperqEstimator::get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt:
      return false;
  }
 
- /****************************************************************/
+/****************************************************************/
 void SuperqEstimator::configure(const string &object_class)
 {
     // Configure exponents according to object class
@@ -744,7 +744,6 @@ bool SuperqEstimatorApp::axisParallel(node *node1, node *node2, Matrix3d &relati
     {
         return false;
     }
-
 }
 
 /****************************************************************/
@@ -1161,7 +1160,6 @@ bool SuperqEstimatorApp::generateFinalTree(node *old_node, node *newnode)
     }
 
     return true;
-
 }
 
 /****************************************************************/
@@ -1196,7 +1194,6 @@ void SuperqEstimatorApp::superqUsingPlane(node *old_node, PointCloud *points, no
     node_c2.height = newnode->height + 1;
 
     superq_tree_new->insert(node_c1, node_c2, newnode);
-
 }
 
 /****************************************************************/

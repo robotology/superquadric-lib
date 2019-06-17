@@ -48,55 +48,55 @@ namespace SuperqModel {
 class SuperqEstimator : public Ipopt::TNLP
 {
 protected:
-  Vector11d x0;
-  Matrix112d bounds;
-  std::string obj_class;
-  double aux_objvalue;
-  int used_points;
+    Vector11d x0;
+    Matrix112d bounds;
+    std::string obj_class;
+    double aux_objvalue;
+    int used_points;
 
-  /** Get info for the nonlinear problem to be solved with ipopt
-  * @param n is the dimension of the variable
-  * @param m is the number of constraints
-  * @param nnz_jac_g is the dimensions of the jacobian
-  * @param nnz_h_lag is an ipopt variable
-  * @param index_styl is an ipopt variable
-  * @return true
-  */
-  /****************************************************************/
-  bool get_nlp_info(Ipopt::Index &n, Ipopt::Index &m,Ipopt::Index &nnz_jac_g,
+    /** Get info for the nonlinear problem to be solved with ipopt
+    * @param n is the dimension of the variable
+    * @param m is the number of constraints
+    * @param nnz_jac_g is the dimensions of the jacobian
+    * @param nnz_h_lag is an ipopt variable
+    * @param index_styl is an ipopt variable
+    * @return true
+    */
+    /****************************************************************/
+    bool get_nlp_info(Ipopt::Index &n, Ipopt::Index &m,Ipopt::Index &nnz_jac_g,
                     Ipopt::Index &nnz_h_lag, Ipopt::TNLP::IndexStyleEnum &index_style);
 
-  /** Compute bounds variable from the point cloud for speeding up optimization */
-  /****************************************************************/
-  void computeBounds();
+    /** Compute bounds variable from the point cloud for speeding up optimization */
+    /****************************************************************/
+    void computeBounds();
 
-  /** Get variable bounds for the nonlinear problem to be solved with ipopt
-  * @param n is the dimension of the variable
-  * @param m is the number of constraints
-  * @param x_l is the lower bound of the variable
-  * @param x_u is the upper bound of the variable
-  * @param g_l is the lower bound of the constraints
-  * @param g_u is the upper bound of the constraints
-  * @return true
-  */
-  /****************************************************************/
-  bool get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt::Number *x_u,
+    /** Get variable bounds for the nonlinear problem to be solved with ipopt
+    * @param n is the dimension of the variable
+    * @param m is the number of constraints
+    * @param x_l is the lower bound of the variable
+    * @param x_u is the upper bound of the variable
+    * @param g_l is the lower bound of the constraints
+    * @param g_u is the upper bound of the constraints
+    * @return true
+    */
+    /****************************************************************/
+    bool get_bounds_info(Ipopt::Index n, Ipopt::Number *x_l, Ipopt::Number *x_u,
                        Ipopt::Index m, Ipopt::Number *g_l, Ipopt::Number *g_u);
 
-   /** Get the starting point for the nonlinear problem to be solved with ipopt
-   * @param n is the dimension of the variable
-   * @param init_x is the starting point of the optimization problem
-   * @param x is the variable
-   * @param init_z is an ipopt variable
-   * @param z_L is an ipopt variable
-   * @param z_U is an ipopt variable
-   * @param m is the number of constraints
-   * @param init_lambda is an ipopt variable
-   * @param lambda is an ipopt variable
-   * @return true
-   */
-   /****************************************************************/
-   bool get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number *x,
+    /** Get the starting point for the nonlinear problem to be solved with ipopt
+    * @param n is the dimension of the variable
+    * @param init_x is the starting point of the optimization problem
+    * @param x is the variable
+    * @param init_z is an ipopt variable
+    * @param z_L is an ipopt variable
+    * @param z_U is an ipopt variable
+    * @param m is the number of constraints
+    * @param init_lambda is an ipopt variable
+    * @param lambda is an ipopt variable
+    * @return true
+    */
+    /****************************************************************/
+    bool get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number *x,
                                bool init_z, Ipopt::Number *z_L, Ipopt::Number *z_U,
                                Ipopt::Index m, bool init_lambda, Ipopt::Number *lambda);
 
@@ -209,86 +209,86 @@ protected:
                            Ipopt::Number obj_value, const Ipopt::IpoptData *ip_data,
                            Ipopt::IpoptCalculatedQuantities *ip_cq);
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  SuperqModel::Superquadric solution;
-  SuperqModel::PointCloud points_downsampled;
+    SuperqModel::Superquadric solution;
+    SuperqModel::PointCloud points_downsampled;
 
-  /** Init function */
-  /****************************************************************/
-  void init();
+    /** Init function */
+    /****************************************************************/
+    void init();
 
-  /** Set point to be used for superquadric estimation
-  * @param point_cloud is the object point cloud
-  * @param optimizer_points is the maximum number of points to be used for the optimization problem
-  */
-  /****************************************************************/
-  void setPoints(SuperqModel::PointCloud &point_cloud, const int &optimizer_points, const bool &random);
+    /** Set point to be used for superquadric estimation
+    * @param point_cloud is the object point cloud
+    * @param optimizer_points is the maximum number of points to be used for the optimization problem
+    */
+    /****************************************************************/
+    void setPoints(SuperqModel::PointCloud &point_cloud, const int &optimizer_points, const bool &random);
 
-  /** Configure function
-  * @param rf is the resource finder
-  * @param bounds_aut is to set or not the automatic computation of the variable bound
-  * @param object_class is the object class according to its shape
-  */
-  /****************************************************************/
-  void configure(const std::string &object_class);
+    /** Configure function
+    * @param rf is the resource finder
+    * @param bounds_aut is to set or not the automatic computation of the variable bound
+    * @param object_class is the object class according to its shape
+    */
+    /****************************************************************/
+    void configure(const std::string &object_class);
 
-  /** Extract the solution
-  * @return the superquadric as a Vector
-  */
-  /****************************************************************/
-  SuperqModel::Superquadric get_result() const;
+    /** Extract the solution
+    * @return the superquadric as a Vector
+    */
+    /****************************************************************/
+    SuperqModel::Superquadric get_result() const;
 
 };
 
 class SuperqEstimatorApp : public Options
 {
-   int h_tree;
-   PointCloud *point_cloud_split1;
-   PointCloud *point_cloud_split2;
+    int h_tree;
+    PointCloud *point_cloud_split1;
+    PointCloud *point_cloud_split2;
 
 protected:
-  /***********************************************************************/
-  void iterativeModeling(SuperqModel::PointCloud &point_cloud);
+    /***********************************************************************/
+    void iterativeModeling(SuperqModel::PointCloud &point_cloud);
 
-  /***********************************************************************/
-  void computeNestedSuperq(SuperqModel::node *newnode);
+    /***********************************************************************/
+    void computeNestedSuperq(SuperqModel::node *newnode);
 
-  /***********************************************************************/
-  void splitPoints(SuperqModel::node *leaf);
+    /***********************************************************************/
+    void splitPoints(SuperqModel::node *leaf);
 
-  /****************************************************************/
-  void computeSuperqAxis(SuperqModel::node *node);
+    /****************************************************************/
+    void computeSuperqAxis(SuperqModel::node *node);
 
-  /****************************************************************/
-  bool axisParallel(SuperqModel::node *node1, SuperqModel::node *node2, Eigen::Matrix3d &relations);
+    /****************************************************************/
+    bool axisParallel(SuperqModel::node *node1, SuperqModel::node *node2, Eigen::Matrix3d &relations);
 
-  /****************************************************************/
-  bool sectionEqual(SuperqModel::node *node1, SuperqModel::node *node2, Eigen::Matrix3d &relations);
+    /****************************************************************/
+    bool sectionEqual(SuperqModel::node *node1, SuperqModel::node *node2, Eigen::Matrix3d &relations);
 
-  /****************************************************************/
-  double edgesClose(SuperqModel::node *node1, SuperqModel::node *node2);
+    /****************************************************************/
+    double edgesClose(SuperqModel::node *node1, SuperqModel::node *node2);
 
-  /****************************************************************/
-  void computeEdges(SuperqModel::node *node, std::deque<Eigen::Vector3d> &edges);
+    /****************************************************************/
+    void computeEdges(SuperqModel::node *node, std::deque<Eigen::Vector3d> &edges);
 
-  /***********************************************************************/
-  void copySuperqChildren(SuperqModel::node *old_node, SuperqModel::node *newnode);
+    /***********************************************************************/
+    void copySuperqChildren(SuperqModel::node *old_node, SuperqModel::node *newnode);
 
-  /****************************************************************/
-  bool findImportantPlanes(SuperqModel::node *current_node);
+    /****************************************************************/
+    bool findImportantPlanes(SuperqModel::node *current_node);
 
-  /***********************************************************************/
-  bool generateFinalTree(SuperqModel::node *old_node, SuperqModel::node *newnode);
+    /***********************************************************************/
+    bool generateFinalTree(SuperqModel::node *old_node, SuperqModel::node *newnode);
 
-  /****************************************************************/
-  void superqUsingPlane(SuperqModel::node *old_node, SuperqModel::PointCloud *pc, SuperqModel::node *newnode);
+    /****************************************************************/
+    void superqUsingPlane(SuperqModel::node *old_node, SuperqModel::PointCloud *pc, SuperqModel::node *newnode);
 
-  /****************************************************************/
-  std::vector<SuperqModel::Superquadric> fillSolution(SuperqModel::node *leaf);
+    /****************************************************************/
+    std::vector<SuperqModel::Superquadric> fillSolution(SuperqModel::node *leaf);
 
-  /**********************************************************************/
-  void addSuperqs(SuperqModel::node *leaf, std::vector<SuperqModel::Superquadric> &superqs);
+    /**********************************************************************/
+    void addSuperqs(SuperqModel::node *leaf, std::vector<SuperqModel::Superquadric> &superqs);
 
 public:
 

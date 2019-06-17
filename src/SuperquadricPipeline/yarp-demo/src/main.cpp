@@ -133,8 +133,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     Eigen::MatrixXd bounds_right, bounds_left;
     Eigen::MatrixXd bounds_constr_right, bounds_constr_left;
 
-   /****************************************************************/
-   bool configure(ResourceFinder &rf) override
+    /****************************************************************/
+    bool configure(ResourceFinder &rf) override
     {
         moduleName = rf.check("name", Value("superquadric-lib-demo")).toString();
         if(!rf.check("robot"))
@@ -512,210 +512,193 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
 
     /****************************************************************/
-      bool updateModule() override
+    bool updateModule() override
+    {
+      return false;
+    }
+
+    /****************************************************************/
+    double getPeriod() override
+    {
+      return 1.0;
+    }
+
+    /****************************************************************/
+    bool interruptModule() override
+    {
+      point_cloud_rpc.interrupt();
+      action_render_rpc.interrupt();
+      reach_calib_rpc.interrupt();
+      user_rpc.interrupt();
+      table_calib_rpc.interrupt();
+      closing = true;
+
+      return true;
+    }
+
+    /****************************************************************/
+    bool close() override
+    {
+      point_cloud_rpc.close();
+      action_render_rpc.close();
+      reach_calib_rpc.close();
+      user_rpc.close();
+      table_calib_rpc.close();
+
+      if (left_arm_client.isValid())
+      {
+          left_arm_client.close();
+      }
+      if (right_arm_client.isValid())
+      {
+          right_arm_client.close();
+      }
+
+      return true;
+    }
+
+    /****************************************************************/
+    bool set_single_superq(const string &value)
+    {
+      single_superq = (value == "on");
+
+      return true;
+    }
+
+    /****************************************************************/
+    bool from_off_file(const string &object_file, const string &hand)
+    {
+      if (hand == "right")
+      {
+          grasping_hand = WhichHand::HAND_RIGHT;
+
+          grasp_estim.SetStringValue("left_or_right", hand);
+      }
+      else if (hand == "left")
+      {
+          grasping_hand = WhichHand::HAND_LEFT;
+
+          grasp_estim.SetStringValue("left_or_right", hand);
+      }
+      else if (hand == "both")
+      {
+          grasping_hand = WhichHand::BOTH;
+
+          grasp_estim.SetStringValue("left_or_right", "right");
+      }
+      else
       {
           return false;
       }
 
-      /****************************************************************/
-      double getPeriod() override
+      deque<Eigen::Vector3d> all_points;
+      vector<Vector> points_yarp;
+      vector<vector<unsigned char>> all_colors;
+
+      ifstream fin(object_file);
+      if (!fin.is_open())
       {
-          return 1.0;
+          yError() << "Unable to open file \"" << object_file;
+
+          return 0;
       }
 
-      /****************************************************************/
-      bool interruptModule() override
-      {
-          point_cloud_rpc.interrupt();
-          action_render_rpc.interrupt();
-          reach_calib_rpc.interrupt();
-          user_rpc.interrupt();
-          table_calib_rpc.interrupt();
-          closing = true;
+      Vector p(3);
+      vector<unsigned int> c_(3);
+      vector<unsigned char> c(3);
 
+      string line;
+      while (getline(fin,line))
+      {
+          istringstream iss(line);
+          if (!(iss >> p(0) >> p(1) >> p(2)))
+              break;
+          points_yarp.push_back(p);
+
+          fill(c_.begin(),c_.end(),120);
+          iss >> c_[0] >> c_[1] >> c_[2];
+          c[0] = (unsigned char)c_[0];
+          c[1] = (unsigned char)c_[1];
+          c[2] = (unsigned char)c_[2];
+
+          if (c[0] == c[1] && c[1] == c[2])
+           {
+               c[0] = 50;
+               c[1] = 100;
+               c[2] = 0;
+           }
+
+          all_colors.push_back(c);
+      }
+
+      all_points = removeOutliers(points_yarp, all_colors);
+
+      point_cloud.setPoints(all_points);
+      point_cloud.setColors(all_colors);
+
+      if (point_cloud.getNumberPoints() > 0)
+      {
+          computeSuperqAndGrasp(true);
           return true;
       }
 
-      /****************************************************************/
-      bool close() override
+      return false;
+    }
+
+    /****************************************************************/
+    bool compute_superq_and_pose(const string &object_name, const string &hand)
+    {
+      if (hand == "right")
       {
-          point_cloud_rpc.close();
-          action_render_rpc.close();
-          reach_calib_rpc.close();
-          user_rpc.close();
-          table_calib_rpc.close();
+          grasping_hand = WhichHand::HAND_RIGHT;
 
-          if (left_arm_client.isValid())
-          {
-              left_arm_client.close();
-          }
-          if (right_arm_client.isValid())
-          {
-              right_arm_client.close();
-          }
-
-          return true;
+          grasp_estim.SetStringValue("left_or_right", hand);
       }
-
-      /****************************************************************/
-      bool set_single_superq(const string &value)
+      else if (hand == "left")
       {
-          single_superq = (value == "on");
+          grasping_hand = WhichHand::HAND_LEFT;
 
-          return true;
+          grasp_estim.SetStringValue("left_or_right", hand);
       }
-
-      /****************************************************************/
-      bool from_off_file(const string &object_file, const string &hand)
+      else if (hand == "both")
       {
-          if (hand == "right")
-          {
-              grasping_hand = WhichHand::HAND_RIGHT;
+          grasping_hand = WhichHand::BOTH;
 
-              grasp_estim.SetStringValue("left_or_right", hand);
-          }
-          else if (hand == "left")
-          {
-              grasping_hand = WhichHand::HAND_LEFT;
-
-              grasp_estim.SetStringValue("left_or_right", hand);
-          }
-          else if (hand == "both")
-          {
-              grasping_hand = WhichHand::BOTH;
-
-              grasp_estim.SetStringValue("left_or_right", "right");
-          }
-          else
-          {
-              return false;
-          }
-
-          deque<Eigen::Vector3d> all_points;
-          vector<Vector> points_yarp;
-          vector<vector<unsigned char>> all_colors;
-
-          ifstream fin(object_file);
-          if (!fin.is_open())
-          {
-              yError() << "Unable to open file \"" << object_file;
-
-              return 0;
-          }
-
-          Vector p(3);
-          vector<unsigned int> c_(3);
-          vector<unsigned char> c(3);
-
-          string line;
-          while (getline(fin,line))
-          {
-              istringstream iss(line);
-              if (!(iss >> p(0) >> p(1) >> p(2)))
-                  break;
-              points_yarp.push_back(p);
-
-              fill(c_.begin(),c_.end(),120);
-              iss >> c_[0] >> c_[1] >> c_[2];
-              c[0] = (unsigned char)c_[0];
-              c[1] = (unsigned char)c_[1];
-              c[2] = (unsigned char)c_[2];
-
-              if (c[0] == c[1] && c[1] == c[2])
-               {
-                   c[0] = 50;
-                   c[1] = 100;
-                   c[2] = 0;
-               }
-
-              all_colors.push_back(c);
-          }
-
-          all_points = removeOutliers(points_yarp, all_colors);
-
-          point_cloud.setPoints(all_points);
-          point_cloud.setColors(all_colors);
-
-          if (point_cloud.getNumberPoints() > 0)
-          {
-              computeSuperqAndGrasp(true);
-              return true;
-          }
-
+          grasp_estim.SetStringValue("left_or_right", "right");
+      }
+      else
+      {
           return false;
       }
 
-      /****************************************************************/
-      bool compute_superq_and_pose(const string &object_name, const string &hand)
+      fixate_object = true;
+
+      bool ok;
+
+      if (object_name != "hanging_tool")
+         ok = requestPointCloud(object_name);
+      else
+         ok = acquireFromSFM();
+
+      if (isInClasses(object_name))
+          object_class = object_name;
+
+      if (ok == true && point_cloud.getNumberPoints() > 0)
       {
-          if (hand == "right")
-          {
-              grasping_hand = WhichHand::HAND_RIGHT;
-
-              grasp_estim.SetStringValue("left_or_right", hand);
-          }
-          else if (hand == "left")
-          {
-              grasping_hand = WhichHand::HAND_LEFT;
-
-              grasp_estim.SetStringValue("left_or_right", hand);
-          }
-          else if (hand == "both")
-          {
-              grasping_hand = WhichHand::BOTH;
-
-              grasp_estim.SetStringValue("left_or_right", "right");
-          }
-          else
-          {
-              return false;
-          }
-
-          fixate_object = true;
-
-          bool ok;
-
-          if (object_name != "hanging_tool")
-             ok = requestPointCloud(object_name);
-          else
-             ok = acquireFromSFM();
-
-          if (isInClasses(object_name))
-              object_class = object_name;
-
-          if (ok == true && point_cloud.getNumberPoints() > 0)
-          {
-              computeSuperqAndGrasp(true);
-          }
-
-          return ok;
+          computeSuperqAndGrasp(true);
       }
 
-      /****************************************************************/
-      bool grasp()
-      {
-          Vector best_pose;
+      return ok;
+    }
 
-          if (grasping_hand == WhichHand::BOTH)
-          {
-              if (best_hand == "right")
-              {
-                  Eigen::VectorXd pose;
-                  pose.resize(7);
-                  pose.head(3) = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose].getGraspPosition();
-                  pose.tail(4) = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose].getGraspAxisAngle();
-                  best_pose = eigenToYarp(pose);
-              }
-              else if (best_hand == "left")
-              {
-                  Eigen::VectorXd pose;
-                  pose.resize(7);
-                  pose.head(3) = grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose].getGraspPosition();
-                  pose.tail(4) = grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose].getGraspAxisAngle();
-                  best_pose = eigenToYarp(pose);
-              }
-          }
-          else
+    /****************************************************************/
+    bool grasp()
+    {
+      Vector best_pose;
+
+      if (grasping_hand == WhichHand::BOTH)
+      {
+          if (best_hand == "right")
           {
               Eigen::VectorXd pose;
               pose.resize(7);
@@ -723,895 +706,912 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
               pose.tail(4) = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose].getGraspAxisAngle();
               best_pose = eigenToYarp(pose);
           }
-
-          cout << "|| ---------------------------------------------------- ||" << endl;
-          yInfo() << " || Best pose selected: " << best_pose.toString();
-          cout << "|| ---------------------------------------------------- ||" << endl;
-          cout << endl << endl;
-
-          executeGrasp(best_pose, best_hand);
-      }
-
-      /****************************************************************/
-      bool drop()
-      {
-          if (action_render_rpc.getOutputCount() > 0)
+          else if (best_hand == "left")
           {
-              Bottle cmd, reply;
-              cmd.addVocab(Vocab::encode("drop"));
-              action_render_rpc.write(cmd, reply);
-              if (reply.get(0).asVocab() == Vocab::encode("ack"))
-                  return true;
-              else
-                  return false;
-          }
-          else
-          {
-              return false;
+              Eigen::VectorXd pose;
+              pose.resize(7);
+              pose.head(3) = grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose].getGraspPosition();
+              pose.tail(4) = grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose].getGraspAxisAngle();
+              best_pose = eigenToYarp(pose);
           }
       }
-
-      /****************************************************************/
-      bool home()
+      else
       {
-          if (action_render_rpc.getOutputCount() > 0)
-          {
-              Bottle cmd, reply;
-              cmd.addVocab(Vocab::encode("home"));
-              action_render_rpc.write(cmd, reply);
-              if (reply.get(0).asVocab() == Vocab::encode("ack"))
-                  return true;
-              else
-                  return false;
+          Eigen::VectorXd pose;
+          pose.resize(7);
+          pose.head(3) = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose].getGraspPosition();
+          pose.tail(4) = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose].getGraspAxisAngle();
+          best_pose = eigenToYarp(pose);
+      }
 
+      cout << "|| ---------------------------------------------------- ||" << endl;
+      yInfo() << " || Best pose selected: " << best_pose.toString();
+      cout << "|| ---------------------------------------------------- ||" << endl;
+      cout << endl << endl;
+
+      executeGrasp(best_pose, best_hand);
+    }
+
+    /****************************************************************/
+    bool drop()
+    {
+        if (action_render_rpc.getOutputCount() > 0)
+        {
+          Bottle cmd, reply;
+          cmd.addVocab(Vocab::encode("drop"));
+          action_render_rpc.write(cmd, reply);
+          if (reply.get(0).asVocab() == Vocab::encode("ack"))
               return true;
-          }
           else
-          {
               return false;
-          }
-      }
+        }
+        else
+        {
+          return false;
+        }
+    }
 
-      /************************************************************************/
-      bool requestPointCloud(const string &object)
+    /****************************************************************/
+    bool home()
+    {
+      if (action_render_rpc.getOutputCount() > 0)
       {
-         Bottle cmd_request;
-         Bottle cmd_reply;
+          Bottle cmd, reply;
+          cmd.addVocab(Vocab::encode("home"));
+          action_render_rpc.write(cmd, reply);
+          if (reply.get(0).asVocab() == Vocab::encode("ack"))
+              return true;
+          else
+              return false;
 
-         //  if fixate_object is given, look at the object before acquiring the point cloud
-         if (fixate_object)
+          return true;
+      }
+      else
+      {
+          return false;
+      }
+    }
+
+    /************************************************************************/
+    bool requestPointCloud(const string &object)
+    {
+     Bottle cmd_request;
+     Bottle cmd_reply;
+
+     //  if fixate_object is given, look at the object before acquiring the point cloud
+     if (fixate_object)
+     {
+         if(action_render_rpc.getOutputCount() < 1)
          {
-             if(action_render_rpc.getOutputCount() < 1)
-             {
-                 yError() << prettyError( __FUNCTION__,  "requestRefreshPointCloud: no connection to action rendering module");
-                 return false;
-             }
-
-             cmd_request.addVocab(Vocab::encode("look"));
-             cmd_request.addString(object);
-             cmd_request.addString("wait");
-
-             action_render_rpc.write(cmd_request, cmd_reply);
-             if (cmd_reply.get(0).asVocab() != Vocab::encode("ack"))
-             {
-                 yError() << prettyError( __FUNCTION__,  "Didn't manage to look at the object");
-                 return false;
-             }
+             yError() << prettyError( __FUNCTION__,  "requestRefreshPointCloud: no connection to action rendering module");
+             return false;
          }
 
-         point_cloud.deletePoints();
-         cmd_request.clear();
-         cmd_reply.clear();
-
-         yarp::sig::PointCloud<DataXYZRGBA> pc;
-
-         cmd_request.addString("get_point_cloud");
+         cmd_request.addVocab(Vocab::encode("look"));
          cmd_request.addString(object);
+         cmd_request.addString("wait");
 
-         if(point_cloud_rpc.getOutputCount() < 1)
+         action_render_rpc.write(cmd_request, cmd_reply);
+         if (cmd_reply.get(0).asVocab() != Vocab::encode("ack"))
          {
-             yError() << prettyError( __FUNCTION__,  "requestRefreshPointCloud: no connection to point cloud module");
+             yError() << prettyError( __FUNCTION__,  "Didn't manage to look at the object");
              return false;
          }
+     }
 
-         point_cloud_rpc.write(cmd_request, cmd_reply);
+     point_cloud.deletePoints();
+     cmd_request.clear();
+     cmd_reply.clear();
 
-         //  cheap workaround to get the point cloud
-         Bottle* pcBt = cmd_reply.get(0).asList();
-         bool success = pc.fromBottle(*pcBt);
+     yarp::sig::PointCloud<DataXYZRGBA> pc;
 
-         vector<Vector> acquired_points;
-         vector<vector<unsigned char>> acquired_colors;
+     cmd_request.addString("get_point_cloud");
+     cmd_request.addString(object);
 
-         Vector point(3);
-         vector<unsigned char> c;
-         c.resize(3);
+     if(point_cloud_rpc.getOutputCount() < 1)
+     {
+         yError() << prettyError( __FUNCTION__,  "requestRefreshPointCloud: no connection to point cloud module");
+         return false;
+     }
 
-         for (size_t i = 0; i < pc.size(); i++)
-         {
-            point(0)=pc(i).x; point(1)=pc(i).y; point(2)=pc(i).z;
-            c[0] = pc(i).r;
-            c[1] = pc(i).g;
-            c[2] = pc(i).b;
+     point_cloud_rpc.write(cmd_request, cmd_reply);
 
-            acquired_points.push_back(point);
-            acquired_colors.push_back(c);
-         }
+     //  cheap workaround to get the point cloud
+     Bottle* pcBt = cmd_reply.get(0).asList();
+     bool success = pc.fromBottle(*pcBt);
 
-         deque<Eigen::Vector3d> all_points;
-         all_points = removeOutliers(acquired_points, acquired_colors);
+     vector<Vector> acquired_points;
+     vector<vector<unsigned char>> acquired_colors;
 
-         if (success && (pc.size() > 0))
-         {
-            point_cloud.setPoints(all_points);
-            point_cloud.setColors(acquired_colors);
-            return true;
-         }
-         else
-            return false;
-      }
+     Vector point(3);
+     vector<unsigned char> c;
+     c.resize(3);
 
-      /****************************************************************/
-      bool acquireFromSFM()
+     for (size_t i = 0; i < pc.size(); i++)
+     {
+        point(0)=pc(i).x; point(1)=pc(i).y; point(2)=pc(i).z;
+        c[0] = pc(i).r;
+        c[1] = pc(i).g;
+        c[2] = pc(i).b;
+
+        acquired_points.push_back(point);
+        acquired_colors.push_back(c);
+     }
+
+     deque<Eigen::Vector3d> all_points;
+     all_points = removeOutliers(acquired_points, acquired_colors);
+
+     if (success && (pc.size() > 0))
+     {
+        point_cloud.setPoints(all_points);
+        point_cloud.setColors(acquired_colors);
+        return true;
+     }
+     else
+        return false;
+    }
+
+    /****************************************************************/
+    bool acquireFromSFM()
+    {
+      point_cloud.deletePoints();
+
+      vector<Vector> acquired_points;
+      vector<vector<unsigned char>> acquired_colors;
+
+      Bottle cmd_request;
+      Bottle cmd_reply;
+      cmd_request.clear();
+      cmd_reply.clear();
+      cmd_request.addString("Points");
+      Bottle pointsList;
+
+      for (int i = u_i; i < u_f; i++)
       {
-          point_cloud.deletePoints();
-
-          vector<Vector> acquired_points;
-          vector<vector<unsigned char>> acquired_colors;
-
-          Bottle cmd_request;
-          Bottle cmd_reply;
-          cmd_request.clear();
-          cmd_reply.clear();
-          cmd_request.addString("Points");
-          Bottle pointsList;
-
-          for (int i = u_i; i < u_f; i++)
+          for (int j = v_i; j < v_f; j++)
           {
-              for (int j = v_i; j < v_f; j++)
-              {
-                  Bottle &points = pointsList.addList();
-                  cmd_request.addInt(i);
-                  cmd_request.addInt(j);
-                  points.addInt(i);
-                  points.addInt(j);
-              }
-          }
-
-
-          if (!sfm_rpc.write(cmd_request, cmd_reply))
-          {
-             yError() << " Problems in getting points from SFM ";
-             return false;
-          }
-
-          ImageOf<PixelRgb> *inCamImg = img_in.read();
-
-          for (int p_i = 0; p_i < cmd_reply.size()/3 ; p_i ++)
-          {
-              Vector point(3,0.0);
-
-              point[0] = cmd_reply.get(p_i*3).asDouble();
-              point[1] = cmd_reply.get(p_i*3 + 1).asDouble();
-              point[2] = cmd_reply.get(p_i*3 + 2).asDouble();
-
-              if (norm(point) == 0.0 || (point[0] > -0.2) || (point[0] < -0.6) || (point[2] < -0.2))
-                  continue;
-
-              Bottle *point2D = pointsList.get(p_i).asList();
-              PixelRgb point_rgb = inCamImg->pixel(point2D->get(0).asInt(), point2D->get(1).asInt());
-
-              vector<unsigned char> color(3);
-
-              color[0] = point_rgb.r;
-              color[1] = point_rgb.g;
-              color[2] = point_rgb.b;
-
-              acquired_points.push_back(point);
-              acquired_colors.push_back(color);
-          }
-
-          filterPC(acquired_points, acquired_colors);
-
-          deque<Eigen::Vector3d> eigen_points;
-
-          for (size_t i = 0; i < acquired_points.size(); i++)
-          {
-              eigen_points.push_back(toEigen(acquired_points[i]));
-          }
-
-          point_cloud.setPoints(eigen_points);
-          point_cloud.setColors(acquired_colors);
-
-          if (point_cloud.getNumberPoints() > 0)
-             return true;
-          else
-             return false;
-      }
-
-      /****************************************************************/
-      void filterPC(vector<Vector> &point_cloud, vector<vector<unsigned char>> &colors)
-      {
-          double x_max = point_cloud[0][0];
-
-          vector<Vector> new_point_cloud;
-          vector<vector<unsigned char>> new_colors;
-
-          for (size_t i = 1; i < point_cloud.size(); i++)
-          {
-              if (point_cloud[i][0] > x_max)
-                 x_max = point_cloud[i][0];
-          }
-
-          yDebug() << "X max " << x_max;
-
-          yDebug() << "x_max - 0.04" << x_max - 0.04;
-
-          for (size_t i = 0; i < point_cloud.size(); i++)
-          {
-              if (point_cloud[i][0] > x_max - 0.04)
-              {
-                 new_point_cloud.push_back(point_cloud[i]);
-
-                 vector<unsigned char> color(3);
-                 color[0] = colors[i][0];
-                 color[1] = colors[i][1];
-                 color[2] = colors[i][2];
-
-                 new_colors.push_back(color);
-              }
-          }
-
-          point_cloud.clear();
-          colors.clear();
-
-          for (size_t i = 0; i < new_point_cloud.size(); i++)
-          {
-              point_cloud.push_back(new_point_cloud[i]);
-              colors.push_back(new_colors[i]);
+              Bottle &points = pointsList.addList();
+              cmd_request.addInt(i);
+              cmd_request.addInt(j);
+              points.addInt(i);
+              points.addInt(j);
           }
       }
 
-      /****************************************************************/
-      deque<Eigen::Vector3d> removeOutliers(vector<Vector> &points_yarp, vector<vector<unsigned char>> &all_colors)
+
+      if (!sfm_rpc.write(cmd_request, cmd_reply))
       {
-          double t0=Time::now();
+         yError() << " Problems in getting points from SFM ";
+         return false;
+      }
 
-          deque<Eigen::Vector3d> in_points;
-          vector<vector<unsigned char>> in_colors;
+      ImageOf<PixelRgb> *inCamImg = img_in.read();
 
-          Property options;
-          options.put("epsilon",radius);
-          options.put("minpts",minpts);
-
-          DBSCAN dbscan;
-          map<size_t,set<size_t>> clusters=dbscan.cluster(points_yarp, options);
-
-          size_t largest_class; size_t largest_size=0;
-          for (auto it=begin(clusters); it!=end(clusters); it++)
-          {
-              if (it->second.size()>largest_size)
-              {
-                  largest_size=it->second.size();
-                  largest_class=it->first;
-              }
-          }
-
-          auto &c=clusters[largest_class];
-          for (size_t i=0; i<points_yarp.size(); i++)
-          {
-              if (c.find(i)!=end(c))
-              {
-                  in_points.push_back(toEigen(points_yarp[i]));
-                  in_colors.push_back(all_colors[i]);
-              }
-          }
-
-          double t1=Time::now();
-
-          cout << "|| ---------------------------------------------------- ||" << endl;
-          cout<<"|| Outliers removed                                      : "<<points_yarp.size() - in_points.size()<<endl;
-          cout << "|| ---------------------------------------------------- ||" << endl<<endl;
-
-          all_colors = in_colors;
-
-          return in_points;
-       }
-
-      /************************************************************************/
-      void computeSuperqAndGrasp(bool choose_hand)
+      for (int p_i = 0; p_i < cmd_reply.size()/3 ; p_i ++)
       {
-          // Reset visualizer for new computations
-          vis.resetSuperq();
-          vis.resetPoses();
-          vis.resetPoints();
+          Vector point(3,0.0);
 
-          // Visualize acquired point cloud
+          point[0] = cmd_reply.get(p_i*3).asDouble();
+          point[1] = cmd_reply.get(p_i*3 + 1).asDouble();
+          point[2] = cmd_reply.get(p_i*3 + 2).asDouble();
+
+          if (norm(point) == 0.0 || (point[0] > -0.2) || (point[0] < -0.6) || (point[2] < -0.2))
+              continue;
+
+          Bottle *point2D = pointsList.get(p_i).asList();
+          PixelRgb point_rgb = inCamImg->pixel(point2D->get(0).asInt(), point2D->get(1).asInt());
+
+          vector<unsigned char> color(3);
+
+          color[0] = point_rgb.r;
+          color[1] = point_rgb.g;
+          color[2] = point_rgb.b;
+
+          acquired_points.push_back(point);
+          acquired_colors.push_back(color);
+      }
+
+      filterPC(acquired_points, acquired_colors);
+
+      deque<Eigen::Vector3d> eigen_points;
+
+      for (size_t i = 0; i < acquired_points.size(); i++)
+      {
+          eigen_points.push_back(toEigen(acquired_points[i]));
+      }
+
+      point_cloud.setPoints(eigen_points);
+      point_cloud.setColors(acquired_colors);
+
+      if (point_cloud.getNumberPoints() > 0)
+         return true;
+      else
+         return false;
+    }
+
+    /****************************************************************/
+    void filterPC(vector<Vector> &point_cloud, vector<vector<unsigned char>> &colors)
+    {
+      double x_max = point_cloud[0][0];
+
+      vector<Vector> new_point_cloud;
+      vector<vector<unsigned char>> new_colors;
+
+      for (size_t i = 1; i < point_cloud.size(); i++)
+      {
+          if (point_cloud[i][0] > x_max)
+             x_max = point_cloud[i][0];
+      }
+
+      yDebug() << "X max " << x_max;
+
+      yDebug() << "x_max - 0.04" << x_max - 0.04;
+
+      for (size_t i = 0; i < point_cloud.size(); i++)
+      {
+          if (point_cloud[i][0] > x_max - 0.04)
+          {
+             new_point_cloud.push_back(point_cloud[i]);
+
+             vector<unsigned char> color(3);
+             color[0] = colors[i][0];
+             color[1] = colors[i][1];
+             color[2] = colors[i][2];
+
+             new_colors.push_back(color);
+          }
+      }
+
+      point_cloud.clear();
+      colors.clear();
+
+      for (size_t i = 0; i < new_point_cloud.size(); i++)
+      {
+          point_cloud.push_back(new_point_cloud[i]);
+          colors.push_back(new_colors[i]);
+      }
+    }
+
+    /****************************************************************/
+    deque<Eigen::Vector3d> removeOutliers(vector<Vector> &points_yarp, vector<vector<unsigned char>> &all_colors)
+    {
+      double t0=Time::now();
+
+      deque<Eigen::Vector3d> in_points;
+      vector<vector<unsigned char>> in_colors;
+
+      Property options;
+      options.put("epsilon",radius);
+      options.put("minpts",minpts);
+
+      DBSCAN dbscan;
+      map<size_t,set<size_t>> clusters=dbscan.cluster(points_yarp, options);
+
+      size_t largest_class; size_t largest_size=0;
+      for (auto it=begin(clusters); it!=end(clusters); it++)
+      {
+          if (it->second.size()>largest_size)
+          {
+              largest_size=it->second.size();
+              largest_class=it->first;
+          }
+      }
+
+      auto &c=clusters[largest_class];
+      for (size_t i=0; i<points_yarp.size(); i++)
+      {
+          if (c.find(i)!=end(c))
+          {
+              in_points.push_back(toEigen(points_yarp[i]));
+              in_colors.push_back(all_colors[i]);
+          }
+      }
+
+      double t1=Time::now();
+
+      cout << "|| ---------------------------------------------------- ||" << endl;
+      cout<<"|| Outliers removed                                      : "<<points_yarp.size() - in_points.size()<<endl;
+      cout << "|| ---------------------------------------------------- ||" << endl<<endl;
+
+      all_colors = in_colors;
+
+      return in_points;
+    }
+
+    /************************************************************************/
+    void computeSuperqAndGrasp(bool choose_hand)
+    {
+      // Reset visualizer for new computations
+      vis.resetSuperq();
+      vis.resetPoses();
+      vis.resetPoints();
+
+      // Visualize acquired point cloud
+      vis.addPoints(point_cloud, false);
+
+      // Compute superq
+      if (single_superq || object_class != "default")
+      {
+          estim.SetStringValue("object_class", object_class);
+          superqs = estim.computeSuperq(point_cloud);
+          vis.addPoints(point_cloud, true);
+      }
+      else
+      {
+          superqs = estim.computeMultipleSuperq(point_cloud);
           vis.addPoints(point_cloud, false);
+      }
+      // Visualize downsampled point cloud and estimated superq
+      vis.addSuperq(superqs);
 
-          // Compute superq
-          if (single_superq || object_class != "default")
+      // Get real value of table height
+      getTable();
+
+      // Compute grasp pose
+      grasp_res_hand1 = grasp_estim.computeGraspPoses(superqs);
+
+      // Show computed grasp pose and plane
+      vis.addPoses(grasp_res_hand1.grasp_poses);
+      vis.addPlane(grasp_estim.getPlaneHeight());
+
+      // Compute and show grasp pose for the other hand
+      if (grasping_hand == WhichHand::BOTH)
+      {
+          grasp_estim.SetStringValue("left_or_right", "left");
+          grasp_res_hand2 = grasp_estim.computeGraspPoses(superqs);
+          vis.addPoses(grasp_res_hand1.grasp_poses, grasp_res_hand2.grasp_poses);
+      }
+
+      if (choose_hand)
+      {
+          // TODO extend to R1 (see cardinal-grasp-pointss)
+          if ((robot == "icubSim") || (robot == "icub"))
           {
-              estim.SetStringValue("object_class", object_class);
-              superqs = estim.computeSuperq(point_cloud);
-              vis.addPoints(point_cloud, true);
-          }
-          else
-          {
-              superqs = estim.computeMultipleSuperq(point_cloud);
-              vis.addPoints(point_cloud, false);
-          }
-          // Visualize downsampled point cloud and estimated superq
-          vis.addSuperq(superqs);
-
-          // Get real value of table height
-          getTable();
-
-          // Compute grasp pose
-          grasp_res_hand1 = grasp_estim.computeGraspPoses(superqs);
-
-          // Show computed grasp pose and plane
-          vis.addPoses(grasp_res_hand1.grasp_poses);
-          vis.addPlane(grasp_estim.getPlaneHeight());
-
-          // Compute and show grasp pose for the other hand
-          if (grasping_hand == WhichHand::BOTH)
-          {
-              grasp_estim.SetStringValue("left_or_right", "left");
-              grasp_res_hand2 = grasp_estim.computeGraspPoses(superqs);
-              vis.addPoses(grasp_res_hand1.grasp_poses, grasp_res_hand2.grasp_poses);
-          }
-
-          if (choose_hand)
-          {
-              // TODO extend to R1 (see cardinal-grasp-pointss)
-              if ((robot == "icubSim") || (robot == "icub"))
-              {
-                  if (grasping_hand == WhichHand::BOTH)
-                  {
-                      if (left_arm_client.isValid())
-                      {
-                          left_arm_client.view(icart_left);
-
-                          computePoseHat(grasp_res_hand2, icart_left);
-                      }
-
-                      if (right_arm_client.isValid())
-                      {
-                          right_arm_client.view(icart_right);
-
-                          computePoseHat(grasp_res_hand1, icart_right);
-                      }
-                  }
-                  else if (grasping_hand == WhichHand::HAND_RIGHT)
-                  {
-                      if (right_arm_client.isValid())
-                      {
-                          right_arm_client.view(icart_right);
-
-                          computePoseHat(grasp_res_hand1, icart_right);
-                      }
-                  }
-                  else if (grasping_hand == WhichHand::HAND_LEFT)
-                  {
-                      if (left_arm_client.isValid())
-                      {
-                          left_arm_client.view(icart_left);
-
-                          computePoseHat(grasp_res_hand1, icart_left);
-                      }
-                  }
-              }
-              else
-              {
-                  if(action_render_rpc.getOutputCount()<1)
-                  {
-                      yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: no connection to action rendering module");
-                  }
-                  else
-                  {
-                      if (grasping_hand == WhichHand::BOTH)
-                      {
-                          computePoseHatR1(grasp_res_hand1, "right");
-                          computePoseHatR1(grasp_res_hand2, "left");
-                      }
-                      else if (grasping_hand == WhichHand::HAND_RIGHT)
-                      {
-                          computePoseHatR1(grasp_res_hand1, "right");
-                      }
-                      else if (grasping_hand == WhichHand::HAND_LEFT)
-                      {
-                          computePoseHatR1(grasp_res_hand1, "left");
-                      }
-                  }
-              }
-              grasp_estim.refinePoseCost(grasp_res_hand1);
-
               if (grasping_hand == WhichHand::BOTH)
               {
-                  grasp_estim.refinePoseCost(grasp_res_hand2);
-                  vis.addPoses(grasp_res_hand1.grasp_poses, grasp_res_hand2.grasp_poses);
-              }
-              else
-                  vis.addPoses(grasp_res_hand1.grasp_poses);
-
-              if (grasping_hand == WhichHand::BOTH)
-              {
-                  int best_right = grasp_res_hand1.best_pose;
-                  int best_left = grasp_res_hand2.best_pose;
-
-                  if (grasp_res_hand1.grasp_poses[best_right].cost < grasp_res_hand2.grasp_poses[best_left].cost)
+                  if (left_arm_client.isValid())
                   {
-                      best_hand = "right";
-                      vis.highlightBestPose("right", "both", best_right);
+                      left_arm_client.view(icart_left);
+
+                      computePoseHat(grasp_res_hand2, icart_left);
                   }
-                  else
+
+                  if (right_arm_client.isValid())
                   {
-                      best_hand = "left";
-                      vis.highlightBestPose("left", "both", best_left);
+                      right_arm_client.view(icart_right);
+
+                      computePoseHat(grasp_res_hand1, icart_right);
                   }
               }
               else if (grasping_hand == WhichHand::HAND_RIGHT)
               {
-                  int best_right = grasp_res_hand1.best_pose;
-                  best_hand = "right";
-                  vis.highlightBestPose("right", "right", best_right);
+                  if (right_arm_client.isValid())
+                  {
+                      right_arm_client.view(icart_right);
+
+                      computePoseHat(grasp_res_hand1, icart_right);
+                  }
               }
               else if (grasping_hand == WhichHand::HAND_LEFT)
               {
-                  int best_left = grasp_res_hand1.best_pose;
-                  best_hand = "left";
-                  vis.highlightBestPose("left", "left", best_left);
-              }
-          }
-      }
-
-      /****************************************************************/
-      void getTable()
-      {
-          bool table_ok = false;
-          if (robot != "icubSim" && table_calib_rpc.getOutputCount() > 0)
-          {
-              Bottle table_cmd, table_rply;
-              table_cmd.addVocab(Vocab::encode("get"));
-              table_cmd.addString("table");
-
-              table_calib_rpc.write(table_cmd, table_rply);
-              if (Bottle *payload = table_rply.get(0).asList())
-              {
-                  if (payload->size() >= 2)
+                  if (left_arm_client.isValid())
                   {
-                      plane(0) = 0.0;
-                      plane(1) = 0.0;
-                      plane(2) = 1.0;
+                      left_arm_client.view(icart_left);
 
-                      plane(3) = -payload->get(1).asDouble() + 0.035;
-                      table_ok = true;
-
-                      grasp_estim.setVector("plane", plane);
+                      computePoseHat(grasp_res_hand1, icart_left);
                   }
               }
           }
-          if (!table_ok)
-          {
-            cout << "|| ---------------------------------------------------- ||" << endl;
-            cout << "|| Unable to retrieve object table                      ||" << endl;
-            cout << "|| Unsig default value                                  : " << -plane[3] << endl;
-            cout << "|| ---------------------------------------------------- ||" << endl << endl;
-          }
           else
           {
-              cout << "|| ---------------------------------------------------- ||" << endl;
-              cout << "|| Unsig plane value                                    : " << -plane[3] << endl;
-              cout << "|| ---------------------------------------------------- ||" << endl << endl;
+              if(action_render_rpc.getOutputCount()<1)
+              {
+                  yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: no connection to action rendering module");
+              }
+              else
+              {
+                  if (grasping_hand == WhichHand::BOTH)
+                  {
+                      computePoseHatR1(grasp_res_hand1, "right");
+                      computePoseHatR1(grasp_res_hand2, "left");
+                  }
+                  else if (grasping_hand == WhichHand::HAND_RIGHT)
+                  {
+                      computePoseHatR1(grasp_res_hand1, "right");
+                  }
+                  else if (grasping_hand == WhichHand::HAND_LEFT)
+                  {
+                      computePoseHatR1(grasp_res_hand1, "left");
+                  }
+              }
           }
-      }
+          grasp_estim.refinePoseCost(grasp_res_hand1);
 
-      /****************************************************************/
-      void setGraspContext(ICartesianControl *icart)
-      {
-          //  set up the context for the grasping planning and execution
-          //  enable all joints
-          Vector dof;
-          icart->getDOF(dof);
-          Vector new_dof(10, 1);
-          new_dof(1) = 0.0;
-          icart->setDOF(new_dof, dof);
-          icart->setPosePriority("position");
-          icart->setInTargetTol(0.001);
-        }
-
-      /****************************************************************/
-      Vector eigenToYarp(Eigen::VectorXd &v)
-      {
-          Vector x;
-          x.resize(v.size());
-
-          for (size_t i = 0; i< x.size(); i++)
+          if (grasping_hand == WhichHand::BOTH)
           {
-              x[i] = v[i];
+              grasp_estim.refinePoseCost(grasp_res_hand2);
+              vis.addPoses(grasp_res_hand1.grasp_poses, grasp_res_hand2.grasp_poses);
           }
+          else
+              vis.addPoses(grasp_res_hand1.grasp_poses);
 
-          return x;
-      }
-
-      /****************************************************************/
-      void computePoseHat(GraspResults &grasp_res, ICartesianControl *icart)
-      {
-          for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
+          if (grasping_hand == WhichHand::BOTH)
           {
-              int context_backup;
-              icart->storeContext(&context_backup);
+              int best_right = grasp_res_hand1.best_pose;
+              int best_left = grasp_res_hand2.best_pose;
 
-              //  set up the context for the computation of the candidates
-              setGraspContext(icart);
-
-              Eigen::VectorXd desired_pose = grasp_res.grasp_poses[i].getGraspPosition();
-              Eigen::VectorXd desired_or = grasp_res.grasp_poses[i].getGraspAxisAngle();
-
-              Vector x_d = eigenToYarp(desired_pose);
-              Vector o_d = eigenToYarp(desired_or);
-
-              Vector x_d_hat, o_d_hat, q_d_hat;
-
-              bool success = icart->askForPose(x_d, o_d, x_d_hat, o_d_hat, q_d_hat);
-
-              Eigen::VectorXd pose_hat = toEigen(x_d_hat);
-              Eigen::VectorXd or_hat = toEigen(o_d_hat);
-
-              Eigen::VectorXd robot_pose;
-              robot_pose.resize(7);
-              robot_pose.head(3) = pose_hat;
-              robot_pose.tail(4) = or_hat;
-
-              //for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
-              //{
-              grasp_res.grasp_poses[i].setGraspParamsHat(robot_pose);
-              //}
-
-              //  restore previous context
-              icart->restoreContext(context_backup);
-              icart->deleteContext(context_backup);
+              if (grasp_res_hand1.grasp_poses[best_right].cost < grasp_res_hand2.grasp_poses[best_left].cost)
+              {
+                  best_hand = "right";
+                  vis.highlightBestPose("right", "both", best_right);
+              }
+              else
+              {
+                  best_hand = "left";
+                  vis.highlightBestPose("left", "both", best_left);
+              }
           }
-      }
-
-      /****************************************************************/
-      void computePoseHatR1(GraspResults &grasp_res, const string &hand)
-      {
-          for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
+          else if (grasping_hand == WhichHand::HAND_RIGHT)
           {
-              Eigen::VectorXd desired_pose = grasp_res.grasp_poses[i].getGraspPosition();
-              Eigen::VectorXd desired_or = grasp_res.grasp_poses[i].getGraspAxisAngle();
-
-              Vector x_d = eigenToYarp(desired_pose);
-              Vector o_d = eigenToYarp(desired_or);
-
-              Bottle cmd, reply;
-              cmd.addVocab(Vocab::encode("ask"));
-              Bottle &subcmd = cmd.addList();
-              for(int i=0 ; i<3 ; i++) subcmd.addDouble(x_d[i]);
-              for(int i=0 ; i<4 ; i++) subcmd.addDouble(o_d[i]);
-
-              cmd.addString(hand);
-
-              action_render_rpc.write(cmd, reply);
-
-              if(reply.size()<1)
-              {
-                  yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: empty reply from action rendering module");
-              }
-
-              if(reply.get(0).asVocab() != Vocab::encode("ack"))
-              {
-                  yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: invalid reply from action rendering module:") << reply.toString();
-              }
-
-              if(reply.size()<3)
-              {
-                  yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: invlaid reply size from action rendering module") << reply.toString();
-              }
-
-              if(!reply.check("x"))
-              {
-                  yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: invalid reply from action rendering module: missing x:") << reply.toString();
-              }
-
-              Bottle *position = reply.find("x").asList();
-              Eigen::VectorXd robot_pose;
-              robot_pose.resize(7);
-              for(int i=0 ; i<3 ; i++) robot_pose(i) = position->get(i).asDouble();
-              for(int i=3 ; i<7 ; i++) robot_pose(i) = position->get(i).asDouble();
-
-              // for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
-              // {
-              grasp_res.grasp_poses[i].setGraspParamsHat(robot_pose);
-              // }
+              int best_right = grasp_res_hand1.best_pose;
+              best_hand = "right";
+              vis.highlightBestPose("right", "right", best_right);
+          }
+          else if (grasping_hand == WhichHand::HAND_LEFT)
+          {
+              int best_left = grasp_res_hand1.best_pose;
+              best_hand = "left";
+              vis.highlightBestPose("left", "left", best_left);
           }
       }
+    }
 
-      /****************************************************************/
-      bool take_tool()
+    /****************************************************************/
+    void getTable()
+    {
+      bool table_ok = false;
+      if (robot != "icubSim" && table_calib_rpc.getOutputCount() > 0)
       {
-          Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
+          Bottle table_cmd, table_rply;
+          table_cmd.addVocab(Vocab::encode("get"));
+          table_cmd.addString("table");
 
-          Vector grasping_current_pos(3), grasping_current_o(4);
+          table_calib_rpc.write(table_cmd, table_rply);
+          if (Bottle *payload = table_rply.get(0).asList())
+          {
+              if (payload->size() >= 2)
+              {
+                  plane(0) = 0.0;
+                  plane(1) = 0.0;
+                  plane(2) = 1.0;
+
+                  plane(3) = -payload->get(1).asDouble() + 0.035;
+                  table_ok = true;
+
+                  grasp_estim.setVector("plane", plane);
+              }
+          }
+      }
+      if (!table_ok)
+      {
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Unable to retrieve object table                      ||" << endl;
+        cout << "|| Unsig default value                                  : " << -plane[3] << endl;
+        cout << "|| ---------------------------------------------------- ||" << endl << endl;
+      }
+      else
+      {
+          cout << "|| ---------------------------------------------------- ||" << endl;
+          cout << "|| Unsig plane value                                    : " << -plane[3] << endl;
+          cout << "|| ---------------------------------------------------- ||" << endl << endl;
+      }
+    }
+
+    /****************************************************************/
+    void setGraspContext(ICartesianControl *icart)
+    {
+      //  set up the context for the grasping planning and execution
+      //  enable all joints
+      Vector dof;
+      icart->getDOF(dof);
+      Vector new_dof(10, 1);
+      new_dof(1) = 0.0;
+      icart->setDOF(new_dof, dof);
+      icart->setPosePriority("position");
+      icart->setInTargetTol(0.001);
+    }
+
+    /****************************************************************/
+    Vector eigenToYarp(Eigen::VectorXd &v)
+    {
+      Vector x;
+      x.resize(v.size());
+
+      for (size_t i = 0; i< x.size(); i++)
+      {
+          x[i] = v[i];
+      }
+
+      return x;
+    }
+
+    /****************************************************************/
+    void computePoseHat(GraspResults &grasp_res, ICartesianControl *icart)
+    {
+      for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
+      {
+          int context_backup;
+          icart->storeContext(&context_backup);
+
+          //  set up the context for the computation of the candidates
+          setGraspContext(icart);
+
+          Eigen::VectorXd desired_pose = grasp_res.grasp_poses[i].getGraspPosition();
+          Eigen::VectorXd desired_or = grasp_res.grasp_poses[i].getGraspAxisAngle();
+
+          Vector x_d = eigenToYarp(desired_pose);
+          Vector o_d = eigenToYarp(desired_or);
+
+          Vector x_d_hat, o_d_hat, q_d_hat;
+
+          bool success = icart->askForPose(x_d, o_d, x_d_hat, o_d_hat, q_d_hat);
+
+          Eigen::VectorXd pose_hat = toEigen(x_d_hat);
+          Eigen::VectorXd or_hat = toEigen(o_d_hat);
+
+          Eigen::VectorXd robot_pose;
+          robot_pose.resize(7);
+          robot_pose.head(3) = pose_hat;
+          robot_pose.tail(4) = or_hat;
+
+          //for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
+          //{
+          grasp_res.grasp_poses[i].setGraspParamsHat(robot_pose);
+          //}
+
+          //  restore previous context
+          icart->restoreContext(context_backup);
+          icart->deleteContext(context_backup);
+      }
+    }
+
+    /****************************************************************/
+    void computePoseHatR1(GraspResults &grasp_res, const string &hand)
+    {
+      for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
+      {
+          Eigen::VectorXd desired_pose = grasp_res.grasp_poses[i].getGraspPosition();
+          Eigen::VectorXd desired_or = grasp_res.grasp_poses[i].getGraspAxisAngle();
+
+          Vector x_d = eigenToYarp(desired_pose);
+          Vector o_d = eigenToYarp(desired_or);
+
+          Bottle cmd, reply;
+          cmd.addVocab(Vocab::encode("ask"));
+          Bottle &subcmd = cmd.addList();
+          for(int i=0 ; i<3 ; i++) subcmd.addDouble(x_d[i]);
+          for(int i=0 ; i<4 ; i++) subcmd.addDouble(o_d[i]);
+
+          cmd.addString(hand);
+
+          action_render_rpc.write(cmd, reply);
+
+          if(reply.size()<1)
+          {
+              yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: empty reply from action rendering module");
+          }
+
+          if(reply.get(0).asVocab() != Vocab::encode("ack"))
+          {
+              yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: invalid reply from action rendering module:") << reply.toString();
+          }
+
+          if(reply.size()<3)
+          {
+              yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: invlaid reply size from action rendering module") << reply.toString();
+          }
+
+          if(!reply.check("x"))
+          {
+              yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: invalid reply from action rendering module: missing x:") << reply.toString();
+          }
+
+          Bottle *position = reply.find("x").asList();
+          Eigen::VectorXd robot_pose;
+          robot_pose.resize(7);
+          for(int i=0 ; i<3 ; i++) robot_pose(i) = position->get(i).asDouble();
+          for(int i=3 ; i<7 ; i++) robot_pose(i) = position->get(i).asDouble();
+
+          // for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
+          // {
+          grasp_res.grasp_poses[i].setGraspParamsHat(robot_pose);
+          // }
+      }
+    }
+
+    /****************************************************************/
+    bool take_tool()
+    {
+      Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
+
+      Vector grasping_current_pos(3), grasping_current_o(4);
+      if (best_hand == "right")
+      {
+          icart_right->getPose(grasping_current_pos, grasping_current_o);
+
+          grasping_current_pos[2] += 0.02;
+
+          cout << "|| ---------------------------------------------------- ||"  << endl;
+          cout << "|| Lifting a bit the tool                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+          icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+          icart_right->waitMotionDone();
+
+          grasping_current_pos[0] += 0.08;
+
+          cout << "|| ---------------------------------------------------- ||"  << endl;
+          cout << "|| Moving the tool closer                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+          icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+          icart_right->waitMotionDone();
+
+          grasping_current_pos[1] += 0.15;
+
+          cout << "|| ---------------------------------------------------- ||"  << endl;
+          cout << "|| Moving the tool on the side                          :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+          icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+          icart_right->waitMotionDone();
+      }
+      else if (best_hand == "left")
+      {
+          icart_left->getPose(grasping_current_pos, grasping_current_o);
+
+          grasping_current_pos[2] += 0.02;
+
+          cout << "|| ---------------------------------------------------- ||"  << endl;
+          cout << "|| Lifting a bit the tool                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+          icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
+          icart_left->waitMotionDone();
+
+          grasping_current_pos[0] += 0.08;
+
+          cout << "|| ---------------------------------------------------- ||"  << endl;
+          cout << "|| Moving the tool closer                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+          icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
+          icart_left->waitMotionDone();
+
+          grasping_current_pos[1] -= 0.15;
+
+          cout << "|| ---------------------------------------------------- ||"  << endl;
+          cout << "|| Moving the tool on the side                          :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+
+          icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
+          icart_left->waitMotionDone();
+      }
+
+
+      return true;
+    }
+
+    /****************************************************************/
+    bool open_hand()
+    {
+      if (action_render_rpc.getOutputCount() > 0)
+      {
+          Bottle cmd, reply;
+          cmd.addVocab(Vocab::encode("hand"));    // TODO Check how command is to be implemented
+
+          action_render_rpc.write(cmd, reply);
+          if (reply.get(0).asVocab() == Vocab::encode("ack"))
+              return true;
+          else
+              return false;
+      }
+      else
+      {
+          return false;
+      }
+    }
+
+    /****************************************************************/
+    bool executeGrasp(Vector &pose, string &best_hand)
+    {
+      Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
+
+      if(robot == "icubSim")
+      {
+          //  simulation context, suppose there is no actionsRenderingEngine running
           if (best_hand == "right")
           {
-              icart_right->getPose(grasping_current_pos, grasping_current_o);
+              Vector pose_intermediate(7,0.0);
+              pose_intermediate.setSubvector(0,pose.subVector(0,2) + grasper_approach_parameters_right.subVector(0,2));
+              pose_intermediate.setSubvector(3, pose.subVector(3,6));
 
-              grasping_current_pos[2] += 0.02;
 
+              int context_backup;
               cout << "|| ---------------------------------------------------- ||"  << endl;
-              cout << "|| Lifting a bit the tool                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+              cout << "|| Right hand reaching  intermediate                    :" << toEigen(pose_intermediate).format(CommaInitFmt) << endl;
 
-              icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+              icart_right->storeContext(&context_backup);
+              setGraspContext(icart_right);
+
+              Vector previous_x(3), previous_o(4);
+              icart_right->getPose(previous_x, previous_o);
+
+              icart_right->goToPoseSync(pose_intermediate.subVector(0, 2), pose_intermediate.subVector(3,6));
               icart_right->waitMotionDone();
 
-              grasping_current_pos[0] += 0.08;
-
-              cout << "|| ---------------------------------------------------- ||"  << endl;
-              cout << "|| Moving the tool closer                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
-
-              icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+              cout << "|| Right hand reaching                                  :" << toEigen(pose).format(CommaInitFmt) << endl;
+              icart_right->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
               icart_right->waitMotionDone();
 
-              grasping_current_pos[1] += 0.15;
-
-              cout << "|| ---------------------------------------------------- ||"  << endl;
-              cout << "|| Moving the tool on the side                          :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
-
-              icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
-              icart_right->waitMotionDone();
+              // cout << "|| Right hand going back to                              :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
+              // cout << "|| ---------------------------------------------------- ||"  << endl;
+              // icart_right->goToPoseSync(previous_x, previous_o);
+              // icart_right->waitMotionDone();
+              //
+              // icart_right->restoreContext(context_backup);
+              // icart_right->deleteContext(context_backup);
+              return true;
           }
           else if (best_hand == "left")
           {
-              icart_left->getPose(grasping_current_pos, grasping_current_o);
 
-              grasping_current_pos[2] += 0.02;
+              Vector pose_intermediate(7,0.0);
+              pose_intermediate.setSubvector(0,pose.subVector(0,2) + grasper_approach_parameters_left.subVector(0,2));
+              pose_intermediate.setSubvector(3, pose.subVector(3,6));
 
+              int context_backup;
               cout << "|| ---------------------------------------------------- ||"  << endl;
-              cout << "|| Lifting a bit the tool                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
+              cout << "|| Left hand reaching  pose intermediate                :" << toEigen(pose_intermediate).format(CommaInitFmt) << endl;
 
-              icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
+              icart_left->storeContext(&context_backup);
+              setGraspContext(icart_left);
+
+              Vector previous_x(3), previous_o(4);
+              icart_left->getPose(previous_x, previous_o);
+
+              icart_left->goToPoseSync(pose_intermediate.subVector(0, 2), pose_intermediate.subVector(3,6));
               icart_left->waitMotionDone();
 
-              grasping_current_pos[0] += 0.08;
-
               cout << "|| ---------------------------------------------------- ||"  << endl;
-              cout << "|| Moving the tool closer                               :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
-
-              icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
+              cout << "|| Left hand reaching  pose                             :" << toEigen(pose).format(CommaInitFmt) << endl;
+              icart_left->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
               icart_left->waitMotionDone();
 
-              grasping_current_pos[1] -= 0.15;
-
-              cout << "|| ---------------------------------------------------- ||"  << endl;
-              cout << "|| Moving the tool on the side                          :" << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
-
-              icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
-              icart_left->waitMotionDone();
+              // cout << "|| Left hand going back to                             :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
+              // cout << "|| ---------------------------------------------------- ||"  << endl;
+              // icart_left->goToPoseSync(previous_x, previous_o);
+              // icart_left->waitMotionDone();
+              // icart_left->restoreContext(context_backup);
+              // icart_left->deleteContext(context_backup);
+              return true;
           }
-
-
-          return true;
       }
-
-      /****************************************************************/
-      bool open_hand()
+      else
       {
-          if (action_render_rpc.getOutputCount() > 0)
-          {
-              Bottle cmd, reply;
-              cmd.addVocab(Vocab::encode("hand"));    // TODO Check how command is to be implemented
+          // TODO See if calibration is necessary and in case adapt fixReachingOffset
+          // to the tool scenario
+          // Vector old_pose = pose;
+          //
+          // cout<< "|| Pose to be fixed with calibration offsets              :" << toEigen(old_pose).format(CommaInitFmt)<< endl;
+          // fixReachingOffset(old_pose, pose);
+          // cout<< "|| Fixed pose                                             :" << toEigen(pose).format(CommaInitFmt)<< endl;
 
-              action_render_rpc.write(cmd, reply);
-              if (reply.get(0).asVocab() == Vocab::encode("ack"))
-                  return true;
-              else
-                  return false;
+          //  communication with actionRenderingEngine/cmd:io
+          //  grasp("cartesian" x y z gx gy gz theta) ("approach" (-0.05 0 +-0.05 0.0)) "left"/"right"
+          Bottle command, reply;
+
+          command.addString("grasp");
+          Bottle &ptr = command.addList();
+          ptr.addString("cartesian");
+          ptr.addDouble(pose(0));
+          ptr.addDouble(pose(1));
+          ptr.addDouble(pose(2));
+          ptr.addDouble(pose(3));
+          ptr.addDouble(pose(4));
+          ptr.addDouble(pose(5));
+          ptr.addDouble(pose(6));
+
+          Bottle &ptr1 = command.addList();
+          ptr1.addString("approach");
+          Bottle &ptr2 = ptr1.addList();
+          if (best_hand == "left")
+          {
+              for(int i=0 ; i<4 ; i++) ptr2.addDouble(grasper_approach_parameters_left[i]);
+              command.addString("left");
           }
           else
           {
-              return false;
-          }
-      }
-
-      /****************************************************************/
-      bool executeGrasp(Vector &pose, string &best_hand)
-      {
-          Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
-
-          if(robot == "icubSim")
-          {
-              //  simulation context, suppose there is no actionsRenderingEngine running
-              if (best_hand == "right")
-              {
-                  Vector pose_intermediate(7,0.0);
-                  pose_intermediate.setSubvector(0,pose.subVector(0,2) + grasper_approach_parameters_right.subVector(0,2));
-                  pose_intermediate.setSubvector(3, pose.subVector(3,6));
-
-
-                  int context_backup;
-                  cout << "|| ---------------------------------------------------- ||"  << endl;
-                  cout << "|| Right hand reaching  intermediate                    :" << toEigen(pose_intermediate).format(CommaInitFmt) << endl;
-
-                  icart_right->storeContext(&context_backup);
-                  setGraspContext(icart_right);
-
-                  Vector previous_x(3), previous_o(4);
-                  icart_right->getPose(previous_x, previous_o);
-
-                  icart_right->goToPoseSync(pose_intermediate.subVector(0, 2), pose_intermediate.subVector(3,6));
-                  icart_right->waitMotionDone();
-
-                  cout << "|| Right hand reaching                                  :" << toEigen(pose).format(CommaInitFmt) << endl;
-                  icart_right->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
-                  icart_right->waitMotionDone();
-
-                  // cout << "|| Right hand going back to                              :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
-                  // cout << "|| ---------------------------------------------------- ||"  << endl;
-                  // icart_right->goToPoseSync(previous_x, previous_o);
-                  // icart_right->waitMotionDone();
-                  //
-                  // icart_right->restoreContext(context_backup);
-                  // icart_right->deleteContext(context_backup);
-                  return true;
-              }
-              else if (best_hand == "left")
-              {
-
-                  Vector pose_intermediate(7,0.0);
-                  pose_intermediate.setSubvector(0,pose.subVector(0,2) + grasper_approach_parameters_left.subVector(0,2));
-                  pose_intermediate.setSubvector(3, pose.subVector(3,6));
-
-                  int context_backup;
-                  cout << "|| ---------------------------------------------------- ||"  << endl;
-                  cout << "|| Left hand reaching  pose intermediate                :" << toEigen(pose_intermediate).format(CommaInitFmt) << endl;
-
-                  icart_left->storeContext(&context_backup);
-                  setGraspContext(icart_left);
-
-                  Vector previous_x(3), previous_o(4);
-                  icart_left->getPose(previous_x, previous_o);
-
-                  icart_left->goToPoseSync(pose_intermediate.subVector(0, 2), pose_intermediate.subVector(3,6));
-                  icart_left->waitMotionDone();
-
-                  cout << "|| ---------------------------------------------------- ||"  << endl;
-                  cout << "|| Left hand reaching  pose                             :" << toEigen(pose).format(CommaInitFmt) << endl;
-                  icart_left->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
-                  icart_left->waitMotionDone();
-
-                  // cout << "|| Left hand going back to                             :" << toEigen(previous_x).format(CommaInitFmt) << toEigen(previous_o).format(CommaInitFmt) << endl;
-                  // cout << "|| ---------------------------------------------------- ||"  << endl;
-                  // icart_left->goToPoseSync(previous_x, previous_o);
-                  // icart_left->waitMotionDone();
-                  // icart_left->restoreContext(context_backup);
-                  // icart_left->deleteContext(context_backup);
-                  return true;
-              }
-          }
-          else
-          {
-              // TODO See if calibration is necessary and in case adapt fixReachingOffset
-              // to the tool scenario
-              // Vector old_pose = pose;
-              //
-              // cout<< "|| Pose to be fixed with calibration offsets              :" << toEigen(old_pose).format(CommaInitFmt)<< endl;
-              // fixReachingOffset(old_pose, pose);
-              // cout<< "|| Fixed pose                                             :" << toEigen(pose).format(CommaInitFmt)<< endl;
-
-              //  communication with actionRenderingEngine/cmd:io
-              //  grasp("cartesian" x y z gx gy gz theta) ("approach" (-0.05 0 +-0.05 0.0)) "left"/"right"
-              Bottle command, reply;
-
-              command.addString("grasp");
-              Bottle &ptr = command.addList();
-              ptr.addString("cartesian");
-              ptr.addDouble(pose(0));
-              ptr.addDouble(pose(1));
-              ptr.addDouble(pose(2));
-              ptr.addDouble(pose(3));
-              ptr.addDouble(pose(4));
-              ptr.addDouble(pose(5));
-              ptr.addDouble(pose(6));
-
-              Bottle &ptr1 = command.addList();
-              ptr1.addString("approach");
-              Bottle &ptr2 = ptr1.addList();
-              if (best_hand == "left")
-              {
-                  for(int i=0 ; i<4 ; i++) ptr2.addDouble(grasper_approach_parameters_left[i]);
-                  command.addString("left");
-              }
-              else
-              {
-                  for(int i=0 ; i<4 ; i++) ptr2.addDouble(grasper_approach_parameters_right[i]);
-                  command.addString("right");
-              }
-
-              yInfo() << command.toString();
-              action_render_rpc.write(command, reply);
-              if (reply.toString() == "[ack]")
-              {
-                  return true;
-              }
-              else
-              {
-                  return false;
-              }
+              for(int i=0 ; i<4 ; i++) ptr2.addDouble(grasper_approach_parameters_right[i]);
+              command.addString("right");
           }
 
-      }
-
-      /****************************************************************/
-      bool isInClasses(const string &obj_name)
-      {
-          auto it = find(classes.begin(), classes.end(), obj_name);
-          if (it != classes.end())
+          yInfo() << command.toString();
+          action_render_rpc.write(command, reply);
+          if (reply.toString() == "[ack]")
           {
-              cout << "|| ---------------------------------------------------- ||" << endl;
-              cout<<"|| Object name is one of the classes                    ||"<<endl;
-              cout << "|| ---------------------------------------------------- ||" << endl << endl;
               return true;
           }
           else
-              return false;
-      }
-
-      /************************************************************************/
-      bool attach(RpcServer &source)
-      {
-        return this->yarp().attachAsServer(source);
-      }
-
-      /****************************************************************/
-      bool fixReachingOffset(const Vector &poseToFix, Vector &poseFixed,
-                             const bool invert=false)
-      {
-          //  fix the pose offset accordint to iolReachingCalibration
-          //  pose is supposed to be (x y z gx gy gz theta)
-          if ((robot == "r1" || robot == "icub") && reach_calib_rpc.getOutputCount() > 0)
           {
-              Bottle command, reply;
-
-              command.addString("get_location_nolook");
-              if (best_hand == "left")
-              {
-                  command.addString("iol-left");
-              }
-              else
-              {
-                  command.addString("iol-right");
-              }
-
-              command.addDouble(poseToFix(0));    //  x value
-              command.addDouble(poseToFix(1));    //  y value
-              command.addDouble(poseToFix(2));    //  z value
-              command.addInt(invert?1:0);         //  flag to invert input/output map
-
-              reach_calib_rpc.write(command, reply);
-
-              //  incoming reply is going to be (success x y z)
-              if (reply.size() < 2)
-              {
-                  yError() << prettyError( __FUNCTION__,  "Failure retrieving fixed pose");
-                  return false;
-              }
-              else if (reply.get(0).asVocab() == Vocab::encode("ok"))
-              {
-                  poseFixed = poseToFix;
-                  poseFixed(0) = reply.get(1).asDouble();
-                  poseFixed(1) = reply.get(2).asDouble();
-                  poseFixed(2) = reply.get(3).asDouble();
-                  return true;
-              }
-              else
-              {
-                  yWarning() << "Couldn't retrieve fixed pose. Continuing with unchanged pose";
-              }
+              return false;
           }
       }
+
+    }
+
+    /****************************************************************/
+    bool isInClasses(const string &obj_name)
+    {
+      auto it = find(classes.begin(), classes.end(), obj_name);
+      if (it != classes.end())
+      {
+          cout << "|| ---------------------------------------------------- ||" << endl;
+          cout<<"|| Object name is one of the classes                    ||"<<endl;
+          cout << "|| ---------------------------------------------------- ||" << endl << endl;
+          return true;
+      }
+      else
+          return false;
+    }
+
+    /************************************************************************/
+    bool attach(RpcServer &source)
+    {
+    return this->yarp().attachAsServer(source);
+    }
+
+    /****************************************************************/
+    bool fixReachingOffset(const Vector &poseToFix, Vector &poseFixed,
+                     const bool invert=false)
+    {
+    //  fix the pose offset accordint to iolReachingCalibration
+    //  pose is supposed to be (x y z gx gy gz theta)
+    if ((robot == "r1" || robot == "icub") && reach_calib_rpc.getOutputCount() > 0)
+    {
+      Bottle command, reply;
+
+      command.addString("get_location_nolook");
+      if (best_hand == "left")
+      {
+          command.addString("iol-left");
+      }
+      else
+      {
+          command.addString("iol-right");
+      }
+
+      command.addDouble(poseToFix(0));    //  x value
+      command.addDouble(poseToFix(1));    //  y value
+      command.addDouble(poseToFix(2));    //  z value
+      command.addInt(invert?1:0);         //  flag to invert input/output map
+
+      reach_calib_rpc.write(command, reply);
+
+      //  incoming reply is going to be (success x y z)
+      if (reply.size() < 2)
+      {
+          yError() << prettyError( __FUNCTION__,  "Failure retrieving fixed pose");
+          return false;
+      }
+      else if (reply.get(0).asVocab() == Vocab::encode("ok"))
+      {
+          poseFixed = poseToFix;
+          poseFixed(0) = reply.get(1).asDouble();
+          poseFixed(1) = reply.get(2).asDouble();
+          poseFixed(2) = reply.get(3).asDouble();
+          return true;
+      }
+      else
+      {
+          yWarning() << "Couldn't retrieve fixed pose. Continuing with unchanged pose";
+      }
+    }
+  }
 };
 
 int main(int argc, char *argv[])
