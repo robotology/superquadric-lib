@@ -196,12 +196,16 @@ Matrix3d PointCloud::getAxes()
 
     for (auto& point: points)
     {
-        M(0,0) = M(0,0) + (point(1)-barycenter(1))*(point(1)-barycenter(1)) + (point(2)-barycenter(2))*(point(2)-barycenter(2));
-        M(0,1) = M(0,1) - (point(1)-barycenter(1))*(point(0)-barycenter(0));
-        M(0,2) = M(0,2) - (point(2)-barycenter(2))*(point(0)-barycenter(0));
-        M(1,1) = M(1,1) + (point(0)-barycenter(0))*(point(0)-barycenter(0)) + (point(2)-barycenter(2))*(point(2)-barycenter(2));
-        M(2,2) = M(2,2) + (point(1)-barycenter(1))*(point(1)-barycenter(1)) + (point(0)-barycenter(0))*(point(0)-barycenter(0));
-        M(1,2) = M(1,2) - (point(2)-barycenter(2))*(point(1)-barycenter(1));
+        double x = point(0) - barycenter(0);
+        double y = point(1) - barycenter(1);
+        double z = point(2) - barycenter(2);
+
+        M(0,0) += x*x;
+        M(0,1) += x*y;
+        M(0,2) += x*z;
+        M(1,1) += y*y;
+        M(2,2) += z*z;
+        M(1,2) += y*z;
     }
 
     M(0,0) = M(0,0)/points.size();
