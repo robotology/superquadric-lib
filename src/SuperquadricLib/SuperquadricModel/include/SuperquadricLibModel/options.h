@@ -103,16 +103,16 @@ public:
   Options();
 
   /****************************************************************/
-  void SetNumericValue(const std::string &tag, const double &value);
+  bool SetNumericValue(const std::string &tag, const double &value);
 
   /****************************************************************/
-  void SetIntegerValue(const std::string &tag, const int &value);
+  bool SetIntegerValue(const std::string &tag, const int &value);
 
   /****************************************************************/
-  void SetStringValue(const std::string &tag, const std::string &value);
+  bool SetStringValue(const std::string &tag, const std::string &value);
 
   /****************************************************************/
-  void SetBoolValue(const std::string &tag, const bool &value);
+  bool SetBoolValue(const std::string &tag, const bool &value);
 };
 
 
