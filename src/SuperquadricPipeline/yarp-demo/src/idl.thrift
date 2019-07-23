@@ -33,8 +33,15 @@
     yarp.includefile="yarp/os/Bottle.h"
  )
 
+struct PointD {
+  1: double x;
+  2: double y;
+  3: double z;
+}
+
  service SuperquadricPipelineDemo_IDL
  {
+
      /**
      * Compute superquadric and grasping pose from offline
      * @param object_file is the object off file with point cloud
@@ -43,16 +50,48 @@
      */
      bool from_off_file(1: string object_file, 2: string hand);
 
+     /**
+     * Compute superquadric and grasping pose of a labelled object
+     * @param object_name is the object label
+     * @param hand is the desired hand for computation, can be right, left or both
+     *@return true/false on success/failure.
+     */
      bool compute_superq_and_pose(1: string object_name, 2: string hand);
 
      bool grasp();
 
      bool drop();
 
-     bool set_single_superq(1: string value);
+     bool home();
+
+     string get_superq_mode();
+
+     bool set_single_superq(1: bool value);
+
+     /**
+     * Get the image region where sfm is computed
+     *@return a list with [u_i, v_i, u_f, v_f]
+     */
+     list<i32> get_sfm_region();
+
+     /**
+     * Set the image region where sfm is computed
+     * @param u_i, v_i are the (u,v) coordinates of the initial pixel of the region
+     * @param u_f, v_f are the (u,v) coordinates of the final pixel of the region
+     *@return true/false on success/failure.
+     */
+     bool set_sfm_region(1: double u_i, 2: double v_i, 3: double u_f, 4: double v_f);
 
      bool take_tool();
 
-     bool open_hand();
+     bool open_hand(1: string hand);
+
+     list<PointD> get_tool_trajectory();
+
+     bool set_tool_trajectory(1: list<PointD> point);
+
+     bool clear_tool_trajectory();
+
+     bool quit();
 
  }
