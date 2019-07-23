@@ -74,6 +74,9 @@ string prettyError(const char* func_name, const string &message)
 };
 
 /****************************************************************/
+Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
+
+/****************************************************************/
 class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 {
     string moduleName;
@@ -1408,7 +1411,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         vis.resetPoses();
         vis.resetPoints();
 
-        cout << "ciao1"<< endl;
         // Visualize acquired point cloud
         vis.addPoints(point_cloud, false);
 
@@ -1424,19 +1426,18 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         {
             superqs = estim.computeMultipleSuperq(point_cloud);
             vis.addPoints(point_cloud, false);
-            cout << "ciao2.3"<< endl;
         }
 
         // Visualize downsampled point cloud and estimated superq
         vis.addSuperq(superqs);
 
         /* ------ Compute grasp poses ------ */
-        cout << "ciao3"<< endl;
+
         // Get real value of table height
         getTable();
-        cout << "ciao4"<< endl;
+
         grasp_res_hand1 = grasp_estim.computeGraspPoses(superqs);
-        cout << "ciao5"<< endl;
+
         // Show computed grasp pose and plane
         vis.addPoses(grasp_res_hand1.grasp_poses);
         vis.addPlane(grasp_estim.getPlaneHeight());
@@ -1452,9 +1453,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         /* ------ Estimate pose cost ------ */
 
         // Compute pose hat
-
-        cout << "left_arm_client.isValid()? " << left_arm_client.isValid() << endl;
-
         if ((robot == "icubSim") || (robot == "icub"))
         {
             if (grasping_hand == WhichHand::BOTH)
@@ -1526,14 +1524,17 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         /* ------ Select best pose ------ */
 
+        GraspPoses best_graspPose;
         if (grasping_hand == WhichHand::HAND_RIGHT)
         {
             best_hand = "right";
+            best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
             vis.highlightBestPose("right", "right", grasp_res_hand1.best_pose);
         }
         else if (grasping_hand == WhichHand::HAND_LEFT)
         {
             best_hand = "left";
+            best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
             vis.highlightBestPose("left", "left", grasp_res_hand1.best_pose);
         }
 
@@ -1545,14 +1546,34 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             if (grasp_res_hand1.grasp_poses[best_right].cost < grasp_res_hand2.grasp_poses[best_left].cost)
             {
                 best_hand = "right";
+                best_graspPose = grasp_res_hand1.grasp_poses[best_right];
                 vis.highlightBestPose("right", "both", best_right);
             }
             else
             {
                 best_hand = "left";
+                best_graspPose = grasp_res_hand2.grasp_poses[best_left];
                 vis.highlightBestPose("left", "both", best_left);
             }
         }
+
+        /* ------ Calibrated pose ------ */
+
+        // TODO See if calibration is necessary and in case adapt fixReachingOffset
+        // to the tool scenario
+
+        Eigen::VectorXd pose;
+        pose.resize(7);
+        pose.head(3) = best_graspPose.getGraspPosition();
+        pose.tail(4) = best_graspPose.getGraspAxisAngle();
+        Vector best_pose = eigenToYarp(pose);
+
+        Vector old_pose = best_pose;
+        //
+        cout<< "|| Pose to be fixed with calibration offsets              :" << toEigen(old_pose).format(CommaInitFmt)<< endl;
+        fixReachingOffset(old_pose, best_pose);
+        cout<< "|| Fixed pose                                             :" << toEigen(best_pose).format(CommaInitFmt)<< endl;
+
     }
 
     /****************************************************************/
@@ -1830,8 +1851,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     /****************************************************************/
     bool SuperquadricPipelineDemo::executeGrasp(Vector &pose, string &best_hand)
     {
-        Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
-
         if(robot == "icubSim")
         {
             //  simulation context, suppose there is no actionsRenderingEngine running
@@ -1903,15 +1922,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         }
         else
         {
-            // TODO See if calibration is necessary and in case adapt fixReachingOffset
-            // to the tool scenario
-            //Vector old_pose = pose;
-            //
-            //cout<< "|| Pose to be fixed with calibration offsets              :" << toEigen(old_pose).format(CommaInitFmt)<< endl;
-            //fixReachingOffset(old_pose, pose);
-            //cout << "success " << success << endl;
-            //cout<< "|| Fixed pose                                             :" << toEigen(pose).format(CommaInitFmt)<< endl;
-
             //  communication with actionRenderingEngine/cmd:io
             //  grasp("cartesian" x y z gx gy gz theta) ("approach" (-0.05 0 +-0.05 0.0)) "left"/"right"
             Bottle command, reply;
@@ -2009,11 +2019,18 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 poseFixed(2) = reply.get(3).asDouble();
                 return true;
             }
+            else
+            {
+                yWarning() << "Couldn't retrieve fixed pose. Continuing with unchanged pose";
+                return true;
+            }
+        }
         else
         {
-            yWarning() << "Couldn't retrieve fixed pose. Continuing with unchanged pose";
+            //  if we are working with the simulator or there is no calib map, the pose doesn't need to be corrected
+            poseFixed = poseToFix;
+            yWarning() << "Connection to iolReachingCalibration not detected or calibration map not present: pose will not be changed";
             return true;
-        }
         }
     }
 
