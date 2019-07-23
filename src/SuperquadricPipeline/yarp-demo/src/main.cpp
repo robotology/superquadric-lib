@@ -120,16 +120,13 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
     string best_hand;
     bool single_superq;
-    int best_pose_1, best_pose_2;
 
     // Take tool trajectory
     double max_traj_value;
     vector<PointD> take_tool_trajectory;
 
     // PointCloud filtering
-    double radius;
-    int minpts;
-    double sfm_range;
+    map<string,double> pc_filter_params;
 
     // Superquadric-lib objects
     SuperqModel::PointCloud point_cloud;
@@ -139,6 +136,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     GraspEstimatorApp grasp_estim;
     Visualizer vis;
 
+    map<string,double> sq_model_params;
+    map<string,double> sq_grasp_params;
     Eigen::Vector4d plane;
     Eigen::Vector3d displacement;
     Eigen::VectorXd hand_superq_params;
@@ -348,7 +347,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         fixate_object = false;
 
-        // take_tool trajectory
+        /* ------ take_tool trajectory ------ */
+
         max_traj_value = rf.check("max_value", Value(0.2)).asDouble();
 
         list->clear();
@@ -375,52 +375,57 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             take_tool_trajectory.push_back(p3);
         }
 
+        /* ------ PointCloud filtering ------ */
 
-        // PointCloud filtering
-        radius = rf.check("radius_dbscan", Value(0.01)).asDouble();
-        minpts = rf.check("points_dbscan", Value(10)).asInt();
-        sfm_range = rf.check("sfm_range", Value(0.04)).asDouble();
+        map<string,double> pc_filter_params;
+        pc_filter_params["radius_dbscan"] = rf.check("radius_dbscan", Value(0.01)).asDouble();
+        pc_filter_params["points_dbscan"] = rf.check("points_dbscan", Value(10)).asInt();
+        pc_filter_params["sfm_range"] = rf.check("sfm_range", Value(0.04)).asDouble();
 
-        // Set Superquadric Model parameters
-        double tol_superq = rf.check("tol_superq", Value(1e-5)).asDouble();
+        /* ------ Set Superquadric Model parameters ------ */
+
         int print_level_superq = rf.check("print_level_superq", Value(0)).asInt();
         object_class = rf.check("object_class", Value("default")).toString();
-        int optimizer_points = rf.check("optimizer_points", Value(50)).asInt();
-        bool random_sampling = rf.check("random_sampling", Value(true)).asBool();
         single_superq = rf.check("single_superq", Value(true)).asBool();
+        sq_model_params["tol"] = rf.check("tol_superq", Value(1e-5)).asDouble();
+        sq_model_params["optimizer_points"] = rf.check("optimizer_points", Value(50)).asInt();
+        sq_model_params["random_sampling"] = rf.check("random_sampling", Value(true)).asBool();
 
-        estim.SetNumericValue("tol", tol_superq);
+        estim.SetNumericValue("tol", sq_model_params["tol"]);
         estim.SetIntegerValue("print_level", print_level_superq);
         estim.SetStringValue("object_class", object_class);
-        estim.SetIntegerValue("optimizer_points", optimizer_points);
-        estim.SetBoolValue("random_sampling", random_sampling);
+        estim.SetIntegerValue("optimizer_points", sq_model_params["optimizer_points"]);
+        estim.SetBoolValue("random_sampling", sq_model_params["random_sampling"]);
 
         bool merge_model = rf.check("merge_model", Value(true)).asBool();
-        int minimum_points = rf.check("minimum_points", Value(150)).asInt();
-        int fraction_pc = rf.check("fraction_pc", Value(8)).asInt();
-        double threshold_axis = rf.check("tol_threshold_axissuperq", Value(0.7)).asDouble();
-        double threshold_section1 = rf.check("threshold_section1", Value(0.6)).asDouble();
-        double threshold_section2 = rf.check("threshold_section2", Value(0.03)).asDouble();
+        sq_model_params["minimum_points"] = rf.check("minimum_points", Value(150)).asInt();
+        sq_model_params["fraction_pc"] = rf.check("fraction_pc", Value(8)).asInt();
+        sq_model_params["tol_threshold_axissuperq"] = rf.check("tol_threshold_axissuperq", Value(0.7)).asDouble();
+        sq_model_params["threshold_section1"] = rf.check("threshold_section1", Value(0.6)).asDouble();
+        sq_model_params["threshold_section2"] = rf.check("threshold_section2", Value(0.03)).asDouble();
 
         estim.SetBoolValue("merge_model", merge_model);
-        estim.SetIntegerValue("minimum_points", minimum_points);
-        estim.SetIntegerValue("fraction_pc", fraction_pc);
-        estim.SetNumericValue("threshold_axis", threshold_axis);
-        estim.SetNumericValue("threshold_section1", threshold_section1);
-        estim.SetNumericValue("threshold_section2", threshold_section2);
+        estim.SetIntegerValue("minimum_points", sq_model_params["minimum_points"]);
+        estim.SetIntegerValue("fraction_pc", sq_model_params["fraction_pc"]);
+        estim.SetNumericValue("threshold_axis", sq_model_params["tol_threshold_axissuperq"]);
+        estim.SetNumericValue("threshold_section1", sq_model_params["threshold_section1"]);
+        estim.SetNumericValue("threshold_section2", sq_model_params["threshold_section2"]);
 
-        // Set Superquadric Grasp parameters
-        double tol_grasp = rf.check("tol_grasp", Value(1e-5)).asDouble();
+        /* ------  Set Superquadric Grasp parameters ------ */
+
         int print_level_grasp = rf.check("print_level_grasp", Value(0)).asInt();
-        double constr_tol = rf.check("constr_tol", Value(1e-4)).asDouble();
-        int max_superq = rf.check("max_superq", Value(4)).asInt();
+        sq_grasp_params["tol_grasp"] = rf.check("tol_grasp", Value(1e-5)).asDouble();
+        sq_grasp_params["constr_tol"] = rf.check("constr_tol", Value(1e-4)).asDouble();
+        sq_grasp_params["max_superq"] = rf.check("max_superq", Value(4)).asInt();
 
-        grasp_estim.SetNumericValue("tol", tol_grasp);
         grasp_estim.SetIntegerValue("print_level", print_level_grasp);
-        grasp_estim.SetIntegerValue("max_superq", max_superq);
-        grasp_estim.SetNumericValue("constr_tol", constr_tol);
+        grasp_estim.SetNumericValue("tol", sq_grasp_params["tol_grasp"]);
+        grasp_estim.SetIntegerValue("max_superq", sq_grasp_params["max_superq"]);
+        grasp_estim.SetNumericValue("constr_tol", sq_grasp_params["constr_tol"]);
         grasp_estim.SetStringValue("left_or_right", "right");
+        grasping_hand = WhichHand::HAND_RIGHT;
 
+        // set plane
         list = rf.find("plane_table").asList();
         if (list)
         {
@@ -434,6 +439,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         grasp_estim.setVector("plane", plane);
 
+        // set displacement
         list = rf.find("displacement").asList();
         if (list)
         {
@@ -447,8 +453,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         grasp_estim.setVector("displacement", displacement);
 
-
+        // set hand_superq_params
         hand_superq_params.resize(11);
+
         list = rf.find("hand").asList();
         if (list)
         {
@@ -462,6 +469,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         grasp_estim.setVector("hand", hand_superq_params);
 
+        // set bounds right
         bounds_right.resize(6,2);
         list = rf.find("bounds_right").asList();
         if (list)
@@ -482,6 +490,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         grasp_estim.setMatrix("bounds_right", bounds_right);
 
+        // set bounds left
         bounds_left.resize(6,2);
         list = rf.find("bounds_left").asList();
         if (list)
@@ -502,6 +511,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         grasp_estim.setMatrix("bounds_left", bounds_left);
 
+        // set bounds constraint right
         bounds_constr_right.resize(8,2);
         list = rf.find("bounds_constr_right").asList();
         if (list)
@@ -525,6 +535,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         grasp_estim.setMatrix("bounds_constr_right", bounds_constr_right);
 
+        // set bounds constraint left
         bounds_constr_left.resize(8,2);
         list = rf.find("bounds_constr_left").asList();
         if (list)
@@ -612,6 +623,54 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
+    bool set_approach(const string& hand, const vector<double> &value)
+    {
+        if (value.size() == 4)
+        {
+            if(!hand.compare("right"))
+            {
+                for(int i=0 ; i<4 ; i++) grasper_approach_parameters_right[i] = value[i];
+            }
+            else if(!hand.compare("left"))
+            {
+                for(int i=0 ; i<4 ; i++) grasper_approach_parameters_left[i] = value[i];
+            }
+            else
+            {
+                yError() << "Invalid hand.";
+                return false;
+            }
+        }
+        else
+        {
+            yError() << "Invalid approach dimension. Should be 4.";
+            return false;
+        }
+        return true;
+    }
+
+    /****************************************************************/
+    vector<double> get_approach(const string& hand)
+    {
+        vector<double> output;
+
+        if(!hand.compare("right"))
+        {
+            for(double & p: grasper_approach_parameters_right) output.push_back(p);
+        }
+        else if(!hand.compare("left"))
+        {
+            for(double & p: grasper_approach_parameters_left) output.push_back(p);
+        }
+        else
+        {
+            yError() << "Invalid hand.";
+        }
+
+        return output;
+    }
+
+    /****************************************************************/
     vector<PointD> get_tool_trajectory()
     {
         return take_tool_trajectory;
@@ -638,6 +697,80 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     bool clear_tool_trajectory()
     {
         take_tool_trajectory.clear();
+        return true;
+    }
+
+    /****************************************************************/
+    map<string,double> get_pc_filter_params()
+    {
+        return pc_filter_params;
+    }
+
+    /****************************************************************/
+    bool set_pc_filter_param(const string &param_name, double value)
+    {
+        if(sq_model_params.find(param_name) == sq_model_params.end())
+        {
+            yError() << param_name << " is unkown.";
+            return false;
+        }
+
+        sq_model_params[param_name] = value;
+        return true;
+    }
+
+    /****************************************************************/
+    map<string,double> get_sq_model_params()
+    {
+        return sq_model_params;
+    }
+
+    /****************************************************************/
+    bool set_sq_model_param(const string &param_name, double value)
+    {
+        if(sq_model_params.find(param_name) == sq_model_params.end())
+        {
+            yError() << param_name << " is unkown.";
+            return false;
+        }
+
+        sq_model_params[param_name] = value;
+        return true;
+    }
+
+    /****************************************************************/
+    map<string,double> get_sq_grasp_params()
+    {
+        return sq_grasp_params;
+    }
+
+    /****************************************************************/
+    bool set_sq_grasp_param(const string &param_name, double value)
+    {
+        if(sq_grasp_params.find(param_name) == sq_grasp_params.end())
+        {
+            yError() << param_name << " is unkown.";
+            return false;
+        }
+
+        sq_grasp_params[param_name] = value;
+        return true;
+    }
+
+    /****************************************************************/
+    vector<double> get_hand_sq_params()
+    {
+        vector<double> output_vec;
+        output_vec.resize(hand_superq_params.size());
+        Eigen::VectorXd::Map(&output_vec[0], hand_superq_params.size()) = hand_superq_params;
+        return output_vec;
+    }
+
+    /****************************************************************/
+    bool set_hand_sq_params(const vector<double> &values)
+    {
+        hand_superq_params.resize(values.size());
+        hand_superq_params = Eigen::VectorXd::Map(&values[0], hand_superq_params.size());
         return true;
     }
 
@@ -675,6 +808,38 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         this->u_f = u_f;
         this->v_f = v_f;
         return true;
+    }
+
+    /****************************************************************/
+    map<string,PointD> get_best_grasping_position()
+    {
+        GraspPoses best_graspPose;
+        map<string,PointD> output_map;
+
+        if(grasp_res_hand1.grasp_poses.size()==0 && grasp_res_hand1.grasp_poses.size()==0)
+        {
+            yWarning() << "no grasping poses available. They need to be computed.";
+            return output_map;
+        }
+
+        if (grasping_hand == WhichHand::BOTH && best_hand == "left")
+        {
+            best_graspPose = grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose];
+        }
+        else
+        {
+            best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
+        }
+
+        PointD position;
+        if(best_graspPose.position.size() > 0)
+        {
+            position.x = best_graspPose.position(0);
+            position.y = best_graspPose.position(1);
+            position.z = best_graspPose.position(2);
+            output_map[best_hand] = position;
+        }
+        return output_map;
     }
 
     /****************************************************************/
@@ -1097,7 +1262,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         for (size_t i = 0; i < point_cloud.size(); i++)
         {
-            if (point_cloud[i][0] > x_max - sfm_range)
+            if (point_cloud[i][0] > x_max - pc_filter_params["sfm_range"])
             {
                 new_point_cloud.push_back(point_cloud[i]);
 
@@ -1127,8 +1292,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         vector<vector<unsigned char>> in_colors;
 
         Property options;
-        options.put("epsilon",radius);
-        options.put("minpts",minpts);
+        options.put("epsilon", pc_filter_params["radius_dbscan"]);
+        options.put("minpts", pc_filter_params["points_dbscan"]);
 
         DBSCAN dbscan;
         map<size_t,set<size_t>> clusters=dbscan.cluster(point_cloud, options);

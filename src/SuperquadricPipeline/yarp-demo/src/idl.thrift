@@ -64,6 +64,8 @@ struct PointD {
 
      bool home();
 
+     bool quit();
+
      string get_superq_mode();
 
      bool set_single_superq(1: bool value);
@@ -92,6 +94,29 @@ struct PointD {
 
      bool clear_tool_trajectory();
 
-     bool quit();
+     bool set_approach(1: string hand, 2: list<double> value)
+
+     list<double> get_approach(1: string hand)
+
+     map<string,PointD> get_best_grasping_position()
+
+     /* Get/set point cloud filtering params */
+
+     map<string,double> get_pc_filter_params()
+     bool set_pc_filter_params(1: string param_name, 2: double value)
+
+
+     /* Get/set super quadric model params */
+
+     map<string,double> get_sq_model_params()
+     bool set_sq_model_param(1: string param_name, 2: double value)
+
+     /* Get/set super quadric grasp params */
+
+     map<string,double> get_sq_grasp_params()
+     bool set_sq_grasp_param(1: string param_name, 2: double value)
+
+     list<double> get_hand_sq_params()
+     bool set_hand_sq_params(1: list<double> values)
 
  }
