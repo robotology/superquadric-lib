@@ -1661,11 +1661,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     /****************************************************************/
     bool SuperquadricPipelineDemo::computePoseHat(GraspResults &grasp_res, ICartesianControl *icart)
     {
-        for (size_t i = 0; i < 2; i++) //grasp_res.grasp_poses.size()
+        for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
         {
             int context_backup;
             icart->storeContext(&context_backup);
-            //  set up the context for the computation of the candidates
             setGraspContext(icart);
 
             Eigen::VectorXd desired_pose = grasp_res.grasp_poses[i].getGraspPosition();
