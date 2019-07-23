@@ -144,8 +144,72 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     Eigen::MatrixXd bounds_right, bounds_left;
     Eigen::MatrixXd bounds_constr_right, bounds_constr_left;
 
+    bool configure(ResourceFinder &rf) override;
+    bool updateModule() override;
+    double getPeriod() override;
+    bool close() override;
+    bool attach(RpcServer &source);
+    bool interruptModule();
+
+    /* idl methods */
+
+    // set-get methods
+    bool set_approach(const string& hand, const vector<double> &value);
+    vector<double> get_approach(const string& hand);
+    vector<PointD> get_tool_trajectory();
+    bool set_tool_trajectory(const vector<PointD> &points);
+    bool clear_tool_trajectory();
+    map<string,double> get_pc_filter_params();
+    map<string,double> get_sq_model_params();
+    map<string,double> get_sq_grasp_params();
+    bool set_pc_filter_param(const string &param_name, double value);
+    bool set_sq_model_param(const string &param_name, double value);
+    bool set_sq_grasp_param(const string &param_name, double value);
+    vector<double> get_hand_sq_params();
+    bool set_hand_sq_params(const vector<double> &values);
+    bool set_single_superq(const bool value);
+    string get_superq_mode();
+    std::vector<int> get_sfm_region();
+    bool set_sfm_region(const double u_i,const double v_i,const double u_f,const double v_f);
+    map<string,PointD> get_best_grasping_position();
+
+    // action methos
+    bool from_off_file(const string &object_file, const string &hand);
+    bool compute_superq_and_pose(const string &object_name, const string &hand);
+    bool grasp();
+    bool take_tool();
+    bool open_hand(const string &hand);
+    bool drop();
+    bool home();
+    bool quit();
+
+    /* */
+    bool requestPointCloud(const string &object);
+    bool acquireFromSFM();
+    void filterPC(vector<Vector> &point_cloud, vector<vector<unsigned char>> &colors);
+    void removeOutliers(vector<Vector> &point_cloud, vector<vector<unsigned char>> &all_colors);
+    bool set_grasping_hand(const string &hand);
+    void computeSuperqAndGrasp(bool choose_hand);
+    bool isInClasses(const string &obj_name);
+    void getTable();
+
+    bool computePoseHat(GraspResults &grasp_res, ICartesianControl *icart);
+    void computePoseHatR1(GraspResults &grasp_res, const string &hand);
+
+
+    bool executeGrasp(Vector &pose, string &best_hand);
+
+    bool fixReachingOffset(const Vector &poseToFix, Vector &poseFixed,
+                           const bool invert=false);
+
+    void setGraspContext(ICartesianControl *icart);
+    Vector eigenToYarp(Eigen::VectorXd &v);
+    deque<Eigen::Vector3d> vectorYarptoEigen(vector<Vector> &yarp_points);
+
+};
+
     /****************************************************************/
-    bool configure(ResourceFinder &rf) override
+    bool SuperquadricPipelineDemo::configure(ResourceFinder &rf)
     {
         moduleName = rf.check("name", Value("superquadric-lib-demo")).toString();
         if(!rf.check("robot"))
@@ -377,7 +441,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         /* ------ PointCloud filtering ------ */
 
-        map<string,double> pc_filter_params;
         pc_filter_params["radius_dbscan"] = rf.check("radius_dbscan", Value(0.01)).asDouble();
         pc_filter_params["points_dbscan"] = rf.check("points_dbscan", Value(10)).asInt();
         pc_filter_params["sfm_range"] = rf.check("sfm_range", Value(0.04)).asDouble();
@@ -394,8 +457,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         estim.SetNumericValue("tol", sq_model_params["tol"]);
         estim.SetIntegerValue("print_level", print_level_superq);
         estim.SetStringValue("object_class", object_class);
-        estim.SetIntegerValue("optimizer_points", sq_model_params["optimizer_points"]);
-        estim.SetBoolValue("random_sampling", sq_model_params["random_sampling"]);
+        estim.SetIntegerValue("optimizer_points", int(sq_model_params["optimizer_points"]));
+        estim.SetBoolValue("random_sampling", bool(sq_model_params["random_sampling"]));
 
         bool merge_model = rf.check("merge_model", Value(true)).asBool();
         sq_model_params["minimum_points"] = rf.check("minimum_points", Value(150)).asInt();
@@ -420,7 +483,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         grasp_estim.SetIntegerValue("print_level", print_level_grasp);
         grasp_estim.SetNumericValue("tol", sq_grasp_params["tol_grasp"]);
-        grasp_estim.SetIntegerValue("max_superq", sq_grasp_params["max_superq"]);
+        grasp_estim.SetIntegerValue("max_superq", int(sq_grasp_params["max_superq"]));
         grasp_estim.SetNumericValue("constr_tol", sq_grasp_params["constr_tol"]);
         grasp_estim.SetStringValue("left_or_right", "right");
         grasping_hand = WhichHand::HAND_RIGHT;
@@ -569,19 +632,19 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
 
     /****************************************************************/
-    bool updateModule() override
+    bool SuperquadricPipelineDemo::updateModule()
     {
         return false;
     }
 
     /****************************************************************/
-    double getPeriod() override
+    double SuperquadricPipelineDemo::getPeriod()
     {
         return 1.0;
     }
 
     /****************************************************************/
-    bool interruptModule() override
+    bool SuperquadricPipelineDemo::interruptModule()
     {
         point_cloud_rpc.interrupt();
         action_render_rpc.interrupt();
@@ -594,7 +657,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool close() override
+    bool SuperquadricPipelineDemo::close()
     {
         point_cloud_rpc.close();
         action_render_rpc.close();
@@ -615,7 +678,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool quit()
+    bool SuperquadricPipelineDemo::quit()
     {
         yInfo() << "asking to stop module";
         stopModule(false);
@@ -623,7 +686,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool set_approach(const string& hand, const vector<double> &value)
+    bool SuperquadricPipelineDemo::set_approach(const string& hand, const vector<double> &value)
     {
         if (value.size() == 4)
         {
@@ -650,7 +713,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    vector<double> get_approach(const string& hand)
+    vector<double> SuperquadricPipelineDemo::get_approach(const string& hand)
     {
         vector<double> output;
 
@@ -671,13 +734,13 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    vector<PointD> get_tool_trajectory()
+    vector<PointD> SuperquadricPipelineDemo::get_tool_trajectory()
     {
         return take_tool_trajectory;
     }
 
     /****************************************************************/
-    bool set_tool_trajectory(const vector<PointD> &points)
+    bool SuperquadricPipelineDemo::set_tool_trajectory(const vector<PointD> &points)
     {
         take_tool_trajectory.clear();
 
@@ -694,20 +757,20 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool clear_tool_trajectory()
+    bool SuperquadricPipelineDemo::clear_tool_trajectory()
     {
         take_tool_trajectory.clear();
         return true;
     }
 
     /****************************************************************/
-    map<string,double> get_pc_filter_params()
+    map<string,double> SuperquadricPipelineDemo::get_pc_filter_params()
     {
         return pc_filter_params;
     }
 
     /****************************************************************/
-    bool set_pc_filter_param(const string &param_name, double value)
+    bool SuperquadricPipelineDemo::set_pc_filter_param(const string &param_name, double value)
     {
         if(sq_model_params.find(param_name) == sq_model_params.end())
         {
@@ -720,13 +783,13 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    map<string,double> get_sq_model_params()
+    map<string,double> SuperquadricPipelineDemo::get_sq_model_params()
     {
         return sq_model_params;
     }
 
     /****************************************************************/
-    bool set_sq_model_param(const string &param_name, double value)
+    bool SuperquadricPipelineDemo::set_sq_model_param(const string &param_name, double value)
     {
         if(sq_model_params.find(param_name) == sq_model_params.end())
         {
@@ -739,13 +802,13 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    map<string,double> get_sq_grasp_params()
+    map<string,double> SuperquadricPipelineDemo::get_sq_grasp_params()
     {
         return sq_grasp_params;
     }
 
     /****************************************************************/
-    bool set_sq_grasp_param(const string &param_name, double value)
+    bool SuperquadricPipelineDemo::set_sq_grasp_param(const string &param_name, double value)
     {
         if(sq_grasp_params.find(param_name) == sq_grasp_params.end())
         {
@@ -758,7 +821,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    vector<double> get_hand_sq_params()
+    vector<double> SuperquadricPipelineDemo::get_hand_sq_params()
     {
         vector<double> output_vec;
         output_vec.resize(hand_superq_params.size());
@@ -767,7 +830,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool set_hand_sq_params(const vector<double> &values)
+    bool SuperquadricPipelineDemo::set_hand_sq_params(const vector<double> &values)
     {
         hand_superq_params.resize(values.size());
         hand_superq_params = Eigen::VectorXd::Map(&values[0], hand_superq_params.size());
@@ -775,27 +838,26 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool set_single_superq(const bool value)
+    bool SuperquadricPipelineDemo::set_single_superq(const bool value)
     {
         single_superq = value;
-
         return true;
     }
 
     /****************************************************************/
-    string get_superq_mode()
+    string SuperquadricPipelineDemo::get_superq_mode()
     {
         return single_superq? "singleSuperQuadric" : "multipleSuperQuadric";
     }
 
     /****************************************************************/
-    std::vector<int> get_sfm_region()
+    std::vector<int> SuperquadricPipelineDemo::get_sfm_region()
     {
         return vector<int>{u_i,v_i,u_f,v_f};
     }
 
     /****************************************************************/
-    bool set_sfm_region(const double u_i,const double v_i,const double u_f,const double v_f)
+    bool SuperquadricPipelineDemo::set_sfm_region(const double u_i,const double v_i,const double u_f,const double v_f)
     {
         if(u_i < 0 || v_i < 0 || u_f < 0 || v_f < 0)
         {
@@ -811,7 +873,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    map<string,PointD> get_best_grasping_position()
+    map<string,PointD> SuperquadricPipelineDemo::get_best_grasping_position()
     {
         GraspPoses best_graspPose;
         map<string,PointD> output_map;
@@ -843,7 +905,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool set_grasping_hand(const string &hand)
+    bool SuperquadricPipelineDemo::set_grasping_hand(const string &hand)
     {
         if (!hand.compare("right"))
         {
@@ -891,7 +953,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool from_off_file(const string &object_file, const string &hand)
+    bool SuperquadricPipelineDemo::from_off_file(const string &object_file, const string &hand)
     {
         if(!set_grasping_hand(hand))
             return false;
@@ -953,7 +1015,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool compute_superq_and_pose(const string &object_name, const string &hand)
+    bool SuperquadricPipelineDemo::compute_superq_and_pose(const string &object_name, const string &hand)
     {
         if(!set_grasping_hand(hand))
             return false;
@@ -979,7 +1041,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool grasp()
+    bool SuperquadricPipelineDemo::grasp()
     {
         if(grasp_res_hand1.grasp_poses.size()==0)
         {
@@ -1009,7 +1071,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool drop()
+    bool SuperquadricPipelineDemo::drop()
     {
         if (action_render_rpc.getOutputCount() > 0)
         {
@@ -1026,7 +1088,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool home()
+    bool SuperquadricPipelineDemo::home()
     {
         if(robot == "icubSim")
         {
@@ -1082,7 +1144,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /************************************************************************/
-    bool requestPointCloud(const string &object)
+    bool SuperquadricPipelineDemo::requestPointCloud(const string &object)
     {
         Bottle cmd_request;
         Bottle cmd_reply;
@@ -1163,7 +1225,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool acquireFromSFM()
+    bool SuperquadricPipelineDemo::acquireFromSFM()
     {
         point_cloud.deletePoints();
 
@@ -1248,7 +1310,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    void filterPC(vector<Vector> &point_cloud, vector<vector<unsigned char>> &colors)
+    void SuperquadricPipelineDemo::filterPC(vector<Vector> &point_cloud, vector<vector<unsigned char>> &colors)
     {
         double x_max = point_cloud[0][0];
 
@@ -1289,7 +1351,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    void removeOutliers(vector<Vector> &point_cloud, vector<vector<unsigned char>> &all_colors)
+    void SuperquadricPipelineDemo::removeOutliers(vector<Vector> &point_cloud, vector<vector<unsigned char>> &all_colors)
     {
         double t0=Time::now();
 
@@ -1298,7 +1360,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         Property options;
         options.put("epsilon", pc_filter_params["radius_dbscan"]);
-        options.put("minpts", pc_filter_params["points_dbscan"]);
+        options.put("minpts", int(pc_filter_params["points_dbscan"]));
 
         DBSCAN dbscan;
         map<size_t,set<size_t>> clusters=dbscan.cluster(point_cloud, options);
@@ -1339,13 +1401,14 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /************************************************************************/
-    void computeSuperqAndGrasp(bool choose_hand)
+    void SuperquadricPipelineDemo::computeSuperqAndGrasp(bool choose_hand)
     {
         // Reset visualizer for new computations
         vis.resetSuperq();
         vis.resetPoses();
         vis.resetPoints();
 
+        cout << "ciao1"<< endl;
         // Visualize acquired point cloud
         vis.addPoints(point_cloud, false);
 
@@ -1361,18 +1424,19 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         {
             superqs = estim.computeMultipleSuperq(point_cloud);
             vis.addPoints(point_cloud, false);
+            cout << "ciao2.3"<< endl;
         }
 
         // Visualize downsampled point cloud and estimated superq
         vis.addSuperq(superqs);
 
         /* ------ Compute grasp poses ------ */
-
+        cout << "ciao3"<< endl;
         // Get real value of table height
         getTable();
-
+        cout << "ciao4"<< endl;
         grasp_res_hand1 = grasp_estim.computeGraspPoses(superqs);
-
+        cout << "ciao5"<< endl;
         // Show computed grasp pose and plane
         vis.addPoses(grasp_res_hand1.grasp_poses);
         vis.addPlane(grasp_estim.getPlaneHeight());
@@ -1492,7 +1556,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    void getTable()
+    void SuperquadricPipelineDemo::getTable()
     {
         bool table_ok = false;
         if (robot != "icubSim" && table_calib_rpc.getOutputCount() > 0)
@@ -1533,7 +1597,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    void setGraspContext(ICartesianControl *icart)
+    void SuperquadricPipelineDemo::setGraspContext(ICartesianControl *icart)
     {
         //  set up the context for the grasping planning and execution
         //  enable all joints
@@ -1547,7 +1611,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    Vector eigenToYarp(Eigen::VectorXd &v)
+    Vector SuperquadricPipelineDemo::eigenToYarp(Eigen::VectorXd &v)
     {
         Vector x;
         x.resize(v.size());
@@ -1561,7 +1625,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    deque<Eigen::Vector3d> vectorYarptoEigen(vector<Vector> &yarp_points)
+    deque<Eigen::Vector3d> SuperquadricPipelineDemo::vectorYarptoEigen(vector<Vector> &yarp_points)
     {
         deque<Eigen::Vector3d> eigen_points;
 
@@ -1574,7 +1638,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool computePoseHat(GraspResults &grasp_res, ICartesianControl *icart)
+    bool SuperquadricPipelineDemo::computePoseHat(GraspResults &grasp_res, ICartesianControl *icart)
     {
         for (size_t i = 0; i < 2; i++) //grasp_res.grasp_poses.size()
         {
@@ -1618,7 +1682,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    void computePoseHatR1(GraspResults &grasp_res, const string &hand)
+    void SuperquadricPipelineDemo::computePoseHatR1(GraspResults &grasp_res, const string &hand)
     {
         for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
         {
@@ -1672,7 +1736,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool take_tool()
+    bool SuperquadricPipelineDemo::take_tool()
     {
         Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
 
@@ -1736,21 +1800,22 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool open_hand(const string &hand)
+    bool SuperquadricPipelineDemo::open_hand(const string &hand)
     {
-        if(hand.compare("right") && hand.compare("left"))
-        {
-            yWarning() << "Specified hand is unknown. Opening the hand in use";
-        }
-        else
-            yInfo() << "opening hand " << hand;
-
         if (action_render_rpc.getOutputCount() > 0)
         {
             Bottle cmd, reply;
             cmd.addVocab(Vocab::encode("hand"));
             cmd.addString("open_hand");
-            cmd.addString(hand);
+            if(hand.compare("right") && hand.compare("left"))
+            {
+                yWarning() << "Specified hand is unknown. Opening the hand in use";
+            }
+            else
+            {
+                yInfo() << "opening hand " << hand;
+                cmd.addString(hand);
+            }
 
             action_render_rpc.write(cmd, reply);
             if (reply.get(0).asVocab() == Vocab::encode("ack"))
@@ -1763,7 +1828,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool executeGrasp(Vector &pose, string &best_hand)
+    bool SuperquadricPipelineDemo::executeGrasp(Vector &pose, string &best_hand)
     {
         Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,", ", ", ", "", "", " [ ", "]");
 
@@ -1886,7 +1951,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool isInClasses(const string &obj_name)
+    bool SuperquadricPipelineDemo::isInClasses(const string &obj_name)
     {
         auto it = find(classes.begin(), classes.end(), obj_name);
         if (it != classes.end())
@@ -1901,14 +1966,14 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /************************************************************************/
-    bool attach(RpcServer &source)
+    bool SuperquadricPipelineDemo::attach(RpcServer &source)
     {
         return this->yarp().attachAsServer(source);
     }
 
     /****************************************************************/
-    bool fixReachingOffset(const Vector &poseToFix, Vector &poseFixed,
-                           const bool invert=false)
+    bool SuperquadricPipelineDemo::fixReachingOffset(const Vector &poseToFix, Vector &poseFixed,
+                           const bool invert)
     {
         //  fix the pose offset according to iolReachingCalibration
         //  pose is supposed to be (x y z gx gy gz theta)
@@ -1951,7 +2016,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         }
         }
     }
-};
+
 
 int main(int argc, char *argv[])
 {
