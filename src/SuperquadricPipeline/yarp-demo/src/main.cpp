@@ -816,7 +816,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         GraspPoses best_graspPose;
         map<string,PointD> output_map;
 
-        if(grasp_res_hand1.grasp_poses.size()==0 && grasp_res_hand1.grasp_poses.size()==0)
+        if(grasp_res_hand1.grasp_poses.size()==0)
         {
             yWarning() << "no grasping poses available. They need to be computed.";
             return output_map;
@@ -981,6 +981,11 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     /****************************************************************/
     bool grasp()
     {
+        if(grasp_res_hand1.grasp_poses.size()==0)
+        {
+            yError() << "no grasping poses available. They need to be computed.";
+            return false;
+        }
 
         GraspPoses best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
 
