@@ -161,7 +161,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     vector<double> get_approach(const string& hand);
     vector<PointD> get_tool_trajectory();
     bool set_tool_trajectory(const vector<PointD> &points);
-    bool clear_tool_trajectory();
     map<string,double> get_pc_filter_params();
     map<string,double> get_sq_model_params();
     map<string,double> get_sq_grasp_params();
@@ -179,6 +178,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     // action methos
     bool from_off_file(const string &object_file, const string &hand);
     bool compute_superq_and_pose(const string &object_name, const string &hand);
+    bool compute_superq_and_pose_from_position(const vector<double> &position, const string &hand);
     bool grasp();
     bool take_tool();
     bool open_hand(const string &hand);
@@ -186,13 +186,13 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     bool home();
     bool quit();
 
-    /* */
-    bool requestPointCloud(const string &object);
+    /* class methods */
+    bool requestPointCloud(const string &object, const Vector &position = Vector());
     bool acquireFromSFM();
     void filterPC(vector<Vector> &point_cloud, vector<vector<unsigned char>> &colors);
     void removeOutliers(vector<Vector> &point_cloud, vector<vector<unsigned char>> &all_colors);
     bool set_grasping_hand(const string &hand);
-    void computeSuperqAndGrasp(bool choose_hand);
+    void computeSuperqAndGrasp();
     bool isInClasses(const string &obj_name);
     void getTable();
 
@@ -760,13 +760,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool SuperquadricPipelineDemo::clear_tool_trajectory()
-    {
-        take_tool_trajectory.clear();
-        return true;
-    }
-
-    /****************************************************************/
     map<string,double> SuperquadricPipelineDemo::get_pc_filter_params()
     {
         return pc_filter_params;
@@ -964,6 +957,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         vector<Vector> points_yarp;
         vector<vector<unsigned char>> all_colors;
 
+        // open file
         ifstream fin(object_file);
         if (!fin.is_open())
         {
@@ -1010,7 +1004,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         if (point_cloud.getNumberPoints() > 0)
         {
-            computeSuperqAndGrasp(false);
+            computeSuperqAndGrasp();
             return true;
         }
 
@@ -1027,17 +1021,48 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         bool ok;
 
+        // Get object point cloud
         if (object_name != "hanging_tool")
             ok = requestPointCloud(object_name);
         else
             ok = acquireFromSFM();
 
+        yInfo() << "compute_superq_and_pose: point cloud received? " << ok;
+
         if (isInClasses(object_name))
             object_class = object_name;
 
+        // Compute sq model and grasping pose
         if (ok == true && point_cloud.getNumberPoints() > 0)
         {
-            computeSuperqAndGrasp(true);
+            yInfo() << "compute_superq_and_pose: point cloud is ok --> call computeSuperqAndGrasp()";
+            computeSuperqAndGrasp();
+        }
+
+        return ok;
+    }
+
+    /****************************************************************/
+    bool SuperquadricPipelineDemo::compute_superq_and_pose_from_position(const vector<double> &position, const string &hand)
+    {
+        if(!set_grasping_hand(hand))
+            return false;
+
+        fixate_object = true;
+
+        Vector yarp_position;
+        for(const double& p: position) yarp_position.push_back(p);
+
+        // Get object point cloud
+        bool ok = requestPointCloud("", yarp_position);
+
+        yInfo() << "compute_superq_and_pose: point cloud received? " << ok;
+
+        // Compute sq model and grasping pose
+        if (ok == true && point_cloud.getNumberPoints() > 0)
+        {
+            yInfo() << "compute_superq_and_pose: point cloud is ok --> call computeSuperqAndGrasp()";
+            computeSuperqAndGrasp();
         }
 
         return ok;
@@ -1147,23 +1172,46 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /************************************************************************/
-    bool SuperquadricPipelineDemo::requestPointCloud(const string &object)
+    bool SuperquadricPipelineDemo::requestPointCloud(const string &object,const Vector &position)
     {
         Bottle cmd_request;
         Bottle cmd_reply;
 
-        //  if fixate_object is given, look at the object before acquiring the point cloud
+        bool use_position = false;
+        if(position.size()==3)
+        {
+            yInfo() << "requestPointCloud: using 3D position to retrieve point cloud";
+            use_position = true;
+        }
+
+        //  if fixate_object is given, look at the object/3D position before acquiring the point cloud
         if (fixate_object)
         {
+            // check connection
             if(action_render_rpc.getOutputCount() < 1)
             {
-                yError() << prettyError( __FUNCTION__,  "requestRefreshPointCloud: no connection to action rendering module");
+                yError() << prettyError( __FUNCTION__,  "no connection to action rendering module");
                 return false;
             }
 
+            // prepare command request
             cmd_request.addVocab(Vocab::encode("look"));
-            cmd_request.addString(object);
+
+            if(use_position)
+            {
+                Bottle &subcmd_request = cmd_request.addList();
+                subcmd_request.addString("cartesian");
+                for(int i=0 ; i<3 ; i++) subcmd_request.addDouble(position[i]);
+            }
+            else
+            {
+                cmd_request.addString(object);
+            }
+
             cmd_request.addString("wait");
+
+            // send request
+            yInfo() << "requestPointCloud: sending request to ARE to look at the object...";
 
             action_render_rpc.write(cmd_request, cmd_reply);
             if (cmd_reply.get(0).asVocab() != Vocab::encode("ack"))
@@ -1171,28 +1219,49 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 yError() << prettyError( __FUNCTION__,  "Didn't manage to look at the object");
                 return false;
             }
+            yInfo() << "requestPointCloud: ...ARE  reply is [ack]";
         }
 
+        // get point cloud from point cloud module:
+
+        // check connection on port
+        if(point_cloud_rpc.getOutputCount() < 1)
+        {
+            yError() << prettyError( __FUNCTION__,  "requestPointCloud: no connection to point cloud module");
+            return false;
+        }
+
+        // prepare command request
         point_cloud.deletePoints();
         cmd_request.clear();
         cmd_reply.clear();
 
-        yarp::sig::PointCloud<DataXYZRGBA> pc;
-
-        cmd_request.addString("get_point_cloud");
-        cmd_request.addString(object);
-
-        if(point_cloud_rpc.getOutputCount() < 1)
+        if(use_position)
         {
-            yError() << prettyError( __FUNCTION__,  "requestRefreshPointCloud: no connection to point cloud module");
+            cmd_request.addString("get_point_cloud_from_3D_position");
+            for(int i=0 ; i<3 ; i++) cmd_request.addDouble(position[i]);
+        }
+        else
+        {
+            cmd_request.addString("get_point_cloud");
+            cmd_request.addString(object);
+        }
+
+        // send request
+        yInfo() << "requestPointCloud: sending request to point cloud module to get point cloud...";
+
+        if(!point_cloud_rpc.write(cmd_request, cmd_reply))
+        {
+            yError() << prettyError( __FUNCTION__,  " Problems in getting points from point cloud module");
             return false;
         }
 
-        point_cloud_rpc.write(cmd_request, cmd_reply);
-
         //  cheap workaround to get the point cloud
+
+        yarp::sig::PointCloud<DataXYZRGBA> yarp_pc;
+
         Bottle* pcBt = cmd_reply.get(0).asList();
-        bool success = pc.fromBottle(*pcBt);
+        bool success = yarp_pc.fromBottle(*pcBt);
 
         vector<Vector> acquired_points;
         vector<vector<unsigned char>> acquired_colors;
@@ -1201,16 +1270,20 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         vector<unsigned char> c;
         c.resize(3);
 
-        for (size_t i = 0; i < pc.size(); i++)
+        for (size_t i = 0; i < yarp_pc.size(); i++)
         {
-            point(0)=pc(i).x; point(1)=pc(i).y; point(2)=pc(i).z;
-            c[0] = pc(i).r;
-            c[1] = pc(i).g;
-            c[2] = pc(i).b;
+            point(0)=yarp_pc(i).x; point(1)=yarp_pc(i).y; point(2)=yarp_pc(i).z;
+            c[0] = yarp_pc(i).r;
+            c[1] = yarp_pc(i).g;
+            c[2] = yarp_pc(i).b;
 
             acquired_points.push_back(point);
             acquired_colors.push_back(c);
         }
+
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| received point cloud with n points                   : "<< acquired_points.size()<< endl;
+        cout << "|| ---------------------------------------------------- ||" << endl<<endl;
 
         // filtering
         removeOutliers(acquired_points, acquired_colors);
@@ -1221,6 +1294,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         {
             point_cloud.setPoints(eigen_points);
             point_cloud.setColors(acquired_colors);
+            yInfo() << "requestPointCloud: point cloud saved";
             return true;
         }
         else
@@ -1256,6 +1330,14 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         }
 
         // Get depth from sfm module
+        yInfo() << "acquireFromSFM: sending request to SFM module to get depth...";
+
+        if(sfm_rpc.getOutputCount() < 1)
+        {
+            yError() << prettyError( __FUNCTION__,  "no connection to SFM module");
+            return false;
+        }
+
         if (!sfm_rpc.write(cmd_request, cmd_reply))
         {
             yError() << " Problems in getting points from SFM ";
@@ -1263,6 +1345,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         }
 
         // Get RGB image
+        yInfo() << "acquireFromSFM: read RGB image...";
+
         if (img_in.getInputCount() < 1)
         {
             yError() << prettyError( __FUNCTION__,  "no connection on RGB image port");
@@ -1272,6 +1356,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         ImageOf<PixelRgb> *inCamImg = img_in.read();
 
         // Create the point cloud
+        yInfo() << "acquireFromSFM: create the point cloud ";
+
         for (int p_i = 0; p_i < cmd_reply.size()/3 ; p_i ++)
         {
             // Get 3D point
@@ -1282,7 +1368,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             point[2] = cmd_reply.get(p_i*3 + 2).asDouble();
 
             if (norm(point) == 0.0 || (point[0] > -0.2) || (point[0] < -0.6) || (point[2] < -0.2))
+            {
+                yInfo() << "   skipping point: null norm or out of range " << point.toString();
                 continue;
+            }
 
             // Get color
             Bottle *point2D = pointsList.get(p_i).asList();
@@ -1297,6 +1386,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             acquired_points.push_back(point);
             acquired_colors.push_back(color);
         }
+
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Created point cloud with n points                    : "<< acquired_points.size()<< endl;
+        cout << "|| ---------------------------------------------------- ||" << endl<<endl;
 
         // filtering
         filterPC(acquired_points, acquired_colors);
@@ -1320,16 +1413,18 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         vector<Vector> new_point_cloud;
         vector<vector<unsigned char>> new_colors;
 
+        // get x max
+        yInfo() << "filterPC: get max value on x...";
         for (size_t i = 1; i < point_cloud.size(); i++)
         {
             if (point_cloud[i][0] > x_max)
                 x_max = point_cloud[i][0];
         }
 
-        yDebug() << "X max " << x_max;
+        yDebug() << "X max: " << x_max;
+        yDebug() << "x_max - " << pc_filter_params["sfm_range"] << ":" << x_max - pc_filter_params["sfm_range"];
 
-        yDebug() << "x_max - 0.04" << x_max - 0.04;
-
+        // filter points out of range
         for (size_t i = 0; i < point_cloud.size(); i++)
         {
             if (point_cloud[i][0] > x_max - pc_filter_params["sfm_range"])
@@ -1345,12 +1440,15 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             }
         }
 
+        cout << "|| ---------------------------------------------------- ||" << endl;
+        cout << "|| Points removed                                       : "<< point_cloud.size() - new_point_cloud.size() << endl;
+        cout << "|| ---------------------------------------------------- ||" << endl<<endl;
+
         point_cloud.clear();
         colors.clear();
 
         point_cloud = new_point_cloud;
         colors = new_colors;
-
     }
 
     /****************************************************************/
@@ -1404,7 +1502,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /************************************************************************/
-    void SuperquadricPipelineDemo::computeSuperqAndGrasp(bool choose_hand)
+    void SuperquadricPipelineDemo::computeSuperqAndGrasp()
     {
         // Reset visualizer for new computations
         vis.resetSuperq();
@@ -1414,7 +1512,11 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         // Visualize acquired point cloud
         vis.addPoints(point_cloud, false);
 
-        /*  ------ Compute superq ------  */
+        /*  ------------------------------  */
+        /*  ------> Compute superq <------  */
+        /*  ------------------------------  */
+
+        yInfo() << "[computeSuperqAndGrasp]: compute superq";
 
         if (single_superq || object_class != "default")
         {
@@ -1431,7 +1533,11 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         // Visualize downsampled point cloud and estimated superq
         vis.addSuperq(superqs);
 
-        /* ------ Compute grasp poses ------ */
+        /*  -----------------------------------  */
+        /*  ------> Compute grasp poses <------  */
+        /*  -----------------------------------  */
+
+        yInfo() << "[computeSuperqAndGrasp]: compute grasp poses";
 
         // Get real value of table height
         getTable();
@@ -1450,22 +1556,25 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             vis.addPoses(grasp_res_hand1.grasp_poses, grasp_res_hand2.grasp_poses);
         }
 
-        /* ------ Estimate pose cost ------ */
+        /*  ----------------------------------  */
+        /*  ------> Estimate pose cost <------  */
+        /*  ----------------------------------  */
+
+        yInfo() << "[computeSuperqAndGrasp]: estimate pose cost";
 
         // Compute pose hat
         if ((robot == "icubSim") || (robot == "icub"))
         {
             if (grasping_hand == WhichHand::BOTH)
             {
-                bool success = false;
                 if (left_arm_client.isValid())
                 {
-                    success = computePoseHat(grasp_res_hand2, icart_left);
+                    computePoseHat(grasp_res_hand2, icart_left);
                 }
 
                 if (right_arm_client.isValid())
                 {
-                    success = computePoseHat(grasp_res_hand1, icart_right);
+                    computePoseHat(grasp_res_hand1, icart_right);
                 }
             }
             else if (grasping_hand == WhichHand::HAND_RIGHT)
@@ -1489,7 +1598,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         {
             if(action_render_rpc.getOutputCount()<1)
             {
-                yError() << prettyError( __FUNCTION__,  "getPoseCostFunction: no connection to action rendering module");
+                yError() << prettyError( __FUNCTION__,  "no connection to action rendering module");
             }
             else
             {
@@ -1510,6 +1619,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         }
 
         // Refine pose cost
+        yInfo() << "[computeSuperqAndGrasp]: refine pose cost";
+
         grasp_estim.refinePoseCost(grasp_res_hand1);
 
         if (grasping_hand == WhichHand::BOTH)
@@ -1522,7 +1633,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             vis.addPoses(grasp_res_hand1.grasp_poses);
         }
 
-        /* ------ Select best pose ------ */
+        /*  --------------------------------  */
+        /*  ------> Select best pose <------  */
+        /*  --------------------------------- */
+        yInfo() << "[computeSuperqAndGrasp]: select best pose";
 
         GraspPoses best_graspPose;
         if (grasping_hand == WhichHand::HAND_RIGHT)
@@ -1557,7 +1671,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             }
         }
 
-        /* ------ Calibrated pose ------ */
+        /*  ------------------------------  */
+        /*  ------> Calibrate pose <------  */
+        /*  ------------------------------ */
+        yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
 
         // TODO See if calibration is necessary and in case adapt fixReachingOffset
         // to the tool scenario
@@ -1570,9 +1687,9 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         Vector old_pose = best_pose;
         //
-        cout<< "|| Pose to be fixed with calibration offsets              :" << toEigen(old_pose).format(CommaInitFmt)<< endl;
+        cout<< "    || Pose to be fixed with calibration offsets              :" << toEigen(old_pose).format(CommaInitFmt)<< endl;
         fixReachingOffset(old_pose, best_pose);
-        cout<< "|| Fixed pose                                             :" << toEigen(best_pose).format(CommaInitFmt)<< endl;
+        cout<< "    || Fixed pose                                             :" << toEigen(best_pose).format(CommaInitFmt)<< endl;
 
     }
 
@@ -1661,6 +1778,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     /****************************************************************/
     bool SuperquadricPipelineDemo::computePoseHat(GraspResults &grasp_res, ICartesianControl *icart)
     {
+        yInfo() << "computePoseHat: num poses to estimate " << grasp_res.grasp_poses.size();
         for (size_t i = 0; i < grasp_res.grasp_poses.size(); i++)
         {
             int context_backup;
@@ -1683,7 +1801,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
             if(!success)
             {
-                yError() << prettyError( __FUNCTION__,  "computePoseHat: could not communicate with kinematics module");
+                yError() << prettyError( __FUNCTION__,  "could not communicate with kinematics module");
                 return false;
             }
 

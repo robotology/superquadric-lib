@@ -58,6 +58,8 @@ struct PointD {
      */
      bool compute_superq_and_pose(1: string object_name, 2: string hand);
 
+     bool compute_superq_and_pose_from_position(1: list <double> &position, 2: string &hand)
+
      bool grasp();
 
      bool drop();
@@ -91,8 +93,6 @@ struct PointD {
      list<PointD> get_tool_trajectory();
 
      bool set_tool_trajectory(1: list<PointD> point);
-
-     bool clear_tool_trajectory();
 
      bool set_approach(1: string hand, 2: list<double> value)
 
