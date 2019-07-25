@@ -173,7 +173,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     string get_superq_mode();
     std::vector<int> get_sfm_region();
     bool set_sfm_region(const double u_i,const double v_i,const double u_f,const double v_f);
-    map<string,PointD> get_best_grasping_position();
+    map<string,PointD> get_best_grasp_position();
+    bool refine_best_grasp_position(const PointD &position);
 
     // action methos
     bool from_off_file(const string &object_file, const string &hand);
@@ -748,12 +749,13 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         take_tool_trajectory.clear();
 
         PointD p1;
+
         for(const PointD& p: points)
         {
             p1.x = sign(p.x) * min(max_traj_value, abs(p.x));
             p1.y = sign(p.y) * min(max_traj_value, abs(p.y));
             p1.z = sign(p.z) * min(max_traj_value, abs(p.z));
-            take_tool_trajectory.push_back(p);
+            take_tool_trajectory.push_back(p1);
         }
 
         return true;
@@ -768,13 +770,13 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     /****************************************************************/
     bool SuperquadricPipelineDemo::set_pc_filter_param(const string &param_name, double value)
     {
-        if(sq_model_params.find(param_name) == sq_model_params.end())
+        if(pc_filter_params.find(param_name) == pc_filter_params.end())
         {
             yError() << param_name << " is unkown.";
             return false;
         }
 
-        sq_model_params[param_name] = value;
+        pc_filter_params[param_name] = value;
         return true;
     }
 
@@ -794,6 +796,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         }
 
         sq_model_params[param_name] = value;
+        estim.SetNumericValue(param_name, value);
+
         return true;
     }
 
@@ -813,6 +817,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         }
 
         sq_grasp_params[param_name] = value;
+        grasp_estim.SetNumericValue(param_name, value);
         return true;
     }
 
@@ -869,7 +874,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    map<string,PointD> SuperquadricPipelineDemo::get_best_grasping_position()
+    map<string,PointD> SuperquadricPipelineDemo::get_best_grasp_position()
     {
         GraspPoses best_graspPose;
         map<string,PointD> output_map;
@@ -898,6 +903,35 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             output_map[best_hand] = position;
         }
         return output_map;
+    }
+
+    bool SuperquadricPipelineDemo::refine_best_grasp_position(const PointD &position)
+    {
+        if(grasp_res_hand1.grasp_poses.size()==0)
+        {
+            yWarning() << "no grasping poses to be refined. They need to be computed first.";
+            return false;
+        }
+
+        GraspPoses best_graspPose;
+        if (grasping_hand == WhichHand::BOTH && best_hand == "left")
+        {
+            best_graspPose = grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose];
+            best_graspPose.position(0) = position.x;
+            best_graspPose.position(1) = position.y;
+            best_graspPose.position(2) = position.z;
+            grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose] = best_graspPose;
+        }
+        else
+        {
+            best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
+            best_graspPose.position(0) = position.x;
+            best_graspPose.position(1) = position.y;
+            best_graspPose.position(2) = position.z;
+            grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = best_graspPose;
+        }
+
+        return true;
     }
 
     /****************************************************************/
@@ -1947,7 +1981,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             cmd.addString("open_hand");
             if(hand.compare("right") && hand.compare("left"))
             {
-                yWarning() << "Specified hand is unknown. Opening the hand in use";
+                yWarning() << "open_hand: Specified hand is unknown. Opening the hand in use";
             }
             else
             {

@@ -98,7 +98,9 @@ struct PointD {
 
      list<double> get_approach(1: string hand)
 
-     map<string,PointD> get_best_grasping_position()
+     map<string,PointD> get_best_grasp_position()
+
+     bool refine_best_grasp_position(1: PointD position)
 
      /* Get/set point cloud filtering params */
 
