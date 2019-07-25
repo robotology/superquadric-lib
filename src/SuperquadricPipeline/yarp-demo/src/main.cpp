@@ -1177,7 +1177,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         cout << "|| ---------------------------------------------------- ||" << endl;
         cout << endl << endl;
 
-        return executeGrasp(best_pose, best_hand);
+        return true;//executeGrasp(best_pose, best_hand);
     }
 
     /****************************************************************/
@@ -1189,21 +1189,21 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         {
             // store context
             int context_backup;
-            icart_right->storeContext(&context_backup);
-            setGraspContext(icart_right);
+            //icart_right->storeContext(&context_backup);
+            //setGraspContext(icart_right);
 
             for(const PointD& p : take_tool_trajectory)
             {
-                success = icart_right->getPose(grasping_current_pos, grasping_current_o);
+                //success = icart_right->getPose(grasping_current_pos, grasping_current_o);
 
-                if(!success)
-                {
-                    yError() << prettyError( __FUNCTION__,  "could not communicate with kinematics module");
-                    // retrieve context
-                    icart_right->restoreContext(context_backup);
-                    icart_right->deleteContext(context_backup);
-                    return false;
-                }
+                //if(!success)
+                //{
+                //    yError() << prettyError( __FUNCTION__,  "could not communicate with kinematics module");
+                //    // retrieve context
+                //    icart_right->restoreContext(context_backup);
+                //    icart_right->deleteContext(context_backup);
+                //    return false;
+                //}
 
                 grasping_current_pos[0] += p.x;
                 grasping_current_pos[1] += p.y;
@@ -1212,34 +1212,34 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 cout << "|| ---------------------------------------------------- ||"  << endl;
                 cout << "|| moving to: " << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
 
-                icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
-                icart_right->waitMotionDone();
+                //icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+                //icart_right->waitMotionDone();
             }
 
             // retrieve context
-            icart_right->restoreContext(context_backup);
-            icart_right->deleteContext(context_backup);
+            //icart_right->restoreContext(context_backup);
+            //icart_right->deleteContext(context_backup);
         }
 
         else if (best_hand == "left")
         {
             // store context
             int context_backup;
-            icart_left->storeContext(&context_backup);
-            setGraspContext(icart_left);
+            //icart_left->storeContext(&context_backup);
+            //setGraspContext(icart_left);
 
             for(const PointD& p : take_tool_trajectory)
             {
-                success = icart_left->getPose(grasping_current_pos, grasping_current_o);
+                //success = icart_left->getPose(grasping_current_pos, grasping_current_o);
 
-                if(!success)
-                {
-                    yError() << prettyError( __FUNCTION__,  "could not communicate with kinematics module");
-                    // retrieve context
-                    icart_left->restoreContext(context_backup);
-                    icart_left->deleteContext(context_backup);
-                    return false;
-                }
+                //if(!success)
+                //{
+                //    yError() << prettyError( __FUNCTION__,  "could not communicate with kinematics module");
+                //    // retrieve context
+                 //   icart_left->restoreContext(context_backup);
+                //    icart_left->deleteContext(context_backup);
+                //    return false;
+                //}
 
                 grasping_current_pos[0] += p.x;
                 grasping_current_pos[1] -= p.y;
@@ -1248,18 +1248,18 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 cout << "|| ---------------------------------------------------- ||"  << endl;
                 cout << "|| moving to: " << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
 
-                icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
-                icart_left->waitMotionDone();
+                //icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
+                //icart_left->waitMotionDone();
             }
 
             // retrieve context
-            icart_left->restoreContext(context_backup);
-            icart_left->deleteContext(context_backup);
+            //icart_left->restoreContext(context_backup);
+            //icart_left->deleteContext(context_backup);
         }
 
         // send robot to home position and return
-        if(go_home)
-            success = this->home();
+        //if(go_home)
+            //success = this->home();
 
         return true;
     }
@@ -1282,14 +1282,14 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 yInfo() << "open_hand: command " << cmd.toString();
             }
 
-            action_render_rpc.write(cmd, reply);
+            /*action_render_rpc.write(cmd, reply);
             if (reply.get(0).asVocab() == Vocab::encode("ack"))
                 return true;
             else
             {
                 yError() << prettyError( __FUNCTION__,  "ARE reply [nack]: Didn't manage to open hand");
                 return false;
-            }
+            }*/
         }
         else
         {
@@ -1305,11 +1305,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         {
             Bottle cmd, reply;
             cmd.addVocab(Vocab::encode("drop"));
-            action_render_rpc.write(cmd, reply);
+            /*action_render_rpc.write(cmd, reply);
             if (reply.get(0).asVocab() == Vocab::encode("ack"))
                 return true;
             else
-                return false;
+                return false;*/
+	    return true;
         }
         else
             return false;
@@ -1362,7 +1363,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             cmd.addString("arms");
 
             yInfo() << "home: command " << cmd.toString();
-            action_render_rpc.write(cmd, reply);
+            /*action_render_rpc.write(cmd, reply);
             if (reply.get(0).asVocab() == Vocab::encode("ack"))
             {
                 return true;
@@ -1371,7 +1372,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             {
                 yError() << prettyError( __FUNCTION__,  "ARE reply [nack]: Didn't manage to go home");
                 return false;
-            }
+            }*/
+            return true;
         }
         else
         {
@@ -2248,7 +2250,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     {
         //  fix the pose offset according to iolReachingCalibration
         //  pose is supposed to be (x y z gx gy gz theta)
-        if ((robot == "r1" || robot == "icub") && reach_calib_rpc.getOutputCount() > 0)
+        /*if ((robot == "r1" || robot == "icub") && reach_calib_rpc.getOutputCount() > 0)
         {
             Bottle command, reply;
 
@@ -2287,12 +2289,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             }
         }
         else
-        {
+        {*/
             //  if we are working with the simulator or there is no calib map, the pose doesn't need to be corrected
             poseFixed = poseToFix;
             yWarning() << "Connection to iolReachingCalibration not detected or calibration map not present: pose will not be changed";
             return true;
-        }
+        //}
     }
 
 
