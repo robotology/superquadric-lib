@@ -60,6 +60,8 @@ struct PointD {
 
      bool compute_superq_and_pose_from_position(1: list <double> &position, 2: string &hand)
 
+     bool save_pcloud(1: string base_dir, 2: string obj_name)
+
      bool grasp();
 
      bool drop();
@@ -86,7 +88,7 @@ struct PointD {
      */
      bool set_sfm_region(1: double u_i, 2: double v_i, 3: double u_f, 4: double v_f);
 
-     bool take_tool();
+     bool take_tool(1: bool go_home = false);
 
      bool open_hand(1: string hand);
 
