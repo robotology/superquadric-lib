@@ -47,9 +47,9 @@ set(${LIBRARY_TARGET_NAME}_HDR
 )
 
 find_package(VTK REQUIRED)
-if(VTK_VERSION VERSION_LESS "8.1")
-	message(ERROR " Wrong VTK version! At least 8.1 required!")
-endif()
+#if(VTK_VERSION VERSION_LESS "8.1")
+#	message(ERROR " Wrong VTK version! At least 8.1 required!")
+#endif()
 
 include(${VTK_USE_FILE})
 
