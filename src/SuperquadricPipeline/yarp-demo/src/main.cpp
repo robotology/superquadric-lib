@@ -2119,7 +2119,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
                 // intermediate pose
                 Vector pose_intermediate(7,0.0);
-                pose_intermediate.setSubvector(0,pose.subVector(0,2) + grasper_approach_parameters_right.subVector(0,2));
+                pose_intermediate.setSubvector(0,pose.subVector(0,2) - grasper_approach_parameters_right.subVector(0,2));
                 pose_intermediate.setSubvector(3, pose.subVector(3,6));
 
                 cout << "|| ---------------------------------------------------- ||"  << endl;
@@ -2148,7 +2148,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
                 // intermediate pose
                 Vector pose_intermediate(7,0.0);
-                pose_intermediate.setSubvector(0,pose.subVector(0,2) + grasper_approach_parameters_left.subVector(0,2));
+                pose_intermediate.setSubvector(0,pose.subVector(0,2) - grasper_approach_parameters_left.subVector(0,2));
                 pose_intermediate.setSubvector(3, pose.subVector(3,6));
 
                 cout << "|| ---------------------------------------------------- ||"  << endl;
