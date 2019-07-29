@@ -94,6 +94,8 @@ struct PointD {
 
      bool open_hand(1: string hand);
 
+     bool pregrasp_hand(1: string hand);
+
      list<PointD> get_tool_trajectory();
 
      bool set_tool_trajectory(1: list<PointD> point);
@@ -106,10 +108,12 @@ struct PointD {
 
      bool refine_best_grasp_position(1: PointD position)
 
+     bool choose_pose(1: string hand, 2: i32 pose_idx)
+
      /* Get/set point cloud filtering params */
 
      map<string,double> get_pc_filter_params()
-     bool set_pc_filter_params(1: string param_name, 2: double value)
+     bool set_pc_filter_param(1: string param_name, 2: double value)
 
 
      /* Get/set super quadric model params */

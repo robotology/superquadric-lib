@@ -643,6 +643,8 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
 
     final_F_value /= points_on.size();
 
+    cout << "final F value " << final_F_value << endl;
+
     // Compute final distance between obstacles
     final_obstacles_value = computeFinalObstacleValues(robot_pose);
 
@@ -660,6 +662,8 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
       final_obstacles_value_average /= final_obstacles_value.size();
 
     }
+
+    cout << "final obstacle value average " << final_obstacles_value_average << endl;
 
     if (final_obstacles_value_average < 1e-4)
      w2 = 0.0;
@@ -1066,12 +1070,16 @@ void GraspEstimatorApp::refinePoseCost(GraspResults &grasp_res)
 
           double error_position  = (x_d - x_hat).norm();
 
+	  cout << " error position " << error_position << endl;
+
           R_hat.transposeInPlace();
 
           Matrix3d orientation_error_matrix =  R_d * R_hat;
           AngleAxisd orientation_error_vector(orientation_error_matrix);
 
           double error_orientation = (orientation_error_vector.axis()).norm() * fabs(sin(orientation_error_vector.angle()));
+
+	  cout << " error orientation " << error_orientation << endl;
 
           double w1 = 1;
           double w2 = 0.01;
