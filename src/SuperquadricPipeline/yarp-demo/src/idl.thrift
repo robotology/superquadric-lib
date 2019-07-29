@@ -109,6 +109,8 @@ struct PointD {
      bool refine_best_grasp_position(1: PointD position)
 
      bool choose_pose(1: string hand, 2: i32 pose_idx)
+ 
+     bool calibratePose()
 
      /* Get/set point cloud filtering params */
 

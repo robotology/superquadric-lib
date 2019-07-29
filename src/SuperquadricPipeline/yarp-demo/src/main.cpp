@@ -177,6 +177,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     map<string,PointD> get_best_grasp_position();
     bool refine_best_grasp_position(const PointD &position);
     bool choose_pose(const string &hand, int pose_idx);
+    bool calibratePose();
 
     // action methods
     bool from_off_file(const string &object_file, const string &hand);
@@ -1197,6 +1198,42 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
+    bool SuperquadricPipelineDemo::calibratePose()
+    {
+        if(grasp_res_hand1.grasp_poses.size()==0)
+        {
+            yError() << "no grasping poses available. They need to be computed.";
+            return false;
+        }
+
+        GraspPoses best_graspPose, calib_pose;
+
+        if (grasping_hand == WhichHand::BOTH && best_hand == "left")
+        {
+            best_graspPose = grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose];
+
+            calib_pose = best_graspPose;
+            yInfo() << "[calibratePose]: calibrate pose";
+        
+            fixReachingOffset(best_graspPose, calib_pose);
+
+	    grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose] = calib_pose;
+        }
+	else
+	{
+	    best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
+	    calib_pose = best_graspPose;
+            yInfo() << "[calibratePose]: calibrate pose";
+        
+            fixReachingOffset(best_graspPose, calib_pose);
+
+	    grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
+	}
+
+        return true;
+    }
+
+    /****************************************************************/
     bool SuperquadricPipelineDemo::take_tool(bool go_home)
     {
         bool success = false;
@@ -1974,10 +2011,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
             vis.highlightBestPose("right", "right", grasp_res_hand1.best_pose);
 	    
-            calib_pose = best_graspPose;
-	    yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
-            fixReachingOffset(best_graspPose, calib_pose);
-	    grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
+            //calib_pose = best_graspPose;
+	    //yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
+            //fixReachingOffset(best_graspPose, calib_pose);
+	    //grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
 
         }
         else if (grasping_hand == WhichHand::HAND_LEFT)
@@ -1986,10 +2023,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
             vis.highlightBestPose("left", "left", grasp_res_hand1.best_pose);
 
-            calib_pose = best_graspPose;
-	    yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
-            fixReachingOffset(best_graspPose, calib_pose);
-	    grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
+            //calib_pose = best_graspPose;
+	    //yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
+            //fixReachingOffset(best_graspPose, calib_pose);
+	    //grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
         }
 
         if(grasping_hand == WhichHand::BOTH)
@@ -2003,10 +2040,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 best_graspPose = grasp_res_hand1.grasp_poses[best_right];
                 vis.highlightBestPose("right", "both", best_right);
 
-                calib_pose = best_graspPose;
-	        yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
-                fixReachingOffset(best_graspPose, calib_pose);
-	        grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
+                //calib_pose = best_graspPose;
+	        //yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
+                //fixReachingOffset(best_graspPose, calib_pose);
+	        //grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
             }
             else
             {
@@ -2014,10 +2051,10 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 best_graspPose = grasp_res_hand2.grasp_poses[best_left];
                 vis.highlightBestPose("left", "both", best_left);
 
-                calib_pose = best_graspPose;
-	        yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
-                fixReachingOffset(best_graspPose, calib_pose);
-	        grasp_res_hand2.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
+                //calib_pose = best_graspPose;
+	        //yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
+                //fixReachingOffset(best_graspPose, calib_pose);
+	        //grasp_res_hand2.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
             }
         }
 
@@ -2051,59 +2088,64 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             yError() << "no grasping poses available. They need to be computed.";
             return false;
         }
-
+	vis.resetPoses();
 	GraspPoses best_graspPose, calib_pose;
-        if(hand == "right")
+        if(grasping_hand == WhichHand::HAND_RIGHT && hand == "right")
         {
-	    best_hand == "right";
+	    best_hand = "right";
 	    grasp_res_hand1.best_pose = pose_idx;
+
+	    vis.addPoses(grasp_res_hand1.grasp_poses);
 	    vis.highlightBestPose("right", "right", grasp_res_hand1.best_pose);
 
             best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
 	    calib_pose = best_graspPose;
-	    yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
-            fixReachingOffset(best_graspPose, calib_pose);
-	    grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
+	    //yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
+            //fixReachingOffset(best_graspPose, calib_pose);
+	    //grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
 
         }
 	else if(grasping_hand == WhichHand::HAND_LEFT && hand == "left")
         {
-	    best_hand == "left";
+	    best_hand = "left";
 	    grasp_res_hand1.best_pose = pose_idx;
+
+	    vis.addPoses(grasp_res_hand1.grasp_poses);
 	    vis.highlightBestPose("left", "left", grasp_res_hand1.best_pose);
 
             best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
 	    calib_pose = best_graspPose;
-	    yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
-            fixReachingOffset(best_graspPose, calib_pose);
-	    grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
+	    //yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
+            //fixReachingOffset(best_graspPose, calib_pose);
+	    //grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
 
         }
 	else if(grasping_hand == WhichHand::BOTH)
         {
+	    vis.addPoses(grasp_res_hand1.grasp_poses, grasp_res_hand2.grasp_poses);
 	    if(hand == "right")
 	    {
-	        best_hand == "right";
+	        best_hand = "right";
 	        grasp_res_hand1.best_pose = pose_idx;
 	        vis.highlightBestPose("right", "both", grasp_res_hand1.best_pose);
 
                 best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
 	        calib_pose = best_graspPose;
-	        yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
-                fixReachingOffset(best_graspPose, calib_pose);
-	        grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
+	        //yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
+                //fixReachingOffset(best_graspPose, calib_pose);
+	        //grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
 	    }
 	    if(hand == "left")
 	    {
-	        best_hand == "left";
+	        best_hand = "left";
 	        grasp_res_hand2.best_pose = pose_idx;
 	        vis.highlightBestPose("left", "both", grasp_res_hand2.best_pose);
 
-                best_graspPose = grasp_res_hand2.grasp_poses[grasp_res_hand1.best_pose];
+                best_graspPose = grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose];
 	        calib_pose = best_graspPose;
-	        yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
-                fixReachingOffset(best_graspPose, calib_pose);
-	        grasp_res_hand2.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
+	        //yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
+                //fixReachingOffset(best_graspPose, calib_pose);
+	        //grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose] = calib_pose;
 	    }
         }
 	else
@@ -2490,7 +2532,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 command.addString("iol-left");
 
             else
-                command.addString("iol-right");
+                command.addString("superq-right");
 
             command.addDouble(poseToFix(0));    //  x value
             command.addDouble(poseToFix(1));    //  y value
