@@ -99,6 +99,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
     string robot;
     WhichHand grasping_hand;
+    string moving_hand;
     string control_arms;
 
     PolyDriver left_arm_client, right_arm_client;
@@ -185,6 +186,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     bool open_hand(const string &hand);
     bool drop();
     bool home();
+    bool stopMotion();
     bool quit();
     bool save_pcloud(const string &base_dir, const string &obj_name);
 
@@ -465,29 +467,29 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         estim.SetIntegerValue("optimizer_points", int(sq_model_params["optimizer_points"]));
         estim.SetBoolValue("random_sampling", bool(sq_model_params["random_sampling"]));
 
-        bool merge_model = rf.check("merge_model", Value(true)).asBool();
+        sq_model_params["merge_model"] = rf.check("merge_model", Value(true)).asBool();
         sq_model_params["minimum_points"] = rf.check("minimum_points", Value(150)).asInt();
         sq_model_params["fraction_pc"] = rf.check("fraction_pc", Value(8)).asInt();
-        sq_model_params["tol_threshold_axissuperq"] = rf.check("tol_threshold_axissuperq", Value(0.7)).asDouble();
+        sq_model_params["threshold_axis"] = rf.check("tol_threshold_axissuperq", Value(0.7)).asDouble();
         sq_model_params["threshold_section1"] = rf.check("threshold_section1", Value(0.6)).asDouble();
         sq_model_params["threshold_section2"] = rf.check("threshold_section2", Value(0.03)).asDouble();
 
-        estim.SetBoolValue("merge_model", merge_model);
+        estim.SetBoolValue("merge_model", sq_model_params["merge_model"]);
         estim.SetIntegerValue("minimum_points", sq_model_params["minimum_points"]);
         estim.SetIntegerValue("fraction_pc", sq_model_params["fraction_pc"]);
-        estim.SetNumericValue("threshold_axis", sq_model_params["tol_threshold_axissuperq"]);
+        estim.SetNumericValue("threshold_axis", sq_model_params["threshold_axis"]);
         estim.SetNumericValue("threshold_section1", sq_model_params["threshold_section1"]);
         estim.SetNumericValue("threshold_section2", sq_model_params["threshold_section2"]);
 
         /* ------  Set Superquadric Grasp parameters ------ */
 
         int print_level_grasp = rf.check("print_level_grasp", Value(0)).asInt();
-        sq_grasp_params["tol_grasp"] = rf.check("tol_grasp", Value(1e-5)).asDouble();
+        sq_grasp_params["tol"] = rf.check("tol_grasp", Value(1e-5)).asDouble();
         sq_grasp_params["constr_tol"] = rf.check("constr_tol", Value(1e-4)).asDouble();
         sq_grasp_params["max_superq"] = rf.check("max_superq", Value(4)).asInt();
 
         grasp_estim.SetIntegerValue("print_level", print_level_grasp);
-        grasp_estim.SetNumericValue("tol", sq_grasp_params["tol_grasp"]);
+        grasp_estim.SetNumericValue("tol", sq_grasp_params["tol"]);
         grasp_estim.SetIntegerValue("max_superq", int(sq_grasp_params["max_superq"]));
         grasp_estim.SetNumericValue("constr_tol", sq_grasp_params["constr_tol"]);
         grasp_estim.SetStringValue("left_or_right", "right");
@@ -797,9 +799,17 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         }
 
         sq_model_params[param_name] = value;
-        estim.SetNumericValue(param_name, value);
+        bool ok = false;
+        if(!param_name.compare("fraction_pc") || !param_name.compare("minimum_points") || !param_name.compare("optimizer_points"))
+            ok = estim.SetIntegerValue(param_name,value);
+        else if(!param_name.compare("merge_model") || !param_name.compare("random_sampling"))
+        {
+            ok = estim.SetBoolValue(param_name, value);
+        }
+        else
+            ok = estim.SetNumericValue(param_name, value);
 
-        return true;
+        return ok;
     }
 
     /****************************************************************/
@@ -818,8 +828,15 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         }
 
         sq_grasp_params[param_name] = value;
-        grasp_estim.SetNumericValue(param_name, value);
-        return true;
+
+        bool ok = false;
+        if(!param_name.compare("max_superq"))
+        {
+            ok = grasp_estim.SetIntegerValue(param_name, value);
+        }
+        else
+            ok = grasp_estim.SetNumericValue(param_name, value);
+        return ok;
     }
 
     /****************************************************************/
@@ -1032,11 +1049,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             all_colors.push_back(c);
         }
 
-        if(points_yarp.size()>0)
-        {
-            // filtering
-            removeOutliers(points_yarp, all_colors);
+        // filtering
+        removeOutliers(points_yarp, all_colors);
 
+        if(points_yarp.size() >= sq_model_params["minimum_points"])
+        {
+            yInfo() << "[from_off_file]: loaded point cloud with " << points_yarp.size() << " points";
             deque<Eigen::Vector3d> points_eigen = vectorYarptoEigen(points_yarp);
 
             point_cloud.setPoints(points_eigen);
@@ -1044,20 +1062,16 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
             // Visualize acquired point cloud
             vis.addPoints(point_cloud, false);
-        }
-        else
-        {
-            yError() << prettyError( __FUNCTION__, "empty file");
-            return false;
-        }
 
-        if (point_cloud.getNumberPoints() > 0)
-        {
+            // Compute superquadric model and grasping pose
             computeSuperqAndGrasp();
             return true;
         }
-
-        return false;
+        else
+        {
+            yError() << prettyError( __FUNCTION__, "too few points in loaded point cloud");
+            return false;
+        }
     }
 
     /****************************************************************/
@@ -1082,7 +1096,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             object_class = object_name;
 
         // Compute sq model and grasping pose
-        if (ok == true && point_cloud.getNumberPoints() > 0)
+        if (ok == true && point_cloud.getNumberPoints() >= sq_model_params["minimum_points"])
         {
             yInfo() << "compute_superq_and_pose: point cloud is ok --> call computeSuperqAndGrasp()";
             computeSuperqAndGrasp();
@@ -1108,7 +1122,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         yInfo() << "compute_superq_and_pose: point cloud received? " << ok;
 
         // Compute sq model and grasping pose
-        if (ok == true && point_cloud.getNumberPoints() > 0)
+        if (ok == true && point_cloud.getNumberPoints() >= sq_model_params["minimum_points"])
         {
             yInfo() << "compute_superq_and_pose: point cloud is ok --> call computeSuperqAndGrasp()";
             computeSuperqAndGrasp();
@@ -1177,7 +1191,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         cout << "|| ---------------------------------------------------- ||" << endl;
         cout << endl << endl;
 
-        return true;//executeGrasp(best_pose, best_hand);
+        return executeGrasp(best_pose, best_hand);
     }
 
     /****************************************************************/
@@ -1185,25 +1199,28 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     {
         bool success = false;
         Vector grasping_current_pos(3), grasping_current_o(4);
+
+        moving_hand = best_hand;
         if (best_hand == "right")
         {
             // store context
             int context_backup;
-            //icart_right->storeContext(&context_backup);
-            //setGraspContext(icart_right);
+            icart_right->storeContext(&context_backup);
+            setGraspContext(icart_right);
 
             for(const PointD& p : take_tool_trajectory)
             {
-                //success = icart_right->getPose(grasping_current_pos, grasping_current_o);
+                success = icart_right->getPose(grasping_current_pos, grasping_current_o);
 
-                //if(!success)
-                //{
-                //    yError() << prettyError( __FUNCTION__,  "could not communicate with kinematics module");
-                //    // retrieve context
-                //    icart_right->restoreContext(context_backup);
-                //    icart_right->deleteContext(context_backup);
-                //    return false;
-                //}
+                if(!success)
+                {
+                    yError() << prettyError( __FUNCTION__,  "could not communicate with kinematics module");
+                    // retrieve context
+                    icart_right->restoreContext(context_backup);
+                    icart_right->deleteContext(context_backup);
+                    moving_hand = "";
+                    return false;
+                }
 
                 grasping_current_pos[0] += p.x;
                 grasping_current_pos[1] += p.y;
@@ -1212,34 +1229,36 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 cout << "|| ---------------------------------------------------- ||"  << endl;
                 cout << "|| moving to: " << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
 
-                //icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
-                //icart_right->waitMotionDone();
+                icart_right->goToPoseSync(grasping_current_pos, grasping_current_o);
+                icart_right->waitMotionDone(0.1, 2.0);
             }
 
             // retrieve context
-            //icart_right->restoreContext(context_backup);
-            //icart_right->deleteContext(context_backup);
+            icart_right->restoreContext(context_backup);
+            icart_right->deleteContext(context_backup);
+            moving_hand = "";
         }
 
         else if (best_hand == "left")
         {
             // store context
             int context_backup;
-            //icart_left->storeContext(&context_backup);
-            //setGraspContext(icart_left);
+            icart_left->storeContext(&context_backup);
+            setGraspContext(icart_left);
 
             for(const PointD& p : take_tool_trajectory)
             {
-                //success = icart_left->getPose(grasping_current_pos, grasping_current_o);
+                success = icart_left->getPose(grasping_current_pos, grasping_current_o);
 
-                //if(!success)
-                //{
-                //    yError() << prettyError( __FUNCTION__,  "could not communicate with kinematics module");
-                //    // retrieve context
-                 //   icart_left->restoreContext(context_backup);
-                //    icart_left->deleteContext(context_backup);
-                //    return false;
-                //}
+                if(!success)
+                {
+                    yError() << prettyError( __FUNCTION__,  "could not communicate with kinematics module");
+                    // retrieve context
+                    icart_left->restoreContext(context_backup);
+                    icart_left->deleteContext(context_backup);
+                    moving_hand = "";
+                    return false;
+                }
 
                 grasping_current_pos[0] += p.x;
                 grasping_current_pos[1] -= p.y;
@@ -1248,18 +1267,19 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 cout << "|| ---------------------------------------------------- ||"  << endl;
                 cout << "|| moving to: " << toEigen(grasping_current_pos).format(CommaInitFmt) << endl;
 
-                //icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
-                //icart_left->waitMotionDone();
+                icart_left->goToPoseSync(grasping_current_pos, grasping_current_o);
+                icart_left->waitMotionDone(0.1, 2.0);
             }
 
             // retrieve context
-            //icart_left->restoreContext(context_backup);
-            //icart_left->deleteContext(context_backup);
+            icart_left->restoreContext(context_backup);
+            icart_left->deleteContext(context_backup);
+            moving_hand = "";
         }
 
         // send robot to home position and return
-        //if(go_home)
-            //success = this->home();
+        if(go_home)
+            success = this->home();
 
         return true;
     }
@@ -1282,14 +1302,14 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 yInfo() << "open_hand: command " << cmd.toString();
             }
 
-            /*action_render_rpc.write(cmd, reply);
+            action_render_rpc.write(cmd, reply);
             if (reply.get(0).asVocab() == Vocab::encode("ack"))
                 return true;
             else
             {
                 yError() << prettyError( __FUNCTION__,  "ARE reply [nack]: Didn't manage to open hand");
                 return false;
-            }*/
+            }
         }
         else
         {
@@ -1305,11 +1325,11 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         {
             Bottle cmd, reply;
             cmd.addVocab(Vocab::encode("drop"));
-            /*action_render_rpc.write(cmd, reply);
+            action_render_rpc.write(cmd, reply);
             if (reply.get(0).asVocab() == Vocab::encode("ack"))
                 return true;
             else
-                return false;*/
+                return false;
 	    return true;
         }
         else
@@ -1319,6 +1339,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     /****************************************************************/
     bool SuperquadricPipelineDemo::home()
     {
+        moving_hand = best_hand;
         if(robot == "icubSim")
         {
             if(best_hand == "right")
@@ -1330,11 +1351,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
                 yInfo() << "home pose: " << home_pos_right.toString() << " " << home_o_right.toString();
                 icart_right->goToPoseSync(home_pos_right, home_o_right);
-                icart_right->waitMotionDone();
+                icart_right->waitMotionDone(0.1,2.0);
 
                 // retrieve context
                 icart_right->restoreContext(context_backup);
                 icart_right->deleteContext(context_backup);
+                moving_hand = "";
             }
             else if (best_hand == "left")
             {
@@ -1345,11 +1367,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
                 yInfo() << "home pose: " << home_pos_left.toString() << " " << home_o_left.toString();
                 icart_left->goToPoseSync(home_pos_left, home_o_left);
-                icart_left->waitMotionDone();
+                icart_left->waitMotionDone(0.1,2.0);
 
                 // retrieve context
                 icart_left->restoreContext(context_backup);
                 icart_left->deleteContext(context_backup);
+                moving_hand = "";
             }
             return true;
         }
@@ -1363,23 +1386,63 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             cmd.addString("arms");
 
             yInfo() << "home: command " << cmd.toString();
-            /*action_render_rpc.write(cmd, reply);
+            action_render_rpc.write(cmd, reply);
             if (reply.get(0).asVocab() == Vocab::encode("ack"))
             {
+                moving_hand = "";
                 return true;
             }
             else
             {
                 yError() << prettyError( __FUNCTION__,  "ARE reply [nack]: Didn't manage to go home");
+                moving_hand = "";
                 return false;
-            }*/
-            return true;
+            }
         }
         else
         {
             yError() << prettyError( __FUNCTION__,  "no connection to action rendering module");
+            moving_hand = "";
             return false;
         }
+    }
+
+    /************************************************************************/
+    bool SuperquadricPipelineDemo::stopMotion()
+    {
+        if(moving_hand=="right")
+        {
+            // store context
+            int context_backup;
+            icart_right->storeContext(&context_backup);
+            setGraspContext(icart_right);
+
+            yInfo() << "stop motion on right arm";
+            icart_right->stopControl();
+
+            // retrieve context
+            icart_right->restoreContext(context_backup);
+            icart_right->deleteContext(context_backup);
+            moving_hand = "";
+            return true;
+        }
+        else if(moving_hand=="left")
+        {
+            // store context
+            int context_backup;
+            icart_left->storeContext(&context_backup);
+            setGraspContext(icart_left);
+
+            yInfo() << "stop motion on left arm";
+            icart_left->stopControl();
+
+            // retrieve context
+            icart_left->restoreContext(context_backup);
+            icart_left->deleteContext(context_backup);
+            moving_hand = "";
+            return true;
+        }
+        return false;
     }
 
     /************************************************************************/
@@ -1502,16 +1565,15 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         deque<Eigen::Vector3d> eigen_points = vectorYarptoEigen(acquired_points);
 
-        if (success && (eigen_points.size() > 0))
+        if (success && (eigen_points.size() >= sq_model_params["minimum_points"]))
         {
             point_cloud.setPoints(eigen_points);
             point_cloud.setColors(acquired_colors);
 
             // Visualize acquired point cloud
-            vis.resetPoints();
             vis.addPoints(point_cloud, false);
 
-            yInfo() << "requestPointCloud: point cloud saved";
+            yInfo() << "requestPointCloud: point cloud successfully acquired.";
             return true;
         }
         else
@@ -1611,15 +1673,14 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
         // filtering
         filterPC(acquired_points, acquired_colors);
+        removeOutliers(acquired_points, acquired_colors);
 
         deque<Eigen::Vector3d> eigen_points = vectorYarptoEigen(acquired_points);
 
-        point_cloud.setPoints(eigen_points);
-        point_cloud.setColors(acquired_colors);
-
-        if (point_cloud.getNumberPoints() > 0)
+        if (eigen_points.size() >= sq_model_params["minimum_points"])
         {
-            vis.resetPoints();
+            point_cloud.setPoints(eigen_points);
+            point_cloud.setColors(acquired_colors);
             // Visualize acquired point cloud
             vis.addPoints(point_cloud, false);
 
@@ -1632,6 +1693,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     /****************************************************************/
     void SuperquadricPipelineDemo::filterPC(vector<Vector> &pc, vector<vector<unsigned char>> &colors)
     {
+        if(pc.empty())
+        {
+            yError() << prettyError(__FUNCTION__, "provided an empty point cloud");
+            return;
+        }
+
         double x_max = pc[0][0];
 
         vector<Vector> new_pc;
@@ -1678,6 +1745,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     /****************************************************************/
     void SuperquadricPipelineDemo::removeOutliers(vector<Vector> &pc, vector<vector<unsigned char>> &all_colors)
     {
+        if(pc.empty())
+        {
+            yError() << prettyError(__FUNCTION__, "provided an empty point cloud");
+            return;
+        }
+
         double t0=Time::now();
 
         vector<Vector> in_points;
@@ -1966,6 +2039,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         icart->setDOF(new_dof, dof);
         icart->setPosePriority("position");
         icart->setInTargetTol(0.001);
+
+        /*double min, max;
+        double torso_pitch_max = 15.0;
+        icart->setLimits(0, 0.0, torso_pitch_max);
+        icart->getLimits(0, &min, &max);
+        yDebug()<<"Get limit of pitch"<<min<<max;*/
     }
 
     /****************************************************************/
@@ -2106,6 +2185,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     /****************************************************************/
     bool SuperquadricPipelineDemo::executeGrasp(Vector &pose, string &best_hand)
     {
+        moving_hand = best_hand;
+
         if(robot == "icubSim")
         {
             //  simulation context, suppose there is no actionsRenderingEngine running
@@ -2128,21 +2209,24 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 cout << "|| Right hand reaching  intermediate                    :" << toEigen(pose_intermediate).format(CommaInitFmt) << endl;
 
                 icart_right->goToPoseSync(pose_intermediate.subVector(0, 2), pose_intermediate.subVector(3,6));
-                icart_right->waitMotionDone();
+                icart_right->waitMotionDone(0.1,2.0);
 
                 // final pose
                 cout << "|| Right hand reaching                                  :" << toEigen(pose).format(CommaInitFmt) << endl;
                 icart_right->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
-                icart_right->waitMotionDone();
+                icart_right->waitMotionDone(0.1,2.0);
 
                 // retrieve context
                 icart_right->restoreContext(context_backup);
                 icart_right->deleteContext(context_backup);
 
+                moving_hand = "";
+
                 return true;
             }
             else if (best_hand == "left")
             {
+
                 // store context
                 int context_backup;
                 icart_left->storeContext(&context_backup);
@@ -2160,17 +2244,19 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 icart_left->getPose(previous_x, previous_o);
 
                 icart_left->goToPoseSync(pose_intermediate.subVector(0, 2), pose_intermediate.subVector(3,6));
-                icart_left->waitMotionDone();
+                icart_left->waitMotionDone(0.1,2.0);
 
                 // final pose
                 cout << "|| ---------------------------------------------------- ||"  << endl;
                 cout << "|| Left hand reaching  pose                             :" << toEigen(pose).format(CommaInitFmt) << endl;
                 icart_left->goToPoseSync(pose.subVector(0, 2), pose.subVector(3,6));
-                icart_left->waitMotionDone();
+                icart_left->waitMotionDone(0.1,2.0);
 
                 // retrieve context
                 icart_left->restoreContext(context_backup);
                 icart_left->deleteContext(context_backup);
+
+                moving_hand = "";
 
                 return true;
             }
@@ -2216,11 +2302,17 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             yInfo() << "executeGrasp: command " << command.toString();
             action_render_rpc.write(command, reply);
             if (reply.get(0).asVocab() == Vocab::encode("ack"))
+            {
+                moving_hand = "";
                 return true;
+            }
             else
+            {
+                moving_hand = "";
                 return false;
-        }
 
+            }
+        }
     }
 
     /****************************************************************/
@@ -2250,7 +2342,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     {
         //  fix the pose offset according to iolReachingCalibration
         //  pose is supposed to be (x y z gx gy gz theta)
-        /*if ((robot == "r1" || robot == "icub") && reach_calib_rpc.getOutputCount() > 0)
+        if ((robot == "r1" || robot == "icub") && reach_calib_rpc.getOutputCount() > 0)
         {
             Bottle command, reply;
 
@@ -2289,12 +2381,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             }
         }
         else
-        {*/
+        {
             //  if we are working with the simulator or there is no calib map, the pose doesn't need to be corrected
             poseFixed = poseToFix;
             yWarning() << "Connection to iolReachingCalibration not detected or calibration map not present: pose will not be changed";
             return true;
-        //}
+        }
     }
 
 

@@ -68,6 +68,8 @@ struct PointD {
 
      bool home();
 
+     bool stopMotion();
+
      bool quit();
 
      string get_superq_mode();
