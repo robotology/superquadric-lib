@@ -99,7 +99,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
     string robot;
     WhichHand grasping_hand;
-    string moving_hand;
     string control_arms;
 
     PolyDriver left_arm_client, right_arm_client;
@@ -179,6 +178,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     bool calibratePose();
 
     // action methods
+    bool look_at(const PointD &point);
     bool from_off_file(const string &object_file, const string &hand);
     bool compute_superq_and_pose(const string &object_name, const string &hand);
     bool compute_superq_and_pose_from_position(const vector<double> &position, const string &hand);
@@ -974,6 +974,42 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
+    bool SuperquadricPipelineDemo::look_at(const PointD &point)
+    {
+        if (action_render_rpc.getOutputCount() > 0)
+        {
+            Vector yarp_pos(3);
+            yarp_pos[0] = point.x;
+            yarp_pos[1] = point.y;
+            yarp_pos[2] = point.z;
+
+            Bottle cmd_request, cmd_reply;
+            // prepare command request
+            cmd_request.addVocab(Vocab::encode("look"));
+
+            Bottle &subcmd_request = cmd_request.addList();
+            subcmd_request.addString("cartesian");
+            for(int i=0 ; i<3 ; i++) subcmd_request.addDouble(yarp_pos[i]);
+
+            cmd_request.addString("wait");
+
+            action_render_rpc.write(cmd_request, cmd_reply);
+            if (cmd_reply.get(0).asVocab() != Vocab::encode("ack"))
+            {
+                yError() << prettyError( __FUNCTION__,  "Didn't manage to look at the point");
+                return false;
+            }
+
+            return true;
+        }
+        else
+        {
+            yError() << prettyError( __FUNCTION__,  "no connection to action rendering module");
+            return false;
+        }
+    }
+
+    /****************************************************************/
     bool SuperquadricPipelineDemo::from_off_file(const string &object_file, const string &hand)
     {
         if(!set_grasping_hand(hand))
@@ -1206,10 +1242,16 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     /****************************************************************/
     bool SuperquadricPipelineDemo::take_tool(bool go_home)
     {
+        // First make the robot looking up
+        PointD p;
+        p.x = -0.4; p.y = 0.0; p.z = 0.1;
+        this->look_at(p);
+
+        // Execute trajectory
         bool success = false;
         Vector grasping_current_pos(3), grasping_current_o(4);
 
-        moving_hand = best_hand;
+
         if (best_hand == "right")
         {
             // store context
@@ -1227,7 +1269,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                     // retrieve context
                     icart_right->restoreContext(context_backup);
                     icart_right->deleteContext(context_backup);
-                    moving_hand = "";
+
                     return false;
                 }
 
@@ -1245,7 +1287,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             // retrieve context
             icart_right->restoreContext(context_backup);
             icart_right->deleteContext(context_backup);
-            moving_hand = "";
+
         }
 
         else if (best_hand == "left")
@@ -1265,7 +1307,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                     // retrieve context
                     icart_left->restoreContext(context_backup);
                     icart_left->deleteContext(context_backup);
-                    moving_hand = "";
+
                     return false;
                 }
 
@@ -1283,7 +1325,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             // retrieve context
             icart_left->restoreContext(context_backup);
             icart_left->deleteContext(context_backup);
-            moving_hand = "";
+
         }
 
         // send robot to home position and return
@@ -1347,8 +1389,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
     /****************************************************************/
     bool SuperquadricPipelineDemo::home()
-    {
-        moving_hand = best_hand;
+    { 
         if(robot == "icubSim")
         {
             if(best_hand == "right")
@@ -1365,7 +1406,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 // retrieve context
                 icart_right->restoreContext(context_backup);
                 icart_right->deleteContext(context_backup);
-                moving_hand = "";
+
             }
             else if (best_hand == "left")
             {
@@ -1381,7 +1422,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 // retrieve context
                 icart_left->restoreContext(context_backup);
                 icart_left->deleteContext(context_backup);
-                moving_hand = "";
+
             }
             return true;
         }
@@ -1391,27 +1432,27 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             Bottle cmd, reply;
 
             cmd.addVocab(Vocab::encode("home"));
-            cmd.addString("head");
+            //cmd.addString("head");
             cmd.addString("arms");
 
             yInfo() << "home: command " << cmd.toString();
             action_render_rpc.write(cmd, reply);
             if (reply.get(0).asVocab() == Vocab::encode("ack"))
             {
-                moving_hand = "";
+
                 return true;
             }
             else
             {
                 yError() << prettyError( __FUNCTION__,  "ARE reply [nack]: Didn't manage to go home");
-                moving_hand = "";
+
                 return false;
             }
         }
         else
         {
             yError() << prettyError( __FUNCTION__,  "no connection to action rendering module");
-            moving_hand = "";
+
             return false;
         }
     }
@@ -2256,7 +2297,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     /****************************************************************/
     bool SuperquadricPipelineDemo::executeGrasp(Vector &pose, string &best_hand)
     {
-        moving_hand = best_hand;
+
 
         if(robot == "icubSim")
         {
@@ -2291,7 +2332,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 icart_right->restoreContext(context_backup);
                 icart_right->deleteContext(context_backup);
 
-                moving_hand = "";
+
 
                 return true;
             }
@@ -2327,7 +2368,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 icart_left->restoreContext(context_backup);
                 icart_left->deleteContext(context_backup);
 
-                moving_hand = "";
+
 
                 return true;
             }
@@ -2374,12 +2415,12 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             action_render_rpc.write(command, reply);
             if (reply.get(0).asVocab() == Vocab::encode("ack"))
             {
-                moving_hand = "";
+
                 return true;
             }
             else
             {
-                moving_hand = "";
+
                 return false;
 
             }

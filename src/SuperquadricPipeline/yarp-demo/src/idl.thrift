@@ -41,8 +41,9 @@ struct PointD {
 
  service SuperquadricPipelineDemo_IDL
  {
+    bool look_at(1: PointD point)
 
-     /**
+    /**
      * Compute superquadric and grasping pose from offline
      * @param object_file is the object off file with point cloud
      * @param hand is the desired hand for computation, can be right, left or both
