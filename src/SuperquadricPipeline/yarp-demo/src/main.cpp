@@ -175,7 +175,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     std::vector<int> get_sfm_region();
     bool set_sfm_region(const double u_i,const double v_i,const double u_f,const double v_f);
     map<string,PointD> get_best_grasp_position();
-    bool refine_best_grasp_position(const PointD &position);
     bool choose_pose(const string &hand, int pose_idx);
     bool calibratePose();
 
@@ -186,10 +185,8 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     bool grasp();
     bool take_tool(bool go_home = false);
     bool open_hand(const string &hand);
-    bool pregrasp_hand(const string &hand);
     bool drop();
     bool home();
-    bool stopMotion();
     bool quit();
     bool save_pcloud(const string &base_dir, const string &obj_name);
 
@@ -661,6 +658,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         reach_calib_rpc.interrupt();
         user_rpc.interrupt();
         table_calib_rpc.interrupt();
+
         closing = true;
 
         return true;
@@ -691,6 +689,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     bool SuperquadricPipelineDemo::quit()
     {
         yInfo() << "asking to stop module";
+        vis.set_closing(true);
         stopModule(false);
         return true;
     }
@@ -924,35 +923,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             output_map[best_hand] = position;
         }
         return output_map;
-    }
-
-    bool SuperquadricPipelineDemo::refine_best_grasp_position(const PointD &position)
-    {
-        if(grasp_res_hand1.grasp_poses.size()==0)
-        {
-            yWarning() << "no grasping poses to be refined. They need to be computed first.";
-            return false;
-        }
-
-        GraspPoses best_graspPose;
-        if (grasping_hand == WhichHand::BOTH && best_hand == "left")
-        {
-            best_graspPose = grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose];
-            best_graspPose.position(0) = position.x;
-            best_graspPose.position(1) = position.y;
-            best_graspPose.position(2) = position.z;
-            grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose] = best_graspPose;
-        }
-        else
-        {
-            best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
-            best_graspPose.position(0) = position.x;
-            best_graspPose.position(1) = position.y;
-            best_graspPose.position(2) = position.z;
-            grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = best_graspPose;
-        }
-
-        return true;
     }
 
     /****************************************************************/
@@ -1358,40 +1328,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool SuperquadricPipelineDemo::pregrasp_hand(const string &hand)
-    {
-        if (action_render_rpc.getOutputCount() > 0)
-        {
-            Bottle cmd, reply;
-            cmd.addVocab(Vocab::encode("hand"));
-            cmd.addString("pregrasp_hand_hanging_tool");
-            if(hand.compare("right") && hand.compare("left"))
-            {
-                yWarning() << "open_hand: Specified hand is unknown. Opening the hand in use";
-            }
-            else
-            {
-                cmd.addString(hand);
-                yInfo() << "open_hand: command " << cmd.toString();
-            }
-
-            action_render_rpc.write(cmd, reply);
-            if (reply.get(0).asVocab() == Vocab::encode("ack"))
-                return true;
-            else
-            {
-                yError() << prettyError( __FUNCTION__,  "ARE reply [nack]: Didn't manage to open hand");
-                return false;
-            }
-        }
-        else
-        {
-            yError() << prettyError( __FUNCTION__,  "no connection to action rendering module");
-            return false;
-        }
-    }
-
-    /****************************************************************/
     bool SuperquadricPipelineDemo::drop()
     {
         if (action_render_rpc.getOutputCount() > 0)
@@ -1478,44 +1414,6 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             moving_hand = "";
             return false;
         }
-    }
-
-    /************************************************************************/
-    bool SuperquadricPipelineDemo::stopMotion()
-    {
-        if(moving_hand=="right")
-        {
-            // store context
-            int context_backup;
-            icart_right->storeContext(&context_backup);
-            setGraspContext(icart_right);
-
-            yInfo() << "stop motion on right arm";
-            icart_right->stopControl();
-
-            // retrieve context
-            icart_right->restoreContext(context_backup);
-            icart_right->deleteContext(context_backup);
-            moving_hand = "";
-            return true;
-        }
-        else if(moving_hand=="left")
-        {
-            // store context
-            int context_backup;
-            icart_left->storeContext(&context_backup);
-            setGraspContext(icart_left);
-
-            yInfo() << "stop motion on left arm";
-            icart_left->stopControl();
-
-            // retrieve context
-            icart_left->restoreContext(context_backup);
-            icart_left->deleteContext(context_backup);
-            moving_hand = "";
-            return true;
-        }
-        return false;
     }
 
     /************************************************************************/
@@ -2288,7 +2186,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             grasp_res.grasp_poses[i].setGraspParamsHat(robot_pose);
         }
 
-
+        return true;
     }
 
     /****************************************************************/

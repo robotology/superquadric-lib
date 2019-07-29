@@ -68,8 +68,6 @@ struct PointD {
 
      bool home();
 
-     bool stopMotion();
-
      bool quit();
 
      string get_superq_mode();
@@ -94,8 +92,6 @@ struct PointD {
 
      bool open_hand(1: string hand);
 
-     bool pregrasp_hand(1: string hand);
-
      list<PointD> get_tool_trajectory();
 
      bool set_tool_trajectory(1: list<PointD> point);
@@ -105,8 +101,6 @@ struct PointD {
      list<double> get_approach(1: string hand)
 
      map<string,PointD> get_best_grasp_position()
-
-     bool refine_best_grasp_position(1: PointD position)
 
      bool choose_pose(1: string hand, 2: i32 pose_idx)
  
