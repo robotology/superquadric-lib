@@ -208,7 +208,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
     bool executeGrasp(Vector &pose, string &best_hand);
 
-    bool fixReachingOffset(const GraspPoses &old_pose, const GraspPoses &calib_pose,
+    bool fixReachingOffset(GraspPoses &old_pose, GraspPoses &calib_pose,
                            const bool invert=false);
 
     void setGraspContext(ICartesianControl *icart);
@@ -2468,7 +2468,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
     }
 
     /****************************************************************/
-    bool SuperquadricPipelineDemo::fixReachingOffset(const GraspPoses &old_pose, const GraspPoses &calib_pose,
+    bool SuperquadricPipelineDemo::fixReachingOffset(GraspPoses &old_pose, GraspPoses &calib_pose,
                            const bool invert)
     {
 	Eigen::VectorXd pose;
@@ -2515,10 +2515,15 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
                 //
                 cout<< "    || Pose to be fixed with calibration offsets              :" << toEigen(poseToFix).format(CommaInitFmt)<< endl;
                 cout<< "    || Fixed pose                                             :" << toEigen(poseFixed).format(CommaInitFmt)<< endl;
-		
-		Eigen::VectorXd pose = toEigen(poseFixed);
-		calib_pose.setGraspPosition(pose.head(3));
-		calib_pose.setGraspOrientation(pose.tail(4));
+
+                Eigen::VectorXd pose = toEigen(poseFixed);
+                Eigen::Vector3d position;
+                Eigen::Vector4d orientation;
+                position << pose(0), pose(1), pose(2);
+                orientation << pose(3), pose(4), pose(5), pose(6);
+
+                calib_pose.setGraspPosition(position);
+                calib_pose.setGraspOrientation(orientation);
                 
                 return true;
             }
