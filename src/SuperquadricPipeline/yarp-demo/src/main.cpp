@@ -1220,7 +1220,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
             calib_pose = best_graspPose;
             yInfo() << "[calibratePose]: calibrate pose";
-        
+
             fixReachingOffset(best_graspPose, calib_pose);
 
 	    grasp_res_hand2.grasp_poses[grasp_res_hand2.best_pose] = calib_pose;
@@ -1230,7 +1230,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 	    best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
 	    calib_pose = best_graspPose;
             yInfo() << "[calibratePose]: calibrate pose";
-        
+
             fixReachingOffset(best_graspPose, calib_pose);
 
 	    grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose] = calib_pose;
@@ -1389,7 +1389,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
     /****************************************************************/
     bool SuperquadricPipelineDemo::home()
-    { 
+    {
         if(robot == "icubSim")
         {
             if(best_hand == "right")
@@ -1827,7 +1827,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
         {
             estim.SetStringValue("object_class", object_class);
             superqs = estim.computeSuperq(point_cloud);
-            vis.addPoints(point_cloud, true);
+            vis.addPoints(point_cloud, false);
         }
         else
         {
@@ -1949,7 +1949,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
             best_hand = "right";
             best_graspPose = grasp_res_hand1.grasp_poses[grasp_res_hand1.best_pose];
             vis.highlightBestPose("right", "right", grasp_res_hand1.best_pose);
-	    
+
             //calib_pose = best_graspPose;
 	    //yInfo() << "[computeSuperqAndGrasp]: calibrate pose";
             //fixReachingOffset(best_graspPose, calib_pose);
@@ -2092,7 +2092,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 	    yError() << prettyError(__FUNCTION__, "unvalid hand tag provided");
 	    return false;
 	}
-	
+
 	return true;
     }
 
@@ -2505,7 +2505,7 @@ class SuperquadricPipelineDemo : public RFModule, SuperquadricPipelineDemo_IDL
 
                 calib_pose.setGraspPosition(position);
                 calib_pose.setGraspOrientation(orientation);
-                
+
                 return true;
             }
             else
