@@ -179,9 +179,9 @@ add_subdirectory(src)
 # required to used the install_basic_package_files() DEPENDENCIES option.
 
 set(PROJECT_INCLUDE_CONTENT "include(\${VTK_USE_FILE})
-if(VTK_VERSION VERSION_LESS \"8.1\")
-	message(ERROR \"Wrong VTK version! At least 8.1 required!\")
-endif()")
+# if(VTK_VERSION VERSION_LESS \"8.1\")
+#	message(ERROR \"Wrong VTK version! At least 8.1 required!\")
+# endif()")
 
 include(InstallBasicPackageFiles)
 install_basic_package_files(${PROJECT_NAME}

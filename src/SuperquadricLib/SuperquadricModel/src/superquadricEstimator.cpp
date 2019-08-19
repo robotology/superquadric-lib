@@ -483,6 +483,9 @@ vector<Superquadric> SuperqEstimatorApp::computeMultipleSuperq(PointCloud &point
 /***********************************************************************/
 void SuperqEstimatorApp::iterativeModeling(PointCloud &point_cloud)
 {
+    if(point_cloud.getNumberPoints()/2 < m_pars.minimum_points)
+        m_pars.minimum_points = point_cloud.getNumberPoints()/2;
+
     if (point_cloud.getNumberPoints() / m_pars.fraction_pc >= m_pars.minimum_points)
         h_tree = (int)log2(m_pars.fraction_pc);
     else
@@ -492,6 +495,7 @@ void SuperqEstimatorApp::iterativeModeling(PointCloud &point_cloud)
             m_pars.fraction_pc--;
         }
 
+        cout << "m_pars.fraction_pc " << m_pars.fraction_pc << endl;
         h_tree = (int)log2(m_pars.fraction_pc);
     }
 
@@ -944,6 +948,8 @@ bool SuperqEstimatorApp::findImportantPlanes(node *current_node)
             cout << "|| ---------------------------------------------------- ||" << endl;
             cout << "|| Look for relevant planes in right sub-tree         " << endl;
         }
+
+        if (current_node->right != NULL)
             findImportantPlanes(current_node->right);
 
         if (m_pars.debug)

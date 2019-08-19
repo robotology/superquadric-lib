@@ -406,7 +406,7 @@ void Visualizer::saveScreenshot(const string &object, const int &number)
     vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter =
     vtkSmartPointer<vtkWindowToImageFilter>::New();
     windowToImageFilter->SetInput(vtk_renderWindow);
-    windowToImageFilter->SetScale(1);
+    //windowToImageFilter->SetScale(1);
     windowToImageFilter->ReadFrontBufferOff();
     windowToImageFilter->Update();
 
