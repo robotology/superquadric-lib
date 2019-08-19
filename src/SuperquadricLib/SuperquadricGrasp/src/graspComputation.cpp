@@ -648,7 +648,8 @@ void graspComputation::finalize_solution(Ipopt::SolverReturn status, Ipopt::Inde
     // Compute final distance between obstacles
     final_obstacles_value = computeFinalObstacleValues(robot_pose);
 
-    double w1 = 1.0;
+    // Change
+    double w1 = 0.01;
     double w2 = 1e-5;
     double final_obstacles_value_average = 0.0;
 
@@ -1082,7 +1083,8 @@ void GraspEstimatorApp::refinePoseCost(GraspResults &grasp_res)
 	  cout << " error orientation " << error_orientation << endl;
 
           double w1 = 1;
-          double w2 = 0.01;
+          //double w2 = 0.01;
+          double w2 = 2;
 
           if (error_position > 0.01)
           {
