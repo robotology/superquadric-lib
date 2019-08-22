@@ -11,6 +11,8 @@ This release provides methods to:
 - compute  **grasping candidates** for any robot;
 - **visualize** superquadrics, planes, point clouds and grasping poses.
 
+Some **examples of outputs** of the `superquadric-lib` are available [here](https://github.com/robotology/superquadric-lib/blob/master/misc/README.md#modeling-and-grasping-results).
+
 ### Relevant features:
 - Only three dependencies: `Ipopt`,`Eigen3` and `VTK`;
 - _Faster computation of grasping poses_ w.r.t the implementation of [superquadric-grasp](https://github.com/robotology/superquadric-grasp);
