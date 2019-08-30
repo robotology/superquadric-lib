@@ -16,3 +16,7 @@
 
 <img src="https://github.com/robotology/superquadric-lib/blob/master/misc/results-grasp-multi-2.png">
 
+
+## Tool grasping with multi-superquadric models
+
+[![Preview](media/video_preview.jpg)](https://youtu.be/LOMAmHSWOec)
