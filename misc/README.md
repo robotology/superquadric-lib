@@ -19,4 +19,4 @@
 
 ## Tool grasping with multi-superquadric models
 
-[![Preview](media/video_preview.jpg)](https://youtu.be/LOMAmHSWOec)
+[![Preview](video_preview.jpg)](https://youtu.be/LOMAmHSWOec)
