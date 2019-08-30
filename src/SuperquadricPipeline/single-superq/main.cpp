@@ -82,6 +82,8 @@ int main(int argc, char* argv[])
     // Add poses for grasping
     vis.addPoses(grasp_res.grasp_poses);
 
+    vis.highlightBestPose("right", "right", 0);
+
     /*******************************************/
     // Outcome visualization
     // Add superquadric to visualizer
@@ -89,16 +91,16 @@ int main(int argc, char* argv[])
 
     // Add points to visualizer
     // (true/false to show downsample points used for superq estimation)
-    vis.addPoints(point_cloud, true);
+    vis.addPoints(point_cloud, false);
 
     // Add plane for grasping
-    vis.addPlane(grasp_estim.getPlaneHeight());
+    //vis.addPlane(grasp_estim.getPlaneHeight());
 
     // Add hands in final pose for grasping
-    vis.addSuperqHands(grasp_res.hand_superq); // Uncomment this to visualize hand ellipsoid in the final pose
+    //vis.addSuperqHands(grasp_res.hand_superq); // Uncomment this to visualize hand ellipsoid in the final pose
 
     points_hand.setPoints(grasp_res.points_on[0]);  // Uncomment this to visualize points on the hand ellipsoid
-    vis.addPointsHands(points_hand);
+    //vis.addPointsHands(points_hand);
 
     // Visualize
     vis.visualize();
