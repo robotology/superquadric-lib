@@ -168,4 +168,5 @@ string GraspPoses::getHandName()
 void GraspPoses::setHandName(string h)
 {
     hand = h;
+    return;
 }

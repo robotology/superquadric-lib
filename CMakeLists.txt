@@ -119,13 +119,15 @@ elseif()
 	option(EXECUTABLE "Build also the executable" OFF)
 endif()
 
+option(ENABLE_BINDINGS "Enable swig bindings" OFF)
+
 option(YARP_EXE "Build the yarp executable" OFF)
 
 # We use
 # - InstallBasicPackageFiles (http://robotology.github.io/ycm/gh-pages/v0.8/module/InstallBasicPackageFiles.html)
 # - AddUninstallTarget (http://robotology.github.io/ycm/gh-pages/v0.8/module/AddUninstallTarget.html)
 # - AddInstallRPATHSupport (http://robotology.github.io/ycm/gh-pages/v0.8/module/AddInstallRPATHSupport.html)
-# from YCM. Files are under the cmake subdirectory.
+# from YCM. Files are under the cmake subdirectory.
 # See https://github.com/robotology/ycm/
 # If you don't want to ship these files with your code (recommended), you can
 # instead depend on YCM.
@@ -147,6 +149,7 @@ endif()
 include(AddInstallRPATHSupport)
 add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
                           LIB_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
+                                   "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/superquadriclib/bindings"
                           INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}"
                           USE_LINK_PATH)
 
@@ -199,6 +202,11 @@ include(AddUninstallTarget)
 # Add integration tests (unit tests for each library should be in each sublibrary directory).
 if(BUILD_TESTING)
     add_subdirectory(test)
+endif()
+
+
+if(ENABLE_BINDINGS)
+    add_subdirectory(bindings)
 endif()
 
 # Add targets related to doxygen documention generation

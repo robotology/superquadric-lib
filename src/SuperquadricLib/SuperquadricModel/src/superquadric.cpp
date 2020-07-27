@@ -156,7 +156,7 @@ bool Superquadric::setSuperqOrientation(const VectorXd &o)
     {
         bool params_ok = true;
 
-        params_ok = params_ok && (o.head(3).norm() == 1);
+        params_ok = params_ok && (abs(o.head(3).norm()-1) < 1e-2);
 
         if (params_ok)
         {

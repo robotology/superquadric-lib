@@ -63,6 +63,8 @@ void SuperqTree::reset()
     root->R.setIdentity();
     root->plane_important = false;
     root->uncle_close = NULL;
+
+    return;
 }
 
 /***********************************************************************/
@@ -75,6 +77,8 @@ SuperqTree::~SuperqTree()
 void SuperqTree::destroy_tree()
 {
     destroy_tree(root);
+
+	return;
 }
 
 /***********************************************************************/
@@ -86,6 +90,8 @@ void SuperqTree::destroy_tree(node *leaf)
         destroy_tree(leaf->right);
         delete leaf;
     }
+
+    return;
 }
 
 
@@ -93,12 +99,14 @@ void SuperqTree::destroy_tree(node *leaf)
 void SuperqTree::setPoints(SuperqModel::PointCloud &point_cloud)
 {
     root->point_cloud = &point_cloud;
+    return;
 }
 
 /***********************************************************************/
 void SuperqTree::insert_uncle(node *leaf,  node *uncle)
 {
     leaf->uncle_close = uncle;
+    return;
 }
 
 /***********************************************************************/
@@ -128,6 +136,7 @@ void SuperqTree::insert(const nodeContent &node_content1, const nodeContent &nod
     leaf->left->father = leaf;
     leaf->left->height = node_content2.height;
     leaf->left->plane_important = false;
+    return;
 }
 
 /***********************************************************************/
@@ -169,6 +178,8 @@ void SuperqTree::printNode(node *leaf)
     }
     else
         cout << "|| ---------------------------------------------------- ||" << endl << endl << endl;
+
+    return;
 }
 
 /***********************************************************************/
@@ -180,4 +191,5 @@ void SuperqTree::printTree()
 
     printNode(root);
 
+    return;
 }

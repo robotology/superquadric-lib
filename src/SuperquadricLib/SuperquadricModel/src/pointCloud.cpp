@@ -108,6 +108,8 @@ void PointCloud::deletePoints()
 {
     points.clear();
     points_for_vis.clear();
+
+    return;
 }
 
 /*********************************************/
@@ -267,6 +269,8 @@ void PointCloud::subSample(const int &desired_points, const bool &random)
     p_aux.clear();
 
     n_points = points.size();
+
+    return;
 }
 
 /*********************************************/
