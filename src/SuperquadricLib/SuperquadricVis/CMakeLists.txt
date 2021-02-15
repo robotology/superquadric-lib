@@ -50,8 +50,10 @@ find_package(VTK REQUIRED)
 #if(VTK_VERSION VERSION_LESS "8.1")
 #	message(ERROR " Wrong VTK version! At least 8.1 required!")
 #endif()
-
-include(${VTK_USE_FILE})
+message (STATUS "VTK_VERSION: ${VTK_VERSION}")
+if (VTK_VERSION VERSION_LESS "8.90.0")
+  include(${VTK_USE_FILE})
+endif()
 
 find_package(Eigen3 QUIET CONFIG)
 if(NOT EIGEN3_FOUND)
@@ -94,6 +96,10 @@ target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC "$<BUILD_INTERFACE:${CM
 
 target_link_libraries(${LIBRARY_TARGET_NAME} PUBLIC ${VTK_LIBRARIES} SuperquadricLibModel SuperquadricLibGrasp)
 target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC ${VTK_INCLUDE_DIRS})
+
+if (VTK_VERSION VERSION_GREATER_EQUAL "8.90.0")
+  vtk_module_autoinit(TARGETS ${LIBRARY_TARGET_NAME} MODULES ${VTK_LIBRARIES})
+endif()
 
 if(NOT TARGET Eigen3)
     target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
